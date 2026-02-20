@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUTH & USERS
+// ═══════════════════════════════════════════════════════════════
+
+enum Role {
+  ADMIN
+  OPERADOR
+  CLIENTE
+  CONTADOR
+  RRHH_MANAGER
+  COMERCIAL
+  VIEWER
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  name             String
+  image            String?
+  provider         String    @default("credentials")
+  password         String?
+  phone            String?
+  phoneVerifiedAt  DateTime?
+  role             Role      @default(CLIENTE)
+  totpSecret       String?
+  totpEnabled      Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@map("users")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONFIGURACION EMPRESA
+// ═══════════════════════════════════════════════════════════════
+
+enum CondicionIva {
+  RESPONSABLE_INSCRIPTO
+  MONOTRIBUTISTA
+  EXENTO
+  CONSUMIDOR_FINAL
+}
+
+model ConfiguracionEmpresa {
+  id                String       @id @default(cuid())
+  razonSocial       String       @default("MotoLibre S.A.")
+  cuit              String       @default("30-71617222-4")
+  direccion         String       @default("Tucumán 141, Piso 4, Of. I, CABA")
+  telefono          String       @default("")
+  email             String       @default("")
+  condicionIva      CondicionIva @default(RESPONSABLE_INSCRIPTO)
+  inicioActividades DateTime?
+  logo              String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@map("configuracion_empresa")
+}
