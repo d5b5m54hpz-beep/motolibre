@@ -39,6 +39,7 @@ model User {
 
   accounts         Account[]
   sessions         Session[]
+  profiles         UserProfile[]
 
   @@map("users")
 }
@@ -81,6 +82,74 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PERMISOS
+// ═══════════════════════════════════════════════════════════════
+
+model PermissionProfile {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  grants      PermissionGrant[]
+  users       UserProfile[]
+
+  @@map("permission_profiles")
+}
+
+model PermissionGrant {
+  id          String  @id @default(cuid())
+  profileId   String
+  profile     PermissionProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  operationId String
+
+  canView     Boolean @default(false)
+  canCreate   Boolean @default(false)
+  canExecute  Boolean @default(false)
+  canApprove  Boolean @default(false)
+
+  @@unique([profileId, operationId])
+  @@index([operationId])
+  @@map("permission_grants")
+}
+
+model UserProfile {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profileId String
+  profile   PermissionProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, profileId])
+  @@map("user_profiles")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EVENTOS
+// ═══════════════════════════════════════════════════════════════
+
+model BusinessEvent {
+  id          String   @id @default(cuid())
+  operationId String
+  entityType  String
+  entityId    String
+  payload     Json?
+  userId      String?
+  status      String   @default("COMPLETED")
+  error       String?
+  createdAt   DateTime @default(now())
+
+  @@index([operationId])
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("business_events")
 }
 
 // ═══════════════════════════════════════════════════════════════
