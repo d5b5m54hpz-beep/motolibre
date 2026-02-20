@@ -388,6 +388,47 @@ async function main() {
   });
   console.log(`  ✅ ${motosDemo.length} motos de prueba`);
 
+  // Clientes demo
+  await prisma.cliente.upsert({
+    where: { dni: "33456789" },
+    update: {},
+    create: {
+      nombre: "Carlos",
+      apellido: "Rodríguez",
+      email: "carlos.rodriguez@demo.com",
+      telefono: "1155667788",
+      dni: "33456789",
+      estado: "APROBADO",
+      fechaAprobacion: new Date(),
+      aprobadoPor: admin.id,
+      condicionIva: "MONOTRIBUTISTA",
+      plataformas: "Rappi, PedidosYa",
+      experienciaMeses: 24,
+      tipoLicencia: "A1",
+      creadoPor: admin.id,
+    },
+  });
+  await prisma.cliente.upsert({
+    where: { dni: "35789012" },
+    update: {},
+    create: {
+      nombre: "María",
+      apellido: "González",
+      email: "maria.gonzalez@demo.com",
+      telefono: "1144556677",
+      dni: "35789012",
+      estado: "APROBADO",
+      fechaAprobacion: new Date(),
+      aprobadoPor: admin.id,
+      condicionIva: "CONSUMIDOR_FINAL",
+      plataformas: "Rappi",
+      experienciaMeses: 6,
+      tipoLicencia: "A1",
+      creadoPor: admin.id,
+    },
+  });
+  console.log("  ✅ 2 clientes demo");
+
   console.log("✅ Seed completado");
 }
 

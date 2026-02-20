@@ -7,7 +7,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Fase Actual** | F1 — GESTIÓN DE FLOTA |
-| **Punto Actual** | 1.2 — siguiente punto |
+| **Punto Actual** | 1.4 — siguiente punto |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-20 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -22,6 +22,8 @@
 | 0.4 | Layout Base | 2026-02-20 | Sidebar colapsable, Header + avatar, DataTable, PageHeader, StatusBadge |
 | 0.5 | Dashboard Admin Home | 2026-02-20 | 6 KPI cards, Recharts, actividad reciente, acciones rápidas — F0 COMPLETA |
 | 1.1 | Gestión de Motos | 2026-02-20 | CRUD completo, 12 estados, máquina transiciones, 6 API routes, listado + detalle con tabs, KPIs reales |
+| 1.2 | Gestión de Clientes | 2026-02-20 | CRUD + flujo aprobación, scoring automático, 5 API routes, listado + detalle con tabs, KPI dashboard |
+| 1.3 | Contratos de Alquiler | 2026-02-20 | Modelo Contrato + Cuota, flujo BORRADOR→ACTIVO→FIN, preview, 9 API routes, listado + detalle con cuotas |
 
 ## Decisiones Tomadas
 
@@ -37,7 +39,7 @@
 
 ## Próxima Acción
 
-Ir al chat CTO y pedir: **"Dame el prompt del punto 1.2"**
+Ir al chat CTO y pedir: **"Dame el prompt del punto 1.4"**
 
 ## Problemas Conocidos
 
@@ -49,13 +51,14 @@ Ir al chat CTO y pedir: **"Dame el prompt del punto 1.2"**
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 6 / 35 |
+| Puntos completados | 8 / 35 |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
-| Fase actual | F1 — Gestión de Flota (1/? puntos) |
-| Modelos Prisma | 15 (+ Moto, DocumentoMoto, HistorialEstadoMoto, LecturaKm, BajaMoto, Amortizacion) |
-| API routes | 11 (+ /api/motos GET/POST, /api/motos/[id] GET/PUT, estado/baja/km POST, marcas GET) |
-| Páginas | 8 (+ /admin/motos, /admin/motos/[id]) |
+| Fase actual | F1 — Gestión de Flota (3/? puntos) |
+| Modelos Prisma | 20 (+ Contrato, Cuota) |
+| Enums Prisma | + EstadoContrato, FrecuenciaPago, EstadoCuota |
+| API routes | 25 (+ 9 de contratos: GET/POST, [id] GET, activar/cancelar/finalizar/ejercer-compra POST, clientes/aprobados GET, motos/disponibles GET) |
+| Páginas | 12 (+ /admin/contratos, /admin/contratos/[id]) |
 | Tests | 0 |
-| PermissionProfiles seeded | 8 (Administrador, Operador Flota, Contador, RRHH Manager, Comercial, Mecánico, Cliente, Auditor) |
+| PermissionProfiles seeded | 8 |
 | Componentes UI | DataTable, DataTableColumnHeader, PageHeader, AppSidebar, AppHeader, StatusBadge, KPICards, EventsChart, UsersByRole, RecentActivity, QuickActions |
 | Deploy | Railway — motolibre-production.up.railway.app |

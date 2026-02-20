@@ -24,6 +24,8 @@ async function getDashboardData() {
     motosByEstado,
     clientesTotal,
     clientesPendientes,
+    contratosActivos,
+    contratosNuevosEsteMes,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
@@ -52,6 +54,8 @@ async function getDashboardData() {
     }),
     prisma.cliente.count(),
     prisma.cliente.count({ where: { estado: "PENDIENTE" } }),
+    prisma.contrato.count({ where: { estado: "ACTIVO" } }),
+    prisma.contrato.count({ where: { createdAt: { gte: startOfMonth } } }),
   ]);
 
   // Eventos por día — fallback seguro si raw query falla
@@ -87,7 +91,7 @@ async function getDashboardData() {
         enService: (estadoMap["EN_SERVICE"] ?? 0) + (estadoMap["EN_REPARACION"] ?? 0),
       },
       clientes: { total: clientesTotal, pendientes: clientesPendientes },
-      contratos: { activos: 0, nuevosEsteMes: 0 },
+      contratos: { activos: contratosActivos, nuevosEsteMes: contratosNuevosEsteMes },
       pagos: { cobradoEsteMes: 0, pendientes: 0 },
       facturacion: { facturadoEsteMes: 0 },
     },

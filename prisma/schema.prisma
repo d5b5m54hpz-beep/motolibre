@@ -310,6 +310,7 @@ model Moto {
   lecturasKm       LecturaKm[]
   baja             BajaMoto?
   amortizaciones   Amortizacion[]
+  contratos        Contrato[]
 
   @@index([estado])
   @@index([marca, modelo])
@@ -522,6 +523,7 @@ model Cliente {
   // ── Relaciones ──
   documentos      DocumentoCliente[]
   puntajes        PuntajeRider[]
+  contratos       Contrato[]
 
   @@index([estado])
   @@index([email])
@@ -561,4 +563,114 @@ model PuntajeRider {
 
   @@index([clienteId])
   @@map("puntajes_rider")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONTRATOS
+// ═══════════════════════════════════════════════════════════════
+
+enum EstadoContrato {
+  BORRADOR
+  ACTIVO
+  FINALIZADO
+  CANCELADO
+  FINALIZADO_COMPRA
+  VENCIDO
+}
+
+enum FrecuenciaPago {
+  SEMANAL
+  QUINCENAL
+  MENSUAL
+}
+
+enum EstadoCuota {
+  PENDIENTE
+  PAGADA
+  PARCIAL
+  VENCIDA
+  CANCELADA
+}
+
+model Contrato {
+  id              String          @id @default(cuid())
+
+  // ── Partes ──
+  clienteId       String
+  cliente         Cliente         @relation(fields: [clienteId], references: [id])
+  motoId          String
+  moto            Moto            @relation(fields: [motoId], references: [id])
+
+  // ── Estado ──
+  estado          EstadoContrato  @default(BORRADOR)
+
+  // ── Fechas ──
+  fechaInicio      DateTime?
+  fechaFin         DateTime?
+  fechaFinReal     DateTime?
+  fechaActivacion  DateTime?
+  fechaCancelacion DateTime?
+
+  // ── Pago ──
+  frecuenciaPago   FrecuenciaPago  @default(MENSUAL)
+  montoPeriodo     Decimal         @db.Decimal(12, 2)
+  deposito         Decimal         @default(0) @db.Decimal(12, 2)
+  depositoDevuelto Boolean         @default(false)
+  duracionMeses    Int             @default(12)
+
+  // ── Opción a compra ──
+  tieneOpcionCompra Boolean        @default(false)
+  precioCompra      Decimal?       @db.Decimal(12, 2)
+  fechaEjercicio    DateTime?
+
+  // ── Renovación ──
+  renovacionAuto     Boolean        @default(false)
+  contratoAnteriorId String?
+  contratoAnterior   Contrato?      @relation("Renovacion", fields: [contratoAnteriorId], references: [id])
+  contratosRenovados Contrato[]     @relation("Renovacion")
+
+  // ── Cancelación ──
+  motivoCancelacion String?
+  penalidad         Decimal?        @db.Decimal(12, 2)
+
+  // ── Notas ──
+  notas             String?
+
+  // ── Metadata ──
+  creadoPor         String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // ── Relaciones ──
+  cuotas            Cuota[]
+
+  @@index([clienteId])
+  @@index([motoId])
+  @@index([estado])
+  @@index([fechaInicio])
+  @@map("contratos")
+}
+
+model Cuota {
+  id               String      @id @default(cuid())
+  contratoId       String
+  contrato         Contrato    @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+
+  numero           Int
+  monto            Decimal     @db.Decimal(12, 2)
+  fechaVencimiento DateTime
+
+  estado           EstadoCuota @default(PENDIENTE)
+  fechaPago        DateTime?
+  montoPagado      Decimal?    @db.Decimal(12, 2)
+
+  notas            String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@unique([contratoId, numero])
+  @@index([contratoId])
+  @@index([estado])
+  @@index([fechaVencimiento])
+  @@map("cuotas")
 }
