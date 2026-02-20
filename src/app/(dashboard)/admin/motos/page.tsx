@@ -3,7 +3,6 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { MotosTable } from "./_components/motos-table";
-import { MotoFormDialog } from "./_components/moto-form-dialog";
 
 async function getMotos() {
   return prisma.moto.findMany({
@@ -40,7 +39,6 @@ export default async function MotosPage() {
       <PageHeader
         title="Gestión de Motos"
         description={`${stats.total} motos en flota`}
-        actions={<MotoFormDialog />}
       />
 
       {stats.total > 0 && (

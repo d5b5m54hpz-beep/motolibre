@@ -3,11 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Bike, Users, FileText, CreditCard, Wrench } from "lucide-react";
+import { Users, FileText, CreditCard, Wrench } from "lucide-react";
 
 export function QuickActions() {
   const actions = [
-    { title: "Nueva Moto", href: "/admin/motos?new=true", icon: Bike, color: "text-[#23e0ff]" },
     { title: "Nuevo Cliente", href: "/admin/clientes?new=true", icon: Users, color: "text-green-500" },
     { title: "Nuevo Contrato", href: "/admin/contratos?new=true", icon: FileText, color: "text-blue-500" },
     { title: "Registrar Pago", href: "/admin/pagos?new=true", icon: CreditCard, color: "text-emerald-500" },
