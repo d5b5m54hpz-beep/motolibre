@@ -4,7 +4,7 @@
 
 **MotoLibre** is an event-driven ERP for motorcycle rental management, operating in Buenos Aires, Argentina.
 
-**Tech Stack:** Next.js 15, React 19, TypeScript strict, Prisma 7, PostgreSQL (Neon), NextAuth v5, Tailwind CSS 4 + Shadcn/ui, Recharts, Sonner, Zod.
+**Tech Stack:** Next.js 15, React 19, TypeScript strict, Prisma 6, PostgreSQL (Neon), NextAuth v5, Tailwind CSS 4 + Shadcn/ui, Recharts, Sonner, Zod.
 
 **Deploy:** Railway (auto-deploy from main) with custom `server.js` binding to `0.0.0.0`. Dev: `npm run dev` locally.
 
@@ -58,9 +58,8 @@ npx shadcn@latest add X  # Add Shadcn component
 npm run typecheck        # Type check (zero errors expected)
 ```
 
-## 4. Prisma Notes (v7)
+## 4. Prisma Notes (v6)
 
-- Schema: `prisma/schema.prisma`
-- Config (datasource + migrations): `prisma.config.ts`
-- Generated client: `src/generated/prisma` (gitignored)
-- Import: `import { PrismaClient } from "@/generated/prisma"`
+- Schema + datasource: `prisma/schema.prisma`
+- Generated client: `node_modules/@prisma/client` (standard)
+- Import via singleton: `import { prisma } from "@/lib/prisma"`
