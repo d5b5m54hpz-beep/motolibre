@@ -1,17 +1,21 @@
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
+import { requirePermission } from "@/lib/permissions";
+import { OPERATIONS } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
-import { PageHeader } from "@/components/layout/page-header";
-import { KPICards } from "./_components/kpi-cards";
-import { EventsChart } from "./_components/events-chart";
-import { RecentActivity } from "./_components/recent-activity";
-import { UsersByRole } from "./_components/users-by-role";
-import { QuickActions } from "./_components/quick-actions";
+import { apiSetup } from "@/lib/api-helpers";
 
-async function getDashboardData() {
+export async function GET() {
+  apiSetup();
+
+  const { error } = await requirePermission(
+    OPERATIONS.system.config.update,
+    "canView",
+    ["ADMIN", "OPERADOR", "CONTADOR"]
+  );
+  if (error) return error;
+
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   const [
     totalUsers,
@@ -43,9 +47,9 @@ async function getDashboardData() {
     }),
   ]);
 
-  // Eventos por día — fallback seguro si raw query falla
   let eventsByDay: Array<{ date: string; count: number }> = [];
   try {
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const raw = await prisma.$queryRaw<Array<{ date: string; count: bigint }>>`
       SELECT DATE("created_at") as date, COUNT(*) as count
       FROM "business_events"
@@ -61,7 +65,7 @@ async function getDashboardData() {
     // tabla vacía o raw query no soportada
   }
 
-  return {
+  return NextResponse.json({
     kpis: {
       users: { total: totalUsers, thisMonth: usersThisMonth },
       events: { total: totalEvents, thisMonth: eventsThisMonth },
@@ -79,32 +83,5 @@ async function getDashboardData() {
       role: r.role,
       count: r._count.role,
     })),
-  };
-}
-
-export default async function AdminDashboardPage() {
-  const session = await auth();
-  if (!session?.user) redirect("/login-admin");
-
-  const data = await getDashboardData();
-
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Dashboard"
-        description={`Bienvenido, ${session.user.name} — MotoLibre S.A.`}
-      />
-
-      <KPICards data={data.kpis} />
-
-      <QuickActions />
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <EventsChart data={data.eventsByDay} />
-        <UsersByRole data={data.usersByRole} />
-      </div>
-
-      <RecentActivity events={data.recentEvents} />
-    </div>
-  );
+  });
 }
