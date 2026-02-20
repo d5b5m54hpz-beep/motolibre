@@ -7,7 +7,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Fase Actual** | F1 — GESTIÓN DE FLOTA |
-| **Punto Actual** | 1.1 — siguiente punto |
+| **Punto Actual** | 1.2 — siguiente punto |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-20 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -21,6 +21,7 @@
 | 0.3 | EventBus + Permissions | 2026-02-20 | OPERATIONS registry, EventBus, requirePermission, 8 perfiles seed |
 | 0.4 | Layout Base | 2026-02-20 | Sidebar colapsable, Header + avatar, DataTable, PageHeader, StatusBadge |
 | 0.5 | Dashboard Admin Home | 2026-02-20 | 6 KPI cards, Recharts, actividad reciente, acciones rápidas — F0 COMPLETA |
+| 1.1 | Gestión de Motos | 2026-02-20 | CRUD completo, 12 estados, máquina transiciones, 6 API routes, listado + detalle con tabs, KPIs reales |
 
 ## Decisiones Tomadas
 
@@ -36,7 +37,7 @@
 
 ## Próxima Acción
 
-Ir al chat CTO y pedir: **"Dame el prompt del punto 1.1"**
+Ir al chat CTO y pedir: **"Dame el prompt del punto 1.2"**
 
 ## Problemas Conocidos
 
@@ -48,12 +49,12 @@ Ir al chat CTO y pedir: **"Dame el prompt del punto 1.1"**
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 5 / 35 |
+| Puntos completados | 6 / 35 |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
-| Fase actual | F1 — Gestión de Flota |
-| Modelos Prisma | 9 (User, ConfiguracionEmpresa, Account, Session, VerificationToken, PermissionProfile, PermissionGrant, UserProfile, BusinessEvent) |
-| API routes | 5 (/api/auth/[...nextauth], /api/system/events, /api/system/handlers, /api/system/permissions, /api/admin/dashboard) |
-| Páginas | 6 (home, login, login-admin, registro, admin, mi-cuenta) |
+| Fase actual | F1 — Gestión de Flota (1/? puntos) |
+| Modelos Prisma | 15 (+ Moto, DocumentoMoto, HistorialEstadoMoto, LecturaKm, BajaMoto, Amortizacion) |
+| API routes | 11 (+ /api/motos GET/POST, /api/motos/[id] GET/PUT, estado/baja/km POST, marcas GET) |
+| Páginas | 8 (+ /admin/motos, /admin/motos/[id]) |
 | Tests | 0 |
 | PermissionProfiles seeded | 8 (Administrador, Operador Flota, Contador, RRHH Manager, Comercial, Mecánico, Cliente, Auditor) |
 | Componentes UI | DataTable, DataTableColumnHeader, PageHeader, AppSidebar, AppHeader, StatusBadge, KPICards, EventsChart, UsersByRole, RecentActivity, QuickActions |

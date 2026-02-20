@@ -40,6 +40,7 @@ model User {
   accounts         Account[]
   sessions         Session[]
   profiles         UserProfile[]
+  cliente          Cliente?
 
   @@map("users")
 }
@@ -420,4 +421,144 @@ model ConfiguracionEmpresa {
   updatedAt         DateTime     @updatedAt
 
   @@map("configuracion_empresa")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CLIENTES
+// ═══════════════════════════════════════════════════════════════
+
+enum EstadoCliente {
+  PENDIENTE
+  EN_REVISION
+  APROBADO
+  RECHAZADO
+  SUSPENDIDO
+  BAJA
+}
+
+enum TipoDocumentoCliente {
+  DNI_FRENTE
+  DNI_DORSO
+  LICENCIA_CONDUCIR_FRENTE
+  LICENCIA_CONDUCIR_DORSO
+  COMPROBANTE_DOMICILIO
+  RECIBO_SUELDO
+  CONSTANCIA_MONOTRIBUTO
+  SELFIE
+  CONTRATO_FIRMADO
+  OTRO
+}
+
+enum TipoLicencia {
+  A1
+  A2
+  A3
+}
+
+model Cliente {
+  id              String         @id @default(cuid())
+
+  // ── Datos personales ──
+  nombre          String
+  apellido        String
+  email           String         @unique
+  telefono        String
+  telefonoAlt     String?
+  dni             String         @unique
+  fechaNacimiento DateTime?
+  genero          String?
+  nacionalidad    String?        @default("Argentina")
+
+  // ── Licencia de conducir ──
+  tipoLicencia    TipoLicencia?
+  numLicencia     String?
+  fechaVencLicencia DateTime?
+
+  // ── Dirección ──
+  calle           String?
+  numero          String?
+  piso            String?
+  depto           String?
+  localidad       String?
+  provincia       String?        @default("CABA")
+  codigoPostal    String?
+
+  // ── Fiscal ──
+  cuit            String?        @unique
+  condicionIva    CondicionIva   @default(CONSUMIDOR_FINAL)
+
+  // ── Trabajo / Delivery ──
+  plataformas     String?
+  experienciaMeses Int?
+
+  // ── Estado y aprobación ──
+  estado          EstadoCliente  @default(PENDIENTE)
+  motivoRechazo   String?
+  fechaAprobacion DateTime?
+  aprobadoPor     String?
+
+  // ── Scoring ──
+  score           Int?           @default(0)
+
+  // ── Referencia ──
+  comoNosConocio  String?
+  referidoPor     String?
+
+  // ── Imagen ──
+  fotoUrl         String?
+
+  // ── Notas internas ──
+  notas           String?
+
+  // ── Relación con User (si tiene cuenta) ──
+  userId          String?        @unique
+  user            User?          @relation(fields: [userId], references: [id])
+
+  // ── Metadata ──
+  creadoPor       String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // ── Relaciones ──
+  documentos      DocumentoCliente[]
+  puntajes        PuntajeRider[]
+
+  @@index([estado])
+  @@index([email])
+  @@index([dni])
+  @@index([apellido, nombre])
+  @@map("clientes")
+}
+
+model DocumentoCliente {
+  id                String               @id @default(cuid())
+  clienteId         String
+  cliente           Cliente              @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  tipo              TipoDocumentoCliente
+  nombre            String
+  url               String
+  tamano            Int?
+  mimeType          String?
+  verificado        Boolean              @default(false)
+  verificadoPor     String?
+  fechaVerificacion DateTime?
+  notas             String?
+  createdAt         DateTime             @default(now())
+
+  @@index([clienteId])
+  @@map("documentos_cliente")
+}
+
+model PuntajeRider {
+  id        String   @id @default(cuid())
+  clienteId String
+  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  categoria String
+  valor     Int
+  motivo    String?
+  userId    String?
+  createdAt DateTime @default(now())
+
+  @@index([clienteId])
+  @@map("puntajes_rider")
 }

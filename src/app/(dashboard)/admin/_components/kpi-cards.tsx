@@ -8,6 +8,7 @@ interface KPIData {
   users: { total: number; thisMonth: number };
   events: { total: number; thisMonth: number };
   motos: { total: number; disponibles: number; alquiladas: number; enService: number };
+  clientes: { total: number; pendientes: number };
   contratos: { activos: number; nuevosEsteMes: number };
   pagos: { cobradoEsteMes: number; pendientes: number };
   facturacion: { facturadoEsteMes: number };
@@ -50,12 +51,14 @@ export function KPICards({ data }: KPICardsProps) {
       color: "text-emerald-500",
     },
     {
-      title: "Usuarios",
-      value: data.users.total,
+      title: "Clientes",
+      value: data.clientes.total || "—",
       subtitle:
-        data.users.thisMonth > 0
-          ? `+${data.users.thisMonth} este mes`
-          : "Primer usuario creado",
+        data.clientes.pendientes > 0
+          ? `${data.clientes.pendientes} pendientes de aprobación`
+          : data.clientes.total > 0
+            ? "Todos aprobados"
+            : "Se activa en Fase 1",
       icon: Users,
       color: "text-blue-500",
     },
