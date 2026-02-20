@@ -7,7 +7,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Fase Actual** | F0 — FUNDACIÓN |
-| **Punto Actual** | 0.4 — siguiente punto |
+| **Punto Actual** | 0.5 — siguiente punto |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-20 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -19,6 +19,7 @@
 | 0.1 | Scaffolding del Proyecto | 2026-02-20 | Proyecto creado, Prisma 6, utils listos |
 | 0.2 | Autenticación y Middleware | 2026-02-20 | NextAuth v5, seed admin, middleware, 3 páginas auth |
 | 0.3 | EventBus + Permissions | 2026-02-20 | OPERATIONS registry, EventBus, requirePermission, 8 perfiles seed |
+| 0.4 | Layout Base | 2026-02-20 | Sidebar colapsable, Header + avatar, DataTable, PageHeader, StatusBadge |
 
 ## Decisiones Tomadas
 
@@ -33,7 +34,7 @@
 
 ## Próxima Acción
 
-Ir al chat CTO y pedir: **"Dame el prompt del punto 0.4"**
+Ir al chat CTO y pedir: **"Dame el prompt del punto 0.5"**
 
 ## Problemas Conocidos
 
@@ -45,10 +46,11 @@ Ir al chat CTO y pedir: **"Dame el prompt del punto 0.4"**
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 3 / 35 |
-| Fase actual | F0 (3/5 puntos) |
+| Puntos completados | 4 / 35 |
+| Fase actual | F0 (4/5 puntos) |
 | Modelos Prisma | 9 (User, ConfiguracionEmpresa, Account, Session, VerificationToken, PermissionProfile, PermissionGrant, UserProfile, BusinessEvent) |
 | API routes | 4 (/api/auth/[...nextauth], /api/system/events, /api/system/handlers, /api/system/permissions) |
-| Páginas | 6 (home, login, login-admin, registro, admin temp, mi-cuenta temp) |
+| Páginas | 6 (home, login, login-admin, registro, admin, mi-cuenta) |
 | Tests | 0 |
 | PermissionProfiles seeded | 8 (Administrador, Operador Flota, Contador, RRHH Manager, Comercial, Mecánico, Cliente, Auditor) |
+| Componentes UI | DataTable, DataTableColumnHeader, PageHeader, AppSidebar, AppHeader, StatusBadge |
