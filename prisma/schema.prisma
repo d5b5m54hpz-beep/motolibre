@@ -153,6 +153,249 @@ model BusinessEvent {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// FLOTA — MOTOS
+// ═══════════════════════════════════════════════════════════════
+
+enum EstadoMoto {
+  EN_DEPOSITO
+  EN_PATENTAMIENTO
+  DISPONIBLE
+  RESERVADA
+  ALQUILADA
+  EN_SERVICE
+  EN_REPARACION
+  INMOVILIZADA
+  RECUPERACION
+  BAJA_TEMP
+  BAJA_DEFINITIVA
+  TRANSFERIDA
+}
+
+enum TipoMoto {
+  NAKED
+  TOURING
+  SPORT
+  SCOOTER
+  CUSTOM
+}
+
+enum EstadoPatentamiento {
+  PENDIENTE
+  EN_TRAMITE
+  COMPLETADO
+  RECHAZADO
+}
+
+enum EstadoSeguro {
+  SIN_SEGURO
+  EN_TRAMITE
+  ACTIVO
+  VENCIDO
+  SUSPENDIDO
+}
+
+enum EstadoLegalMoto {
+  LIMPIO
+  INHIBIDA
+  SECUESTRADA
+  EN_JUICIO
+}
+
+enum TipoBaja {
+  ROBO
+  SINIESTRO
+  VENTA
+  CHATARRA
+  DEVOLUCION_FABRICANTE
+}
+
+enum TipoDocumentoMoto {
+  TITULO
+  CEDULA_VERDE
+  CEDULA_AZUL
+  POLIZA_SEGURO
+  VTV
+  FORMULARIO_08
+  FORMULARIO_12
+  FORMULARIO_13
+  FOTO_GENERAL
+  FOTO_DANO
+  INFORME_MECANICO
+  OTRO
+}
+
+enum MetodoAmortizacion {
+  LINEAL
+}
+
+enum FuenteKm {
+  MANUAL
+  GPS
+  SERVICE
+  INSPECCION
+}
+
+model Moto {
+  id              String       @id @default(cuid())
+
+  // ── Identificación ──
+  marca           String
+  modelo          String
+  anio            Int
+  patente         String?      @unique
+  numMotor        String?      @unique
+  numChasis       String?      @unique
+  color           String?
+  cilindrada      Int?
+  tipo            TipoMoto     @default(NAKED)
+
+  // ── Estado operativo ──
+  estado          EstadoMoto   @default(EN_DEPOSITO)
+  estadoAnterior  EstadoMoto?
+
+  // ── Kilometraje ──
+  km              Int          @default(0)
+  kmUltimaLectura DateTime?
+
+  // ── Patentamiento ──
+  estadoPatentamiento  EstadoPatentamiento @default(PENDIENTE)
+  fechaPatentamiento   DateTime?
+  tramitePatente       String?
+
+  // ── Seguro ──
+  estadoSeguro      EstadoSeguro @default(SIN_SEGURO)
+  aseguradora       String?
+  numPoliza         String?
+  fechaInicioSeguro DateTime?
+  fechaFinSeguro    DateTime?
+
+  // ── Legal ──
+  estadoLegal      EstadoLegalMoto @default(LIMPIO)
+
+  // ── Financiero / Compra ──
+  precioCompra      Decimal?   @db.Decimal(12, 2)
+  fechaCompra       DateTime?
+  proveedorCompra   String?
+  numFacturaCompra  String?
+  monedaCompra      String     @default("ARS")
+  cotizacionCompra  Decimal?   @db.Decimal(12, 2)
+
+  // ── Alquiler ──
+  precioAlquilerMensual  Decimal?  @db.Decimal(12, 2)
+
+  // ── Amortización ──
+  metodoAmortizacion  MetodoAmortizacion @default(LINEAL)
+  vidaUtilMeses       Int        @default(60)
+  valorResidual       Decimal    @default(0) @db.Decimal(12, 2)
+  fechaAltaContable   DateTime?
+
+  // ── Ubicación ──
+  ubicacion        String?
+
+  // ── Imagen ──
+  imagenUrl        String?
+
+  // ── Notas ──
+  notas            String?
+
+  // ── Metadata ──
+  creadoPor        String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  // ── Relaciones ──
+  documentos       DocumentoMoto[]
+  historialEstados HistorialEstadoMoto[]
+  lecturasKm       LecturaKm[]
+  baja             BajaMoto?
+  amortizaciones   Amortizacion[]
+
+  @@index([estado])
+  @@index([marca, modelo])
+  @@index([patente])
+  @@index([tipo])
+  @@map("motos")
+}
+
+model DocumentoMoto {
+  id        String             @id @default(cuid())
+  motoId    String
+  moto      Moto               @relation(fields: [motoId], references: [id], onDelete: Cascade)
+  tipo      TipoDocumentoMoto
+  nombre    String
+  url       String
+  tamano    Int?
+  mimeType  String?
+  notas     String?
+  creadoPor String?
+  createdAt DateTime           @default(now())
+
+  @@index([motoId])
+  @@map("documentos_moto")
+}
+
+model HistorialEstadoMoto {
+  id             String     @id @default(cuid())
+  motoId         String
+  moto           Moto       @relation(fields: [motoId], references: [id], onDelete: Cascade)
+  estadoAnterior EstadoMoto
+  estadoNuevo    EstadoMoto
+  motivo         String?
+  userId         String?
+  createdAt      DateTime   @default(now())
+
+  @@index([motoId])
+  @@index([createdAt])
+  @@map("historial_estado_moto")
+}
+
+model LecturaKm {
+  id        String    @id @default(cuid())
+  motoId    String
+  moto      Moto      @relation(fields: [motoId], references: [id], onDelete: Cascade)
+  km        Int
+  fuente    FuenteKm  @default(MANUAL)
+  notas     String?
+  userId    String?
+  createdAt DateTime  @default(now())
+
+  @@index([motoId])
+  @@index([createdAt])
+  @@map("lecturas_km")
+}
+
+model BajaMoto {
+  id              String   @id @default(cuid())
+  motoId          String   @unique
+  moto            Moto     @relation(fields: [motoId], references: [id], onDelete: Cascade)
+  tipo            TipoBaja
+  fecha           DateTime @default(now())
+  motivo          String
+  montoRecuperado Decimal? @db.Decimal(12, 2)
+  numDenuncia     String?
+  userId          String?
+  createdAt       DateTime @default(now())
+
+  @@map("bajas_moto")
+}
+
+model Amortizacion {
+  id          String   @id @default(cuid())
+  motoId      String
+  moto        Moto     @relation(fields: [motoId], references: [id], onDelete: Cascade)
+  periodo     String
+  monto       Decimal  @db.Decimal(12, 2)
+  acumulado   Decimal  @db.Decimal(12, 2)
+  valorLibros Decimal  @db.Decimal(12, 2)
+  createdAt   DateTime @default(now())
+
+  @@unique([motoId, periodo])
+  @@index([motoId])
+  @@index([periodo])
+  @@map("amortizaciones")
+}
+
+// ═══════════════════════════════════════════════════════════════
 // CONFIGURACION EMPRESA
 // ═══════════════════════════════════════════════════════════════
 

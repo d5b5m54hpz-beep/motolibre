@@ -20,6 +20,8 @@ async function getDashboardData() {
     eventsThisMonth,
     recentEvents,
     usersByRole,
+    motosTotal,
+    motosByEstado,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
@@ -41,6 +43,11 @@ async function getDashboardData() {
       by: ["role"],
       _count: { role: true },
     }),
+    prisma.moto.count(),
+    prisma.moto.groupBy({
+      by: ["estado"],
+      _count: { estado: true },
+    }),
   ]);
 
   // Eventos por día — fallback seguro si raw query falla
@@ -61,11 +68,20 @@ async function getDashboardData() {
     // tabla vacía o raw query no soportada
   }
 
+  const estadoMap = Object.fromEntries(
+    motosByEstado.map((e) => [e.estado, e._count.estado])
+  );
+
   return {
     kpis: {
       users: { total: totalUsers, thisMonth: usersThisMonth },
       events: { total: totalEvents, thisMonth: eventsThisMonth },
-      motos: { total: 0, disponibles: 0, alquiladas: 0, enService: 0 },
+      motos: {
+        total: motosTotal,
+        disponibles: estadoMap["DISPONIBLE"] ?? 0,
+        alquiladas: estadoMap["ALQUILADA"] ?? 0,
+        enService: (estadoMap["EN_SERVICE"] ?? 0) + (estadoMap["EN_REPARACION"] ?? 0),
+      },
       contratos: { activos: 0, nuevosEsteMes: 0 },
       pagos: { cobradoEsteMes: 0, pendientes: 0 },
       facturacion: { facturadoEsteMes: 0 },
