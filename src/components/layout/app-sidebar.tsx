@@ -15,10 +15,12 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-gray-800">
-      <SidebarHeader className="border-b border-gray-800 p-4">
+    <Sidebar collapsible="icon" className="border-r border-[var(--border-base)]">
+      <SidebarHeader className="border-b border-[var(--border-base)] p-4">
         <Link href="/admin" className="flex items-center gap-2">
-          <span className="text-xl font-bold text-[#23e0ff]">MotoLibre</span>
+          <span className="text-xl font-bold bg-gradient-to-r from-[#7B61FF] to-[#4DA6FF] bg-clip-text text-transparent">
+            MotoLibre
+          </span>
         </Link>
       </SidebarHeader>
 
@@ -26,7 +28,7 @@ export function AppSidebar() {
         <ScrollArea className="h-full">
           {navigation.map((group) => (
             <SidebarGroup key={group.title}>
-              <SidebarGroupLabel className="text-xs uppercase text-gray-500">
+              <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-t-tertiary font-semibold">
                 {group.title}
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -42,14 +44,20 @@ export function AppSidebar() {
                           asChild
                           isActive={isActive}
                           tooltip={item.title}
+                          className={cn(
+                            "rounded-xl transition-all duration-200",
+                            isActive && "bg-accent-bg text-accent-DEFAULT border-l-[3px] border-l-accent-DEFAULT"
+                          )}
                         >
                           <Link href={item.href}>
-                            <item.icon className="h-4 w-4" />
-                            <span>{item.title}</span>
+                            <item.icon className={cn("h-4 w-4", isActive ? "text-accent-DEFAULT" : "text-t-secondary")} />
+                            <span className={cn(isActive ? "text-accent-DEFAULT font-medium" : "text-t-secondary")}>
+                              {item.title}
+                            </span>
                             {item.badge ? (
                               <span className={cn(
                                 "ml-auto flex h-5 min-w-5 items-center justify-center",
-                                "rounded-full bg-[#23e0ff] px-1.5 text-xs font-medium text-[#0D1B2A]"
+                                "rounded-full bg-accent-DEFAULT px-1.5 text-xs font-medium text-white"
                               )}>
                                 {item.badge}
                               </span>
@@ -66,8 +74,8 @@ export function AppSidebar() {
         </ScrollArea>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-gray-800 p-2">
-        <p className="text-center text-xs text-gray-600">
+      <SidebarFooter className="border-t border-[var(--border-base)] p-3">
+        <p className="text-center text-xs text-t-tertiary font-medium">
           MotoLibre v3
         </p>
       </SidebarFooter>
