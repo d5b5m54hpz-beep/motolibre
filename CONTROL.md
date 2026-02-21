@@ -6,8 +6,8 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Fase Actual** | F1 — GESTIÓN DE FLOTA |
-| **Punto Actual** | 1.6 — siguiente punto |
+| **Fase Actual** | F2 — CONTABILIDAD |
+| **Punto Actual** | 2.2 — siguiente punto |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-21 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -28,6 +28,7 @@
 | REFACTOR-B | Auto-asignación + Entrega + Mantenimientos + Lease-to-Own | 2026-02-21 | Cierre del flujo: asignación automática al liberar moto, Registrar Entrega crea contrato+cuotas+mantenimientos, MantenimientoProgramado, lease-to-own plan 24m |
 | 1.4 | Pagos MercadoPago | 2026-02-21 | SDK MP (Checkout Pro + PreApproval + PaymentRefund), webhook, suscripción recurrente, refund, /admin/pagos, PagoMercadoPago + SuscripcionMP modelos |
 | 1.5 | Facturación | 2026-02-21 | Factura A/B (condición IVA), CAE stub, PDF con pdfkit, email con Resend, auto-generación en webhook, 4 API routes, /admin/facturas + detalle, KPIs dashboard |
+| 2.1 | Plan de Cuentas y Asientos Contables | 2026-02-21 | Plan FACPCE 65 cuentas (4 niveles), CuentaContable + AsientoContable + LineaAsiento + PeriodoContable, partida doble estricta, helper crearAsiento(), CUENTAS constante, 7 API routes, 5 páginas (árbol cuentas, asientos listado/detalle/nuevo, períodos), sidebar Contabilidad |
 
 ## Decisiones Tomadas
 
@@ -43,10 +44,11 @@
 | D008 | 2026-02-21 | Flujo negocio: cliente se autoregistra + paga primer mes → operador evalúa → lista espera → sistema asigna moto. Admin NO crea clientes ni contratos directamente. |
 | D009 | 2026-02-21 | Contrato se crea automáticamente al registrar entrega (NO existe "Crear Contrato" ni "Activar Contrato" manual) |
 | D010 | 2026-02-21 | Pagos 100% automáticos vía MP webhook. Admin NO registra pagos manualmente. PaymentRefund.create (no Payment.refund) para reembolsos. |
+| D011 | 2026-02-21 | Contabilidad: partida doble es LEY. Asientos automáticos NO se crean en 2.1, se conectan en 2.2 con event handlers. Motos son Bienes de Uso con amortización lineal. |
 
 ## Próxima Acción
 
-Ir al chat CTO y pedir: **"Dame el prompt del punto 1.6"**
+Ir al chat CTO y pedir: **"Dame el prompt del punto 2.2"**
 
 ## Problemas Conocidos
 
@@ -58,16 +60,17 @@ Ir al chat CTO y pedir: **"Dame el prompt del punto 1.6"**
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 13 / 35 (+ REFACTOR-A + REFACTOR-B) |
+| Puntos completados | 14 / 35 (+ REFACTOR-A + REFACTOR-B) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
-| Fase actual | F1 — Gestión de Flota (5/? puntos + 2 refactors) |
-| Modelos Prisma | 26 (+ Factura) |
-| Enums Prisma | + TipoFactura + EstadoFactura |
-| API routes | 60 (+ /api/facturas GET, /api/facturas/[id] GET, /api/facturas/[id]/pdf GET, /api/facturas/[id]/enviar POST) |
-| Páginas | 20 (+ /admin/facturas, /admin/facturas/[id]) |
+| **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
+| Fase actual | F2 — Contabilidad (1/? puntos) |
+| Modelos Prisma | 30 (+ CuentaContable, AsientoContable, LineaAsiento, PeriodoContable) |
+| Enums Prisma | + TipoCuenta, TipoAsiento |
+| API routes | 67 (+ 7 contabilidad) |
+| Páginas | 25 (+ /admin/cuentas-contables, /admin/asientos, /admin/asientos/nuevo, /admin/asientos/[id], /admin/periodos) |
+| Cuentas contables seeded | 65 (4 niveles FACPCE) |
 | Tests | 0 |
 | PermissionProfiles seeded | 8 |
-| Componentes UI | DataTable, DataTableColumnHeader, PageHeader, AppSidebar, AppHeader, StatusBadge, KPICards, EventsChart, UsersByRole, RecentActivity, QuickActions, SolicitudesTable, PricingModelCard, MantenimientosTable |
 | Deploy | Railway — motolibre-production.up.railway.app |
 
 ## Flujo de Negocio Implementado

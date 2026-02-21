@@ -488,6 +488,159 @@ async function main() {
     console.log("  ✅ 1 solicitud demo (en espera)");
   }
 
+  // ── Plan de Cuentas FACPCE ──
+  console.log("  📋 Creando plan de cuentas contables...");
+  const cuentas: Array<{
+    codigo: string;
+    nombre: string;
+    tipo: "ACTIVO" | "PASIVO" | "PATRIMONIO" | "INGRESO" | "EGRESO";
+    nivel: number;
+    padreCode?: string;
+    aceptaMovimientos: boolean;
+    descripcion?: string;
+  }> = [
+    // ═══ NIVEL 1 — RUBROS ═══
+    { codigo: "1", nombre: "ACTIVO", tipo: "ACTIVO", nivel: 1, aceptaMovimientos: false },
+    { codigo: "2", nombre: "PASIVO", tipo: "PASIVO", nivel: 1, aceptaMovimientos: false },
+    { codigo: "3", nombre: "PATRIMONIO NETO", tipo: "PATRIMONIO", nivel: 1, aceptaMovimientos: false },
+    { codigo: "4", nombre: "INGRESOS", tipo: "INGRESO", nivel: 1, aceptaMovimientos: false },
+    { codigo: "5", nombre: "EGRESOS", tipo: "EGRESO", nivel: 1, aceptaMovimientos: false },
+
+    // ═══ NIVEL 2 — SUBRUBROS ═══
+    // Activo
+    { codigo: "1.1", nombre: "Activo Corriente", tipo: "ACTIVO", nivel: 2, padreCode: "1", aceptaMovimientos: false },
+    { codigo: "1.2", nombre: "Activo No Corriente", tipo: "ACTIVO", nivel: 2, padreCode: "1", aceptaMovimientos: false },
+    // Pasivo
+    { codigo: "2.1", nombre: "Pasivo Corriente", tipo: "PASIVO", nivel: 2, padreCode: "2", aceptaMovimientos: false },
+    // Patrimonio
+    { codigo: "3.1", nombre: "Capital", tipo: "PATRIMONIO", nivel: 2, padreCode: "3", aceptaMovimientos: false },
+    { codigo: "3.2", nombre: "Resultados Acumulados", tipo: "PATRIMONIO", nivel: 2, padreCode: "3", aceptaMovimientos: false },
+    { codigo: "3.3", nombre: "Resultado del Ejercicio", tipo: "PATRIMONIO", nivel: 2, padreCode: "3", aceptaMovimientos: false },
+    // Ingresos
+    { codigo: "4.1", nombre: "Ingresos Operativos", tipo: "INGRESO", nivel: 2, padreCode: "4", aceptaMovimientos: false },
+    { codigo: "4.2", nombre: "Otros Ingresos", tipo: "INGRESO", nivel: 2, padreCode: "4", aceptaMovimientos: false },
+    // Egresos
+    { codigo: "5.1", nombre: "Costos Operativos", tipo: "EGRESO", nivel: 2, padreCode: "5", aceptaMovimientos: false },
+    { codigo: "5.2", nombre: "Gastos de Administración", tipo: "EGRESO", nivel: 2, padreCode: "5", aceptaMovimientos: false },
+    { codigo: "5.3", nombre: "Otros Egresos", tipo: "EGRESO", nivel: 2, padreCode: "5", aceptaMovimientos: false },
+
+    // ═══ NIVEL 3 — CUENTAS ═══
+    // Activo Corriente
+    { codigo: "1.1.01", nombre: "Caja y Bancos", tipo: "ACTIVO", nivel: 3, padreCode: "1.1", aceptaMovimientos: false },
+    { codigo: "1.1.02", nombre: "Créditos", tipo: "ACTIVO", nivel: 3, padreCode: "1.1", aceptaMovimientos: false },
+    { codigo: "1.1.03", nombre: "Créditos Fiscales", tipo: "ACTIVO", nivel: 3, padreCode: "1.1", aceptaMovimientos: false },
+    { codigo: "1.1.04", nombre: "Otros Créditos", tipo: "ACTIVO", nivel: 3, padreCode: "1.1", aceptaMovimientos: false },
+    // Activo No Corriente
+    { codigo: "1.2.01", nombre: "Bienes de Uso", tipo: "ACTIVO", nivel: 3, padreCode: "1.2", aceptaMovimientos: false },
+    // Pasivo Corriente
+    { codigo: "2.1.01", nombre: "Deudas Comerciales", tipo: "PASIVO", nivel: 3, padreCode: "2.1", aceptaMovimientos: false },
+    { codigo: "2.1.02", nombre: "Deudas Fiscales", tipo: "PASIVO", nivel: 3, padreCode: "2.1", aceptaMovimientos: false },
+    { codigo: "2.1.03", nombre: "Depósitos Recibidos", tipo: "PASIVO", nivel: 3, padreCode: "2.1", aceptaMovimientos: false },
+    { codigo: "2.1.04", nombre: "Ingresos Diferidos", tipo: "PASIVO", nivel: 3, padreCode: "2.1", aceptaMovimientos: false },
+    // Capital
+    { codigo: "3.1.01", nombre: "Capital Social", tipo: "PATRIMONIO", nivel: 3, padreCode: "3.1", aceptaMovimientos: false },
+    { codigo: "3.2.01", nombre: "Resultados No Asignados", tipo: "PATRIMONIO", nivel: 3, padreCode: "3.2", aceptaMovimientos: false },
+    { codigo: "3.3.01", nombre: "Resultado del Ejercicio", tipo: "PATRIMONIO", nivel: 3, padreCode: "3.3", aceptaMovimientos: false },
+    // Ingresos Operativos
+    { codigo: "4.1.01", nombre: "Ingresos por Alquiler", tipo: "INGRESO", nivel: 3, padreCode: "4.1", aceptaMovimientos: false },
+    { codigo: "4.1.02", nombre: "Ingresos por Venta de Motos", tipo: "INGRESO", nivel: 3, padreCode: "4.1", aceptaMovimientos: false },
+    { codigo: "4.1.03", nombre: "Ingresos por Repuestos", tipo: "INGRESO", nivel: 3, padreCode: "4.1", aceptaMovimientos: false },
+    { codigo: "4.2.01", nombre: "Otros Ingresos", tipo: "INGRESO", nivel: 3, padreCode: "4.2", aceptaMovimientos: false },
+    // Costos Operativos
+    { codigo: "5.1.01", nombre: "Depreciación", tipo: "EGRESO", nivel: 3, padreCode: "5.1", aceptaMovimientos: false },
+    { codigo: "5.1.02", nombre: "Mantenimiento", tipo: "EGRESO", nivel: 3, padreCode: "5.1", aceptaMovimientos: false },
+    { codigo: "5.1.03", nombre: "Seguros", tipo: "EGRESO", nivel: 3, padreCode: "5.1", aceptaMovimientos: false },
+    // Gastos Administración
+    { codigo: "5.2.01", nombre: "Gastos Administrativos", tipo: "EGRESO", nivel: 3, padreCode: "5.2", aceptaMovimientos: false },
+    { codigo: "5.2.02", nombre: "Gastos Bancarios", tipo: "EGRESO", nivel: 3, padreCode: "5.2", aceptaMovimientos: false },
+    { codigo: "5.2.03", nombre: "Impuestos y Tasas", tipo: "EGRESO", nivel: 3, padreCode: "5.2", aceptaMovimientos: false },
+    // Otros Egresos
+    { codigo: "5.3.01", nombre: "Otros Egresos", tipo: "EGRESO", nivel: 3, padreCode: "5.3", aceptaMovimientos: false },
+
+    // ═══ NIVEL 4 — SUBCUENTAS (aceptan movimientos) ═══
+    // Caja y Bancos
+    { codigo: "1.1.01.001", nombre: "Caja en Pesos", tipo: "ACTIVO", nivel: 4, padreCode: "1.1.01", aceptaMovimientos: true },
+    { codigo: "1.1.01.002", nombre: "MercadoPago", tipo: "ACTIVO", nivel: 4, padreCode: "1.1.01", aceptaMovimientos: true },
+    { codigo: "1.1.01.003", nombre: "Banco BIND", tipo: "ACTIVO", nivel: 4, padreCode: "1.1.01", aceptaMovimientos: true },
+    // Créditos
+    { codigo: "1.1.02.001", nombre: "Deudores por Alquiler", tipo: "ACTIVO", nivel: 4, padreCode: "1.1.02", aceptaMovimientos: true },
+    // Créditos Fiscales
+    { codigo: "1.1.03.001", nombre: "IVA Crédito Fiscal", tipo: "ACTIVO", nivel: 4, padreCode: "1.1.03", aceptaMovimientos: true },
+    // Otros Créditos
+    { codigo: "1.1.04.001", nombre: "Depósitos Dados en Garantía", tipo: "ACTIVO", nivel: 4, padreCode: "1.1.04", aceptaMovimientos: true },
+    // Bienes de Uso
+    { codigo: "1.2.01.001", nombre: "Rodados — Motos", tipo: "ACTIVO", nivel: 4, padreCode: "1.2.01", aceptaMovimientos: true },
+    { codigo: "1.2.01.002", nombre: "(-) Amortización Acumulada Motos", tipo: "ACTIVO", nivel: 4, padreCode: "1.2.01", aceptaMovimientos: true, descripcion: "Cuenta regularizadora — saldo acreedor" },
+    // Pasivo
+    { codigo: "2.1.01.001", nombre: "Proveedores", tipo: "PASIVO", nivel: 4, padreCode: "2.1.01", aceptaMovimientos: true },
+    { codigo: "2.1.02.001", nombre: "IVA Débito Fiscal", tipo: "PASIVO", nivel: 4, padreCode: "2.1.02", aceptaMovimientos: true },
+    { codigo: "2.1.03.001", nombre: "Depósitos de Clientes", tipo: "PASIVO", nivel: 4, padreCode: "2.1.03", aceptaMovimientos: true, descripcion: "Primer mes cobrado por adelantado" },
+    { codigo: "2.1.04.001", nombre: "Ingresos Diferidos por Alquiler", tipo: "PASIVO", nivel: 4, padreCode: "2.1.04", aceptaMovimientos: true },
+    // Patrimonio
+    { codigo: "3.1.01.001", nombre: "Capital Social", tipo: "PATRIMONIO", nivel: 4, padreCode: "3.1.01", aceptaMovimientos: true },
+    { codigo: "3.2.01.001", nombre: "Resultados No Asignados", tipo: "PATRIMONIO", nivel: 4, padreCode: "3.2.01", aceptaMovimientos: true },
+    { codigo: "3.3.01.001", nombre: "Resultado del Ejercicio", tipo: "PATRIMONIO", nivel: 4, padreCode: "3.3.01", aceptaMovimientos: true },
+    // Ingresos
+    { codigo: "4.1.01.001", nombre: "Ingresos por Alquiler de Motos", tipo: "INGRESO", nivel: 4, padreCode: "4.1.01", aceptaMovimientos: true },
+    { codigo: "4.1.02.001", nombre: "Ingresos por Venta de Motos", tipo: "INGRESO", nivel: 4, padreCode: "4.1.02", aceptaMovimientos: true },
+    { codigo: "4.1.03.001", nombre: "Ingresos por Venta de Repuestos", tipo: "INGRESO", nivel: 4, padreCode: "4.1.03", aceptaMovimientos: true },
+    { codigo: "4.2.01.001", nombre: "Otros Ingresos", tipo: "INGRESO", nivel: 4, padreCode: "4.2.01", aceptaMovimientos: true },
+    // Egresos
+    { codigo: "5.1.01.001", nombre: "Amortización de Motos", tipo: "EGRESO", nivel: 4, padreCode: "5.1.01", aceptaMovimientos: true },
+    { codigo: "5.1.02.001", nombre: "Gastos de Mantenimiento", tipo: "EGRESO", nivel: 4, padreCode: "5.1.02", aceptaMovimientos: true },
+    { codigo: "5.1.03.001", nombre: "Gastos de Seguros", tipo: "EGRESO", nivel: 4, padreCode: "5.1.03", aceptaMovimientos: true },
+    { codigo: "5.2.01.001", nombre: "Gastos Administrativos Generales", tipo: "EGRESO", nivel: 4, padreCode: "5.2.01", aceptaMovimientos: true },
+    { codigo: "5.2.02.001", nombre: "Comisiones MercadoPago", tipo: "EGRESO", nivel: 4, padreCode: "5.2.02", aceptaMovimientos: true },
+    { codigo: "5.2.03.001", nombre: "Impuestos y Tasas", tipo: "EGRESO", nivel: 4, padreCode: "5.2.03", aceptaMovimientos: true },
+    { codigo: "5.3.01.001", nombre: "Otros Egresos", tipo: "EGRESO", nivel: 4, padreCode: "5.3.01", aceptaMovimientos: true },
+  ];
+
+  // Primero crear sin padreId, luego actualizar relaciones
+  for (const c of cuentas) {
+    await prisma.cuentaContable.upsert({
+      where: { codigo: c.codigo },
+      update: { nombre: c.nombre },
+      create: {
+        codigo: c.codigo,
+        nombre: c.nombre,
+        tipo: c.tipo,
+        nivel: c.nivel,
+        aceptaMovimientos: c.aceptaMovimientos,
+        descripcion: c.descripcion ?? null,
+      },
+    });
+  }
+
+  // Actualizar padreId basándose en padreCode
+  for (const c of cuentas) {
+    if (c.padreCode) {
+      const padre = await prisma.cuentaContable.findUnique({
+        where: { codigo: c.padreCode },
+      });
+      if (padre) {
+        await prisma.cuentaContable.update({
+          where: { codigo: c.codigo },
+          data: { padreId: padre.id },
+        });
+      }
+    }
+  }
+  console.log(`  ✅ ${cuentas.length} cuentas contables`);
+
+  // ── Período actual ──
+  const hoy = new Date();
+  const mesesNombres = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  await prisma.periodoContable.upsert({
+    where: { anio_mes: { anio: hoy.getFullYear(), mes: hoy.getMonth() + 1 } },
+    update: {},
+    create: {
+      anio: hoy.getFullYear(),
+      mes: hoy.getMonth() + 1,
+      nombre: `${mesesNombres[hoy.getMonth() + 1]} ${hoy.getFullYear()}`,
+    },
+  });
+  console.log("  ✅ Período contable actual");
+
   console.log("✅ Seed completado");
 }
 

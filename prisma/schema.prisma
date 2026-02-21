@@ -1012,3 +1012,132 @@ model Factura {
   @@index([fechaEmision])
   @@map("facturas")
 }
+
+// ═══════════════════════════════════════════════════════════════
+// CONTABILIDAD — PLAN DE CUENTAS
+// ═══════════════════════════════════════════════════════════════
+
+enum TipoCuenta {
+  ACTIVO
+  PASIVO
+  PATRIMONIO
+  INGRESO
+  EGRESO
+}
+
+model CuentaContable {
+  id                String          @id @default(cuid())
+  codigo            String          @unique    // "1.1.01.001"
+  nombre            String                     // "Caja en Pesos"
+  tipo              TipoCuenta                 // ACTIVO, PASIVO, etc.
+  nivel             Int                        // 1=rubro, 2=subrubro, 3=cuenta, 4=subcuenta
+  padreId           String?
+  padre             CuentaContable? @relation("CuentaHijos", fields: [padreId], references: [id])
+  hijos             CuentaContable[] @relation("CuentaHijos")
+  aceptaMovimientos Boolean         @default(false) // true = se pueden cargar asientos
+  activa            Boolean         @default(true)
+  descripcion       String?
+
+  // ── Relaciones ──
+  lineasAsiento     LineaAsiento[]
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([codigo])
+  @@index([tipo])
+  @@index([padreId])
+  @@index([nivel])
+  @@map("cuentas_contables")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONTABILIDAD — ASIENTOS
+// ═══════════════════════════════════════════════════════════════
+
+enum TipoAsiento {
+  MANUAL            // Creado por el usuario
+  VENTA             // Cobro de alquiler
+  COMPRA            // Compra de moto u otro activo
+  DEPRECIACION      // Amortización mensual
+  GASTO             // Gasto operativo
+  AJUSTE            // Ajuste contable
+  CIERRE            // Asiento de cierre de ejercicio
+}
+
+model AsientoContable {
+  id              String         @id @default(cuid())
+  numero          Int            @unique @default(autoincrement())
+  fecha           DateTime
+  tipo            TipoAsiento
+  descripcion     String
+  totalDebe       Decimal        @db.Decimal(14, 2) @default(0)
+  totalHaber      Decimal        @db.Decimal(14, 2) @default(0)
+  cerrado         Boolean        @default(false) // una vez verificado, no se edita
+
+  // ── Origen ──
+  origenTipo      String?        // "Contrato", "PagoMercadoPago", "Factura", etc.
+  origenId        String?        // ID de la entidad que generó el asiento
+  eventoId        String?        // BusinessEvent que lo disparó
+
+  // ── Período ──
+  periodoId       String?
+  periodo         PeriodoContable? @relation(fields: [periodoId], references: [id])
+
+  // ── Líneas ──
+  lineas          LineaAsiento[]
+
+  // ── Metadata ──
+  creadoPor       String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([fecha])
+  @@index([tipo])
+  @@index([periodoId])
+  @@index([origenTipo, origenId])
+  @@map("asientos_contables")
+}
+
+model LineaAsiento {
+  id              String          @id @default(cuid())
+
+  asientoId       String
+  asiento         AsientoContable @relation(fields: [asientoId], references: [id], onDelete: Cascade)
+
+  cuentaId        String
+  cuenta          CuentaContable  @relation(fields: [cuentaId], references: [id])
+
+  debe            Decimal         @db.Decimal(14, 2) @default(0)
+  haber           Decimal         @db.Decimal(14, 2) @default(0)
+  descripcion     String?
+
+  createdAt       DateTime        @default(now())
+
+  @@index([asientoId])
+  @@index([cuentaId])
+  @@map("lineas_asiento")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONTABILIDAD — PERÍODOS
+// ═══════════════════════════════════════════════════════════════
+
+model PeriodoContable {
+  id              String    @id @default(cuid())
+  anio            Int
+  mes             Int       // 1-12
+  nombre          String    // "Enero 2026", "Febrero 2026"
+  cerrado         Boolean   @default(false)
+  fechaCierre     DateTime?
+  cerradoPor      String?
+
+  asientos        AsientoContable[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([anio, mes])
+  @@index([cerrado])
+  @@map("periodos_contables")
+}

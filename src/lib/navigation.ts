@@ -3,7 +3,7 @@ import {
   Wrench, Building2, Package, Truck, Ship, DollarSign,
   TrendingUp, PiggyBank, Calculator, BookOpen, FileSpreadsheet,
   BarChart3, UserCog, Shield, Bell, AlertTriangle, Settings,
-  Bot, Mail, Languages, ClipboardList, Gauge,
+  Bot, Mail, Languages, ClipboardList, Gauge, Calendar,
   type LucideIcon,
 } from "lucide-react";
 
@@ -74,7 +74,8 @@ export const navigation: NavGroup[] = [
     title: "Contabilidad",
     items: [
       { title: "Plan de Cuentas", href: "/admin/cuentas-contables", icon: BookOpen },
-      { title: "Asientos", href: "/admin/asientos-contables", icon: Calculator },
+      { title: "Asientos", href: "/admin/asientos", icon: Calculator },
+      { title: "Períodos", href: "/admin/periodos", icon: Calendar },
       { title: "Facturas Compra", href: "/admin/facturas-compra", icon: FileSpreadsheet },
       { title: "Reportes", href: "/admin/reportes-contables", icon: BarChart3 },
     ],
