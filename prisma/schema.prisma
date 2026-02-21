@@ -1141,3 +1141,198 @@ model PeriodoContable {
   @@index([cerrado])
   @@map("periodos_contables")
 }
+
+// ═══════════════════════════════════════════════════════════════
+// GASTOS
+// ═══════════════════════════════════════════════════════════════
+
+enum CategoriaGasto {
+  COMBUSTIBLE
+  SEGUROS
+  MANTENIMIENTO
+  REPUESTOS
+  ADMINISTRATIVO
+  ALQUILER_LOCAL
+  SERVICIOS
+  IMPUESTOS
+  BANCARIOS
+  PUBLICIDAD
+  SUELDOS
+  LEGAL
+  OTROS
+}
+
+enum EstadoGasto {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  ANULADO
+}
+
+model Gasto {
+  id              String         @id @default(cuid())
+  fecha           DateTime
+  monto           Decimal        @db.Decimal(12, 2)
+  categoria       CategoriaGasto
+  descripcion     String
+  comprobante     String?
+  estado          EstadoGasto    @default(PENDIENTE)
+
+  medioPago       String         @default("CAJA")
+
+  responsableId   String?
+  aprobadoPor     String?
+  aprobadoAt      DateTime?
+
+  asientoId       String?
+
+  motoId          String?
+  contratoId      String?
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([categoria])
+  @@index([estado])
+  @@index([fecha])
+  @@index([motoId])
+  @@map("gastos")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PRESUPUESTOS MENSUALES
+// ═══════════════════════════════════════════════════════════════
+
+model PresupuestoMensual {
+  id                 String         @id @default(cuid())
+  anio               Int
+  mes                Int
+  categoria          CategoriaGasto
+  montoPresupuestado Decimal        @db.Decimal(12, 2)
+  montoEjecutado     Decimal        @db.Decimal(12, 2) @default(0)
+  notas              String?
+
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@unique([anio, mes, categoria])
+  @@index([anio, mes])
+  @@map("presupuestos_mensuales")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NOTAS DE CRÉDITO
+// ═══════════════════════════════════════════════════════════════
+
+enum TipoNotaCredito {
+  ANULACION
+  DESCUENTO
+  DEVOLUCION
+}
+
+enum EstadoNotaCredito {
+  GENERADA
+  ENVIADA
+  ANULADA
+}
+
+model NotaCredito {
+  id              String            @id @default(cuid())
+
+  tipo            TipoNotaCredito
+  tipoComprobante String            @default("NC")
+  puntoVenta      String
+  numero          Int
+  numeroCompleto  String            @unique
+
+  facturaId       String
+  facturaNumero   String
+
+  receptorNombre  String
+  receptorCuit    String?
+  receptorCondicionIva String
+
+  montoNeto       Decimal           @db.Decimal(12, 2)
+  montoIva        Decimal           @db.Decimal(12, 2)
+  montoTotal      Decimal           @db.Decimal(12, 2)
+
+  motivo          String
+
+  estado          EstadoNotaCredito @default(GENERADA)
+  fechaEmision    DateTime          @default(now())
+
+  cae             String?
+  caeVencimiento  DateTime?
+
+  clienteId       String
+  asientoId       String?
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([tipoComprobante, puntoVenta, numero])
+  @@index([facturaId])
+  @@index([clienteId])
+  @@index([estado])
+  @@map("notas_credito")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FACTURAS DE COMPRA (PROVEEDORES)
+// ═══════════════════════════════════════════════════════════════
+
+enum TipoFacturaCompra {
+  A
+  B
+  C
+  M
+}
+
+enum EstadoFacturaCompra {
+  PENDIENTE
+  PAGADA
+  PARCIAL
+  ANULADA
+}
+
+model FacturaCompra {
+  id              String              @id @default(cuid())
+
+  proveedorNombre String
+  proveedorCuit   String
+  proveedorCondicionIva String
+
+  tipo            TipoFacturaCompra
+  puntoVenta      String
+  numero          String
+  numeroCompleto  String
+
+  montoNeto       Decimal             @db.Decimal(12, 2)
+  montoIva        Decimal             @db.Decimal(12, 2)
+  montoTotal      Decimal             @db.Decimal(12, 2)
+
+  fechaEmision    DateTime
+  fechaVencimiento DateTime?
+
+  cae             String?
+
+  concepto        String
+  categoria       CategoriaGasto?
+
+  estado          EstadoFacturaCompra @default(PENDIENTE)
+  montoPagado     Decimal             @db.Decimal(12, 2) @default(0)
+
+  archivoUrl      String?
+
+  asientoId       String?
+  motoId          String?
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([proveedorCuit])
+  @@index([estado])
+  @@index([fechaEmision])
+  @@index([tipo])
+  @@map("facturas_compra")
+}

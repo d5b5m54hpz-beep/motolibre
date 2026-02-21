@@ -16,6 +16,8 @@ import {
   handleWorkorderComplete,
   handleCreditNoteCreate,
   handleReconciliation,
+  handlePurchaseInvoiceCreate,
+  handlePurchaseInvoicePay,
 } from "./accounting";
 
 /**
@@ -153,6 +155,22 @@ export function initializeEventHandlers(): void {
     handler: handleReconciliation,
   });
 
+  // 17. Factura compra
+  eventBus.register({
+    name: "accounting:purchase_invoice.create",
+    priority: P_ACCOUNTING,
+    pattern: OPERATIONS.invoicing.purchaseInvoice.create,
+    handler: handlePurchaseInvoiceCreate,
+  });
+
+  // 18. Pago factura compra
+  eventBus.register({
+    name: "accounting:purchase_invoice.pay",
+    priority: P_ACCOUNTING,
+    pattern: OPERATIONS.invoicing.purchaseInvoice.approve,
+    handler: handlePurchaseInvoicePay,
+  });
+
   // ── HANDLER METRICS/LOGGING (P999) ──
   eventBus.register({
     name: "metrics-logger",
@@ -169,6 +187,6 @@ export function initializeEventHandlers(): void {
 
   eventBus.markInitialized();
   console.log(
-    `[EventBus] Initialized with ${eventBus.getHandlers().length} handler(s) (16 contables + 1 metrics)`
+    `[EventBus] Initialized with ${eventBus.getHandlers().length} handler(s) (18 contables + 1 metrics)`
   );
 }

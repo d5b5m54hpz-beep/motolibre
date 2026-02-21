@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bike, Users, FileText, ClipboardList, Activity, DollarSign, Wrench, Receipt } from "lucide-react";
+import { Bike, Users, FileText, ClipboardList, Activity, DollarSign, Wrench, Receipt, PiggyBank, FileInput } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import type { LucideIcon } from "lucide-react";
@@ -16,6 +16,8 @@ interface KPIData {
   mantenimientos: { hoy: number; semana: number };
   pagos: { cobradoEsteMes: number; pendientes: number };
   facturacion: { facturadoEsteMes: number; facturasEmitidas: number };
+  gastos?: { pendientes: number };
+  facturasCompra?: { pendientesPago: number };
 }
 
 interface KPICard {
@@ -123,6 +125,26 @@ export function KPICards({ data }: KPICardsProps) {
       subtitle: `${data.facturacion.facturasEmitidas} facturas emitidas`,
       icon: Receipt,
       color: "text-pink-500",
+    },
+    {
+      title: "Gastos Pendientes",
+      numericValue: data.gastos?.pendientes ?? 0,
+      emptyLabel: "0",
+      subtitle: data.gastos?.pendientes
+        ? `${data.gastos.pendientes} por aprobar`
+        : "Sin gastos pendientes",
+      icon: PiggyBank,
+      color: "text-purple-500",
+    },
+    {
+      title: "FC por Pagar",
+      numericValue: data.facturasCompra?.pendientesPago ?? 0,
+      emptyLabel: "0",
+      subtitle: data.facturasCompra?.pendientesPago
+        ? `${data.facturasCompra.pendientesPago} facturas pendientes`
+        : "Sin facturas por pagar",
+      icon: FileInput,
+      color: "text-red-500",
     },
   ];
 

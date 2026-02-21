@@ -1,4 +1,5 @@
 import { getCuentaPorCodigo, crearAsiento, CUENTAS } from "@/lib/contabilidad-utils";
+import { categoriaToCuentaContable } from "@/lib/gastos-utils";
 import { prisma } from "@/lib/prisma";
 import type { BusinessEventData } from "../event-bus";
 
@@ -388,7 +389,42 @@ export async function handleWorkorderComplete(event: BusinessEventData) {
 // 15. Nota de crédito
 export async function handleCreditNoteCreate(event: BusinessEventData) {
   try {
-    console.log(`[Contabilidad] Stub: credit_note.create — ${event.entityId}`);
+    const nc = await prisma.notaCredito.findUnique({
+      where: { id: event.entityId },
+    });
+    if (!nc) return;
+
+    const ctaCobrar = await getCuentaPorCodigo(CUENTAS.CUENTAS_COBRAR);
+    const ctaIngresos = await getCuentaPorCodigo(CUENTAS.INGRESOS_ALQUILER);
+
+    const lineas: Array<{ cuentaId: string; debe: number; haber: number; descripcion?: string }> = [];
+
+    if (Number(nc.montoIva) > 0) {
+      const ctaIvaDF = await getCuentaPorCodigo(CUENTAS.IVA_DF);
+      lineas.push({ cuentaId: ctaIngresos.id, debe: Number(nc.montoNeto), haber: 0, descripcion: "Reverso ingreso (NC)" });
+      lineas.push({ cuentaId: ctaIvaDF.id, debe: Number(nc.montoIva), haber: 0, descripcion: "Reverso IVA DF (NC)" });
+    } else {
+      lineas.push({ cuentaId: ctaIngresos.id, debe: Number(nc.montoTotal), haber: 0, descripcion: "Reverso ingreso (NC)" });
+    }
+
+    lineas.push({
+      cuentaId: ctaCobrar.id,
+      debe: 0,
+      haber: Number(nc.montoTotal),
+      descripcion: `NC ${nc.numeroCompleto} — ${nc.receptorNombre}`,
+    });
+
+    await crearAsiento({
+      fecha: nc.fechaEmision,
+      tipo: "AJUSTE",
+      descripcion: `Nota de crédito ${nc.numeroCompleto} — ${nc.motivo}`,
+      lineas,
+      origenTipo: "NotaCredito",
+      origenId: nc.id,
+      userId: "system",
+    });
+
+    console.log(`[Contabilidad] Asiento NC creado — ${nc.numeroCompleto}`);
   } catch (error) {
     console.error("[Contabilidad] Error handler credit_note.create:", error);
   }
@@ -400,5 +436,91 @@ export async function handleReconciliation(event: BusinessEventData) {
     console.log(`[Contabilidad] Stub: reconciliation.complete — ${event.entityId}`);
   } catch (error) {
     console.error("[Contabilidad] Error handler reconciliation:", error);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HANDLER 17 — FACTURA DE COMPRA (invoicing.purchaseInvoice.create)
+// Registra la deuda con el proveedor
+// ═══════════════════════════════════════════════════════════════
+export async function handlePurchaseInvoiceCreate(event: BusinessEventData) {
+  try {
+    const fc = await prisma.facturaCompra.findUnique({
+      where: { id: event.entityId },
+    });
+    if (!fc) return;
+
+    const ctaProveedores = await getCuentaPorCodigo(CUENTAS.PROVEEDORES);
+    const lineas: Array<{ cuentaId: string; debe: number; haber: number; descripcion?: string }> = [];
+
+    if (fc.tipo === "A" && Number(fc.montoIva) > 0) {
+      const ctaIvaCF = await getCuentaPorCodigo(CUENTAS.IVA_CF);
+      const cuentaGasto = fc.categoria
+        ? await getCuentaPorCodigo(categoriaToCuentaContable(fc.categoria))
+        : await getCuentaPorCodigo(CUENTAS.GASTOS_ADMINISTRATIVOS);
+
+      lineas.push({ cuentaId: cuentaGasto.id, debe: Number(fc.montoNeto), haber: 0, descripcion: fc.concepto });
+      lineas.push({ cuentaId: ctaIvaCF.id, debe: Number(fc.montoIva), haber: 0, descripcion: "IVA CF 21%" });
+    } else {
+      const cuentaGasto = fc.categoria
+        ? await getCuentaPorCodigo(categoriaToCuentaContable(fc.categoria))
+        : await getCuentaPorCodigo(CUENTAS.GASTOS_ADMINISTRATIVOS);
+
+      lineas.push({ cuentaId: cuentaGasto.id, debe: Number(fc.montoTotal), haber: 0, descripcion: fc.concepto });
+    }
+
+    lineas.push({
+      cuentaId: ctaProveedores.id,
+      debe: 0,
+      haber: Number(fc.montoTotal),
+      descripcion: `${fc.proveedorNombre} — ${fc.numeroCompleto}`,
+    });
+
+    await crearAsiento({
+      fecha: fc.fechaEmision,
+      tipo: "COMPRA",
+      descripcion: `Factura compra ${fc.tipo} ${fc.numeroCompleto} — ${fc.proveedorNombre}`,
+      lineas,
+      origenTipo: "FacturaCompra",
+      origenId: fc.id,
+      userId: "system",
+    });
+
+    console.log(`[Contabilidad] Asiento FC COMPRA creado — ${fc.numeroCompleto}`);
+  } catch (error) {
+    console.error("[Contabilidad] Error handler purchase_invoice.create:", error);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HANDLER 18 — PAGO FACTURA COMPRA (invoicing.purchaseInvoice.approve)
+// Registra el pago al proveedor
+// ═══════════════════════════════════════════════════════════════
+export async function handlePurchaseInvoicePay(event: BusinessEventData) {
+  try {
+    const meta = event.payload as Record<string, unknown> | undefined;
+    const monto = Number(meta?.monto || 0);
+    if (monto <= 0) return;
+
+    const cuentaPago = (meta?.cuentaPago as string) || CUENTAS.CAJA;
+    const ctaProveedores = await getCuentaPorCodigo(CUENTAS.PROVEEDORES);
+    const ctaPago = await getCuentaPorCodigo(cuentaPago);
+
+    await crearAsiento({
+      fecha: new Date(),
+      tipo: "COMPRA",
+      descripcion: `Pago a proveedor — ${meta?.proveedorNombre || ""} ${meta?.numeroCompleto || ""}`,
+      lineas: [
+        { cuentaId: ctaProveedores.id, debe: monto, haber: 0, descripcion: "Cancelación deuda proveedor" },
+        { cuentaId: ctaPago.id, debe: 0, haber: monto, descripcion: `Pago ${cuentaPago === CUENTAS.BANCO_MP ? "MercadoPago" : "Caja"}` },
+      ],
+      origenTipo: "FacturaCompra",
+      origenId: event.entityId,
+      userId: "system",
+    });
+
+    console.log(`[Contabilidad] Asiento PAGO FC creado — $${monto}`);
+  } catch (error) {
+    console.error("[Contabilidad] Error handler purchase_invoice.pay:", error);
   }
 }
