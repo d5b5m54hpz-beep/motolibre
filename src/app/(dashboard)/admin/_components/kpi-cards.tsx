@@ -3,6 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bike, Users, FileText, ClipboardList, Activity, DollarSign, Wrench, Receipt } from "lucide-react";
 import { formatMoney } from "@/lib/format";
+import { AnimatedNumber } from "@/components/ui/animated-number";
+import type { LucideIcon } from "lucide-react";
 
 interface KPIData {
   users: { total: number; thisMonth: number };
@@ -16,15 +18,26 @@ interface KPIData {
   facturacion: { facturadoEsteMes: number; facturasEmitidas: number };
 }
 
+interface KPICard {
+  title: string;
+  numericValue: number;
+  emptyLabel: string;
+  formatFn?: (n: number) => string;
+  subtitle: string;
+  icon: LucideIcon;
+  color: string;
+}
+
 interface KPICardsProps {
   data: KPIData;
 }
 
 export function KPICards({ data }: KPICardsProps) {
-  const cards = [
+  const cards: KPICard[] = [
     {
       title: "Motos en Flota",
-      value: data.motos.total || "—",
+      numericValue: data.motos.total,
+      emptyLabel: "—",
       subtitle:
         data.motos.total > 0
           ? `${data.motos.disponibles} disponibles · ${data.motos.alquiladas} alquiladas`
@@ -34,7 +47,8 @@ export function KPICards({ data }: KPICardsProps) {
     },
     {
       title: "Contratos Activos",
-      value: data.contratos.activos || "—",
+      numericValue: data.contratos.activos,
+      emptyLabel: "—",
       subtitle:
         data.contratos.activos > 0
           ? `${data.contratos.nuevosEsteMes} nuevos este mes`
@@ -44,7 +58,9 @@ export function KPICards({ data }: KPICardsProps) {
     },
     {
       title: "Cobrado este Mes",
-      value: data.pagos.cobradoEsteMes > 0 ? formatMoney(data.pagos.cobradoEsteMes) : "—",
+      numericValue: data.pagos.cobradoEsteMes,
+      emptyLabel: "—",
+      formatFn: (n) => formatMoney(n),
       subtitle:
         data.pagos.pendientes > 0
           ? `${data.pagos.pendientes} confirmados hoy`
@@ -54,7 +70,8 @@ export function KPICards({ data }: KPICardsProps) {
     },
     {
       title: "Clientes",
-      value: data.clientes.total || "—",
+      numericValue: data.clientes.total,
+      emptyLabel: "—",
       subtitle:
         data.clientes.pendientes > 0
           ? `${data.clientes.pendientes} pendientes de aprobación`
@@ -66,14 +83,16 @@ export function KPICards({ data }: KPICardsProps) {
     },
     {
       title: "Eventos del Sistema",
-      value: data.events.total,
+      numericValue: data.events.total,
+      emptyLabel: "0",
       subtitle: `${data.events.thisMonth} este mes`,
       icon: Activity,
       color: "text-purple-500",
     },
     {
       title: "Solicitudes",
-      value: data.solicitudes.pendientes + data.solicitudes.enEspera || "—",
+      numericValue: data.solicitudes.pendientes + data.solicitudes.enEspera,
+      emptyLabel: "—",
       subtitle:
         data.solicitudes.pendientes > 0
           ? `${data.solicitudes.pendientes} por evaluar · ${data.solicitudes.enEspera} en espera`
@@ -85,7 +104,8 @@ export function KPICards({ data }: KPICardsProps) {
     },
     {
       title: "Mantenimientos",
-      value: data.mantenimientos.semana || "—",
+      numericValue: data.mantenimientos.semana,
+      emptyLabel: "—",
       subtitle:
         data.mantenimientos.hoy > 0
           ? `${data.mantenimientos.hoy} hoy · ${data.mantenimientos.semana} esta semana`
@@ -97,9 +117,9 @@ export function KPICards({ data }: KPICardsProps) {
     },
     {
       title: "Facturado este Mes",
-      value: data.facturacion.facturadoEsteMes > 0
-        ? formatMoney(data.facturacion.facturadoEsteMes)
-        : "—",
+      numericValue: data.facturacion.facturadoEsteMes,
+      emptyLabel: "—",
+      formatFn: (n) => formatMoney(n),
       subtitle: `${data.facturacion.facturasEmitidas} facturas emitidas`,
       icon: Receipt,
       color: "text-pink-500",
@@ -117,7 +137,17 @@ export function KPICards({ data }: KPICardsProps) {
             <card.icon className={`h-4 w-4 ${card.color}`} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{card.value}</div>
+            <div className="text-2xl font-bold">
+              {card.numericValue > 0 ? (
+                <AnimatedNumber
+                  value={card.numericValue}
+                  formatFn={card.formatFn}
+                  duration={1.0}
+                />
+              ) : (
+                card.emptyLabel
+              )}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">{card.subtitle}</p>
           </CardContent>
         </Card>
