@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ClipboardList, Clock, Wrench, DollarSign, Receipt, PiggyBank, FileInput, TrendingUp, Target, ShoppingCart } from "lucide-react";
+import { ClipboardList, Clock, Wrench, DollarSign, Receipt, PiggyBank, FileInput, TrendingUp, Target, ShoppingCart, AlertTriangle } from "lucide-react";
 
 export function QuickActions() {
   const actions = [
@@ -18,6 +18,7 @@ export function QuickActions() {
     { title: "Estado Resultados", href: "/admin/finanzas/estado-resultados", icon: TrendingUp, color: "text-indigo-500" },
     { title: "Rentabilidad Motos", href: "/admin/finanzas/rentabilidad", icon: Target, color: "text-teal-500" },
     { title: "OC Pendientes", href: "/admin/ordenes-compra?estado=ENVIADA", icon: ShoppingCart, color: "text-amber-500" },
+    { title: "Stock Bajo", href: "/admin/repuestos?stockBajo=true", icon: AlertTriangle, color: "text-red-500" },
   ];
 
   return (

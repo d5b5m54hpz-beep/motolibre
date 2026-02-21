@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/lib/permissions";
 import { OPERATIONS } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
+import { registrarMovimiento } from "@/lib/stock-utils";
 import { apiSetup } from "@/lib/api-helpers";
 
 export async function PUT(
@@ -50,7 +51,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; repuestoId: string }> }
 ) {
   apiSetup();
-  const { error } = await requirePermission(
+  const { error, session } = await requirePermission(
     OPERATIONS.maintenance.workOrder.update,
     "canExecute",
     ["ADMIN", "OPERADOR"]
@@ -59,7 +60,26 @@ export async function DELETE(
 
   const { id, repuestoId } = await params;
 
+  // Find the OT repuesto before deleting to check inventory link
+  const otRepuesto = await prisma.repuestoOrdenTrabajo.findUnique({
+    where: { id: repuestoId },
+  });
+
   await prisma.repuestoOrdenTrabajo.delete({ where: { id: repuestoId } });
+
+  // If linked to inventory, return stock via DEVOLUCION
+  if (otRepuesto?.repuestoId) {
+    await registrarMovimiento({
+      repuestoId: otRepuesto.repuestoId,
+      tipo: "DEVOLUCION",
+      cantidad: otRepuesto.cantidad,
+      descripcion: `Devolución desde OT ${id}`,
+      costoUnitario: Number(otRepuesto.precioUnitario),
+      referenciaTipo: "OrdenTrabajo",
+      referenciaId: id,
+      userId: session?.user?.id,
+    }).catch(() => {}); // Don't fail the delete if stock return fails
+  }
 
   // Recalcular costoRepuestos
   const totalRepuestos = await prisma.repuestoOrdenTrabajo.aggregate({

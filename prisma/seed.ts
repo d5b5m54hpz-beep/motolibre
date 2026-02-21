@@ -789,6 +789,63 @@ async function main() {
 
   console.log("  ✅ Proveedores (2)");
 
+  // ══════════════════════════════════════════
+  // UBICACIONES DEPÓSITO
+  // ══════════════════════════════════════════
+  const ubicaciones = [
+    { codigo: "A1-N1", nombre: "Estante A Nivel 1", sector: "A", nivel: "1" },
+    { codigo: "A1-N2", nombre: "Estante A Nivel 2", sector: "A", nivel: "2" },
+    { codigo: "A1-N3", nombre: "Estante A Nivel 3", sector: "A", nivel: "3" },
+    { codigo: "B1-N1", nombre: "Estante B Nivel 1", sector: "B", nivel: "1" },
+    { codigo: "B1-N2", nombre: "Estante B Nivel 2", sector: "B", nivel: "2" },
+  ];
+
+  for (const u of ubicaciones) {
+    await prisma.ubicacionDeposito.upsert({
+      where: { codigo: u.codigo },
+      update: {},
+      create: u,
+    });
+  }
+
+  console.log("  ✅ Ubicaciones depósito (5)");
+
+  // ══════════════════════════════════════════
+  // REPUESTOS
+  // ══════════════════════════════════════════
+  const ubicacionDefault = await prisma.ubicacionDeposito.findUnique({ where: { codigo: "A1-N1" } });
+
+  const repuestos = [
+    { codigo: "FIL-ACE-001", nombre: "Filtro de aceite Honda CB 125F", categoria: "FILTROS" as const, stock: 12, stockMinimo: 5, precioCompra: 2500, modeloCompatible: ["Honda CB 125F", "Honda CB 190R"] },
+    { codigo: "FIL-ACE-002", nombre: "Filtro de aceite Yamaha YBR 125", categoria: "FILTROS" as const, stock: 8, stockMinimo: 5, precioCompra: 2200, modeloCompatible: ["Yamaha YBR 125"] },
+    { codigo: "ACE-10W40-001", nombre: "Aceite motor 10W-40 Castrol 1L", categoria: "LUBRICANTES" as const, stock: 20, stockMinimo: 10, precioCompra: 4500, unidad: "litro" },
+    { codigo: "PAS-FRE-001", nombre: "Pastillas de freno delantero universal", categoria: "FRENOS" as const, stock: 6, stockMinimo: 8, precioCompra: 3800, modeloCompatible: ["Honda CB 125F", "Yamaha YBR 125"] },
+    { codigo: "CAD-428-001", nombre: "Cadena 428 x 118 eslabones", categoria: "TRANSMISION" as const, stock: 3, stockMinimo: 4, precioCompra: 12000, modeloCompatible: ["Honda CB 125F", "Yamaha YBR 125"] },
+    { codigo: "BUJ-NGK-001", nombre: "Bujía NGK CR7HSA", categoria: "MOTOR" as const, stock: 15, stockMinimo: 10, precioCompra: 1800, modeloCompatible: ["Honda CB 125F"] },
+    { codigo: "NEU-DEL-001", nombre: "Neumático delantero 2.75-18", categoria: "NEUMATICOS" as const, stock: 2, stockMinimo: 3, precioCompra: 28000 },
+    { codigo: "NEU-TRA-001", nombre: "Neumático trasero 90/90-18", categoria: "NEUMATICOS" as const, stock: 2, stockMinimo: 3, precioCompra: 32000 },
+  ];
+
+  for (const r of repuestos) {
+    await prisma.repuesto.upsert({
+      where: { codigo: r.codigo },
+      update: {},
+      create: {
+        codigo: r.codigo,
+        nombre: r.nombre,
+        categoria: r.categoria,
+        stock: r.stock,
+        stockMinimo: r.stockMinimo,
+        precioCompra: r.precioCompra,
+        modeloCompatible: r.modeloCompatible || [],
+        unidad: (r as { unidad?: string }).unidad || "unidad",
+        ubicacionId: ubicacionDefault?.id,
+      },
+    });
+  }
+
+  console.log("  ✅ Repuestos (8 — 4 con stock bajo)");
+
   console.log("✅ Seed completado");
 }
 

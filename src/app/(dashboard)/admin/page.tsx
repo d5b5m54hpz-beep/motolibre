@@ -42,6 +42,7 @@ async function getDashboardData() {
     gastosPendientes,
     fcPendientesPago,
     otActivas,
+    repuestosStockBajo,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
@@ -97,6 +98,9 @@ async function getDashboardData() {
     prisma.gasto.count({ where: { estado: "PENDIENTE" } }),
     prisma.facturaCompra.count({ where: { estado: { in: ["PENDIENTE", "PARCIAL"] } } }),
     prisma.ordenTrabajo.count({ where: { estado: { notIn: ["COMPLETADA", "CANCELADA"] } } }),
+    prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
+      `SELECT COUNT(*) as count FROM repuestos WHERE stock <= "stockMinimo" AND activo = true`
+    ).then((r) => Number(r[0]?.count ?? 0)).catch(() => 0),
   ]);
 
   // Eventos por día — fallback seguro si raw query falla
@@ -145,6 +149,7 @@ async function getDashboardData() {
       },
       gastos: { pendientes: gastosPendientes },
       facturasCompra: { pendientesPago: fcPendientesPago },
+      inventario: { stockBajo: repuestosStockBajo as number },
     },
     recentEvents: recentEvents.map((e) => ({
       ...e,

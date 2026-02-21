@@ -1755,3 +1755,143 @@ model ItemOrdenCompra {
   @@index([ordenCompraId])
   @@map("items_orden_compra")
 }
+
+// ═══════════════════════════════════════════════════════════════
+// INVENTARIO DE REPUESTOS
+// ═══════════════════════════════════════════════════════════════
+
+enum CategoriaRepuesto {
+  MOTOR
+  FRENOS
+  SUSPENSION
+  ELECTRICA
+  TRANSMISION
+  CARROCERIA
+  NEUMATICOS
+  LUBRICANTES
+  FILTROS
+  TORNILLERIA
+  ACCESORIOS
+  OTRO
+}
+
+enum TipoMovimientoStock {
+  INGRESO
+  EGRESO
+  AJUSTE_POSITIVO
+  AJUSTE_NEGATIVO
+  TRANSFERENCIA
+  DEVOLUCION
+}
+
+model Repuesto {
+  id                String            @id @default(cuid())
+
+  // ── Identificación ──
+  codigo            String            @unique
+  nombre            String
+  descripcion       String?
+  categoria         CategoriaRepuesto
+  marca             String?
+  modeloCompatible  String[]
+
+  // ── Stock ──
+  stock             Int               @default(0)
+  stockMinimo       Int               @default(5)
+  stockMaximo       Int?
+  unidad            String            @default("unidad")
+
+  // ── Precios ──
+  precioCompra      Decimal           @db.Decimal(12, 2) @default(0)
+  precioVenta       Decimal?          @db.Decimal(12, 2)
+  moneda            String            @default("ARS")
+
+  // ── Importación ──
+  precioFOB         Decimal?          @db.Decimal(12, 2)
+  costoNacionalizado Decimal?         @db.Decimal(12, 2)
+
+  // ── Proveedor principal ──
+  proveedorId       String?
+  proveedorCodigo   String?
+
+  // ── Ubicación ──
+  ubicacionId       String?
+  ubicacion         UbicacionDeposito? @relation(fields: [ubicacionId], references: [id])
+
+  // ── Estado ──
+  activo            Boolean           @default(true)
+
+  // ── Relaciones ──
+  movimientos       MovimientoStock[]
+  historialCostos   HistorialCostoRepuesto[]
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([codigo])
+  @@index([categoria])
+  @@index([stock])
+  @@index([proveedorId])
+  @@index([activo])
+  @@map("repuestos")
+}
+
+model MovimientoStock {
+  id              String              @id @default(cuid())
+
+  repuestoId      String
+  repuesto        Repuesto            @relation(fields: [repuestoId], references: [id])
+
+  tipo            TipoMovimientoStock
+  cantidad        Int
+  stockAnterior   Int
+  stockPosterior  Int
+
+  // ── Referencia ──
+  referenciaTipo  String?
+  referenciaId    String?
+
+  // ── Detalle ──
+  descripcion     String?
+  costoUnitario   Decimal?            @db.Decimal(12, 2)
+  userId          String?
+
+  createdAt       DateTime            @default(now())
+
+  @@index([repuestoId])
+  @@index([tipo])
+  @@index([createdAt])
+  @@map("movimientos_stock")
+}
+
+model UbicacionDeposito {
+  id              String      @id @default(cuid())
+  codigo          String      @unique
+  nombre          String
+  sector          String?
+  nivel           String?
+  descripcion     String?
+  activa          Boolean     @default(true)
+
+  repuestos       Repuesto[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("ubicaciones_deposito")
+}
+
+model HistorialCostoRepuesto {
+  id              String      @id @default(cuid())
+  repuestoId      String
+  repuesto        Repuesto    @relation(fields: [repuestoId], references: [id])
+
+  precioAnterior  Decimal     @db.Decimal(12, 2)
+  precioNuevo     Decimal     @db.Decimal(12, 2)
+  motivo          String?
+
+  createdAt       DateTime    @default(now())
+
+  @@index([repuestoId])
+  @@map("historial_costo_repuesto")
+}

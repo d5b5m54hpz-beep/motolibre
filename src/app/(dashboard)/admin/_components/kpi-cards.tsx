@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bike, Users, FileText, ClipboardList, Activity, DollarSign, Wrench, Receipt, PiggyBank, FileInput } from "lucide-react";
+import { Bike, Users, FileText, ClipboardList, Activity, DollarSign, Wrench, Receipt, PiggyBank, FileInput, AlertTriangle } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import type { LucideIcon } from "lucide-react";
@@ -18,6 +18,7 @@ interface KPIData {
   facturacion: { facturadoEsteMes: number; facturasEmitidas: number };
   gastos?: { pendientes: number };
   facturasCompra?: { pendientesPago: number };
+  inventario?: { stockBajo: number };
 }
 
 interface KPICard {
@@ -155,6 +156,16 @@ export function KPICards({ data }: KPICardsProps) {
         : "Sin facturas por pagar",
       icon: FileInput,
       color: "text-red-500",
+    },
+    {
+      title: "Stock Bajo",
+      numericValue: data.inventario?.stockBajo ?? 0,
+      emptyLabel: "0",
+      subtitle: data.inventario?.stockBajo
+        ? `${data.inventario.stockBajo} repuestos bajo mínimo`
+        : "Stock OK — sin alertas",
+      icon: AlertTriangle,
+      color: (data.inventario?.stockBajo ?? 0) > 0 ? "text-red-500" : "text-emerald-500",
     },
   ];
 

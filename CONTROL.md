@@ -7,7 +7,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Fase Actual** | F3 — Operaciones |
-| **Punto Actual** | 3.4 — siguiente punto |
+| **Punto Actual** | 3.5 — siguiente punto |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-22 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -35,6 +35,7 @@
 | 3.1 | Mantenimientos (OT) | 2026-02-21 | 8 modelos (OrdenTrabajo, TareaOT, RepuestoOT, FotoInspeccion, HistorialOT, PlanMantenimiento, TareaPlan, RepuestoTareaPlan), 6 enums (EstadoOT, TipoOT, PrioridadOT, TipoService, CategoriaTarea, ResultadoTarea), flujo 8 estados con validación transiciones, 11 API routes (OT CRUD + estado + tareas + repuestos + fotos + planes CRUD + generar-ot + estadísticas), 3 páginas (listado OT con stats, detalle OT con acciones por estado, planes con generar OT), seed 2 planes, completar MantenimientoProgramado puede generar OT, sidebar Flota +2 items, dashboard OTs Activas KPI, Quick Actions +1 |
 | 3.2 | Talleres y Mecánicos | 2026-02-21 | 2 modelos (Taller, Mecanico), 1 enum (TipoTaller), tallerId/mecanicoId FK en OrdenTrabajo, 4 API routes (talleres CRUD + mecánicos CRUD), página /admin/talleres con tabla expandible y mecánicos, OT detalle muestra taller/mecánico vinculados con select FK, seed 2 talleres + 3 mecánicos |
 | 3.3 | Proveedores y Órdenes de Compra | 2026-02-22 | 3 modelos (Proveedor, OrdenCompra, ItemOrdenCompra), 2 enums (TipoProveedor, EstadoOrdenCompra), proveedorId FK en FacturaCompra, flujo OC 5 estados con validación transiciones, IVA 21% auto para RI nacionales, 7 API routes (proveedores CRUD + OC CRUD + estado + items + items/[itemId]), 3 páginas (proveedores listado, OC listado con Suspense, OC detalle con acciones por estado), recepción parcial/total, seed 2 proveedores, sidebar Supply Chain + Quick Actions |
+| 3.4 | Inventario de Repuestos | 2026-02-22 | 4 modelos (Repuesto, MovimientoStock, UbicacionDeposito, HistorialCostoRepuesto), 2 enums (CategoriaRepuesto 12 vals, TipoMovimientoStock 6 vals), registrarMovimiento() central, 10 API routes (repuestos CRUD + ajuste-stock + movimientos + sugerencia-compra + dashboard + ubicaciones CRUD), 4 páginas (inventario con stats/filtros, detalle con gauge+movimientos+historial, ubicaciones grilla visual, sugerencia compra con OC auto), integración OT egreso/devolución automática, integración OC ingreso+precio historial, seed 5 ubicaciones + 8 repuestos (4 stock bajo), sidebar +2 items, dashboard KPI Stock Bajo, Quick Action Stock Bajo |
 
 ## Decisiones Tomadas
 
@@ -54,7 +55,7 @@
 
 ## Próxima Acción
 
-Ir al chat CTO y pedir: **"Dame el prompt del punto 3.4"**
+Ir al chat CTO y pedir: **"Dame el prompt del punto 3.5"**
 
 ## Problemas Conocidos
 
@@ -66,15 +67,15 @@ Ir al chat CTO y pedir: **"Dame el prompt del punto 3.4"**
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 20 / 35 (+ REFACTOR-A + REFACTOR-B) |
+| Puntos completados | 21 / 35 (+ REFACTOR-A + REFACTOR-B) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
 | **Fase F2** | ✅ COMPLETA (4 puntos: 2.1-2.4) |
-| Fase actual | F3 — Operaciones (3.1-3.3 completados) |
-| Modelos Prisma | 47 (+3 proveedores/OC) |
-| Enums | 28 (+2 TipoProveedor, EstadoOrdenCompra) |
-| API routes | 101 (+7 proveedores/OC) |
-| Páginas | 40 (+3 proveedores, OC listado, OC detalle) |
+| Fase actual | F3 — Operaciones (3.1-3.4 completados) |
+| Modelos Prisma | 51 (+4 inventario) |
+| Enums | 30 (+2 CategoriaRepuesto, TipoMovimientoStock) |
+| API routes | 111 (+10 repuestos/ubicaciones) |
+| Páginas | 44 (+4 inventario, detalle, ubicaciones, sugerencia) |
 | Event handlers contables | 18 (10 completos + 8 stubs) |
 | Cuentas contables seeded | 65 (4 niveles FACPCE) |
 | Tests | 0 |
