@@ -13,7 +13,7 @@ interface KPIData {
   clientes: { total: number; pendientes: number };
   contratos: { activos: number; nuevosEsteMes: number };
   solicitudes: { pendientes: number; enEspera: number };
-  mantenimientos: { hoy: number; semana: number };
+  mantenimientos: { hoy: number; semana: number; otActivas?: number };
   pagos: { cobradoEsteMes: number; pendientes: number };
   facturacion: { facturadoEsteMes: number; facturasEmitidas: number };
   gastos?: { pendientes: number };
@@ -116,6 +116,16 @@ export function KPICards({ data }: KPICardsProps) {
             : "Sin mantenimientos próximos",
       icon: Wrench,
       color: "text-yellow-500",
+    },
+    {
+      title: "OTs Activas",
+      numericValue: data.mantenimientos.otActivas ?? 0,
+      emptyLabel: "0",
+      subtitle: data.mantenimientos.otActivas
+        ? `${data.mantenimientos.otActivas} órdenes en curso`
+        : "Sin OTs activas",
+      icon: Wrench,
+      color: "text-cyan-500",
     },
     {
       title: "Facturado este Mes",

@@ -6,8 +6,8 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Fase Actual** | F3 — SIGUIENTE FASE |
-| **Punto Actual** | 3.1 — siguiente punto |
+| **Fase Actual** | F3 — Operaciones |
+| **Punto Actual** | 3.2 — siguiente punto |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-21 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -32,6 +32,7 @@
 | 2.2 | Handlers de Contabilidad Automática | 2026-02-21 | 16 event handlers contables (8 completos + 8 stubs), asientos automáticos en partida doble, eventBus.emit() conectado en webhook MP + facturación + rechazo solicitud, API diagnóstico /api/admin/contabilidad/verificar, prioridad P50 |
 | 2.3 | Gastos + Presupuestos + NC + FC | 2026-02-21 | 4 modelos (Gasto, PresupuestoMensual, NotaCredito, FacturaCompra), 6 enums, 10 API routes, 4 páginas admin, 2 handlers contables nuevos (NC completo + purchaseInvoice create/pay), gastos-utils helper, 4 validaciones Zod, KPIs dashboard |
 | 2.4 | Reportes Financieros | 2026-02-21 | 5 APIs cálculo tiempo real (resumen, estado-resultados, flujo-caja, indicadores, rentabilidad), 5 páginas con Recharts (dashboard financiero, EERR formato contable, flujo diario, indicadores 3 secciones, rentabilidad por moto con gráfico barras), sidebar grupo Finanzas 5 items, Quick Actions +2 — **FASE 2 COMPLETA** |
+| 3.1 | Mantenimientos (OT) | 2026-02-21 | 8 modelos (OrdenTrabajo, TareaOT, RepuestoOT, FotoInspeccion, HistorialOT, PlanMantenimiento, TareaPlan, RepuestoTareaPlan), 6 enums (EstadoOT, TipoOT, PrioridadOT, TipoService, CategoriaTarea, ResultadoTarea), flujo 8 estados con validación transiciones, 11 API routes (OT CRUD + estado + tareas + repuestos + fotos + planes CRUD + generar-ot + estadísticas), 3 páginas (listado OT con stats, detalle OT con acciones por estado, planes con generar OT), seed 2 planes, completar MantenimientoProgramado puede generar OT, sidebar Flota +2 items, dashboard OTs Activas KPI, Quick Actions +1 |
 
 ## Decisiones Tomadas
 
@@ -51,7 +52,7 @@
 
 ## Próxima Acción
 
-Ir al chat CTO y pedir: **"Dame el prompt del punto 3.1"** (inicio Fase 3)
+Ir al chat CTO y pedir: **"Dame el prompt del punto 3.2"**
 
 ## Problemas Conocidos
 
@@ -63,14 +64,15 @@ Ir al chat CTO y pedir: **"Dame el prompt del punto 3.1"** (inicio Fase 3)
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 17 / 35 (+ REFACTOR-A + REFACTOR-B) |
+| Puntos completados | 18 / 35 (+ REFACTOR-A + REFACTOR-B) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
 | **Fase F2** | ✅ COMPLETA (4 puntos: 2.1-2.4) |
-| Fase actual | F3 — siguiente fase |
-| Modelos Prisma | 34 |
-| API routes | 83 (+ 5 finanzas) |
-| Páginas | 34 (+ 5 finanzas: dashboard, EERR, flujo-caja, indicadores, rentabilidad) |
+| Fase actual | F3 — Operaciones (3.1 completado) |
+| Modelos Prisma | 42 (+8 OT) |
+| Enums | 26 (+6 OT) |
+| API routes | 94 (+11 mantenimientos) |
+| Páginas | 37 (+3 OT: listado, detalle, planes) |
 | Event handlers contables | 18 (10 completos + 8 stubs) |
 | Cuentas contables seeded | 65 (4 niveles FACPCE) |
 | Tests | 0 |

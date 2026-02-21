@@ -12,6 +12,7 @@ export function QuickActions() {
     { title: "Ver Pagos", href: "/admin/pagos", icon: DollarSign, color: "text-emerald-500" },
     { title: "Facturas Pendientes", href: "/admin/facturas?estado=GENERADA", icon: Receipt, color: "text-[#23e0ff]" },
     { title: "Mantenimientos Hoy", href: "/admin/mantenimientos?estado=PROGRAMADO", icon: Wrench, color: "text-orange-500" },
+    { title: "OTs Pendientes", href: "/admin/mantenimientos/ordenes?estado=SOLICITADA", icon: ClipboardList, color: "text-cyan-500" },
     { title: "Gastos por Aprobar", href: "/admin/gastos?estado=PENDIENTE", icon: PiggyBank, color: "text-purple-500" },
     { title: "Facturas por Pagar", href: "/admin/facturas-compra?estado=PENDIENTE", icon: FileInput, color: "text-red-500" },
     { title: "Estado Resultados", href: "/admin/finanzas/estado-resultados", icon: TrendingUp, color: "text-indigo-500" },

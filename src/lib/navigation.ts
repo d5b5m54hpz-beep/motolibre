@@ -32,7 +32,9 @@ export const navigation: NavGroup[] = [
     title: "Flota",
     items: [
       { title: "Motos", href: "/admin/motos", icon: Bike },
-      { title: "Mantenimientos", href: "/admin/mantenimientos", icon: Wrench },
+      { title: "Mantenimientos", href: "/admin/mantenimientos", icon: Calendar },
+      { title: "Órdenes de Trabajo", href: "/admin/mantenimientos/ordenes", icon: Wrench },
+      { title: "Planes Service", href: "/admin/mantenimientos/planes", icon: ClipboardList },
       { title: "Talleres", href: "/admin/talleres", icon: Building2 },
     ],
   },

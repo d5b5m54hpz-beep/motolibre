@@ -1336,3 +1336,247 @@ model FacturaCompra {
   @@index([tipo])
   @@map("facturas_compra")
 }
+
+// ═══════════════════════════════════════════════════════════════
+// MANTENIMIENTOS — ÓRDENES DE TRABAJO
+// ═══════════════════════════════════════════════════════════════
+
+enum EstadoOT {
+  SOLICITADA
+  APROBADA
+  PROGRAMADA
+  EN_ESPERA_REPUESTOS
+  EN_EJECUCION
+  EN_REVISION
+  COMPLETADA
+  CANCELADA
+}
+
+enum TipoOT {
+  PREVENTIVO
+  CORRECTIVO
+  EMERGENCIA
+}
+
+enum PrioridadOT {
+  BAJA
+  MEDIA
+  ALTA
+  URGENTE
+}
+
+enum TipoService {
+  SERVICE_5000KM
+  SERVICE_10000KM
+  SERVICE_15000KM
+  SERVICE_20000KM
+  SERVICE_GENERAL
+  REPARACION
+  INSPECCION
+  OTRO
+}
+
+enum CategoriaTarea {
+  MOTOR
+  FRENOS
+  SUSPENSION
+  ELECTRICA
+  CARROCERIA
+  NEUMATICOS
+  TRANSMISION
+  LUBRICACION
+  INSPECCION
+  OTRO
+}
+
+enum ResultadoTarea {
+  PENDIENTE
+  OK
+  REQUIERE_ATENCION
+  REEMPLAZADO
+  NO_APLICA
+}
+
+model OrdenTrabajo {
+  id                  String        @id @default(cuid())
+
+  // ── Identificación ──
+  numero              String        @unique  // "OT-2026-00001"
+  tipo                TipoOT
+  prioridad           PrioridadOT   @default(MEDIA)
+  tipoService         TipoService?
+  estado              EstadoOT      @default(SOLICITADA)
+
+  // ── Moto ──
+  motoId              String
+  kmIngreso           Int?
+  kmEgreso            Int?
+
+  // ── Cliente/Contrato ──
+  contratoId          String?
+  clienteId           String?
+
+  // ── Programación ──
+  fechaSolicitud      DateTime      @default(now())
+  fechaAprobacion     DateTime?
+  fechaProgramada     DateTime?
+  fechaInicioReal     DateTime?
+  fechaFinReal        DateTime?
+  fechaCheckIn        DateTime?
+  fechaCheckOut       DateTime?
+
+  // ── Taller/Mecánico ──
+  tallerNombre        String?
+  mecanicoNombre      String?
+
+  // ── Descripción ──
+  descripcion         String
+  diagnostico         String?
+  observaciones       String?
+  motivoCancelacion   String?
+
+  // ── Costos ──
+  costoManoObra       Decimal?      @db.Decimal(12, 2) @default(0)
+  costoRepuestos      Decimal?      @db.Decimal(12, 2) @default(0)
+  costoTotal          Decimal?      @db.Decimal(12, 2) @default(0)
+
+  // ── Origen ──
+  mantenimientoProgramadoId String?
+  solicitadoPor       String?
+
+  // ── Contabilidad ──
+  asientoId           String?
+
+  // ── Relaciones ──
+  tareas              TareaOrdenTrabajo[]
+  repuestos           RepuestoOrdenTrabajo[]
+  fotos               FotoInspeccion[]
+  historial           HistorialOT[]
+
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([estado])
+  @@index([motoId])
+  @@index([tipo])
+  @@index([fechaProgramada])
+  @@index([mantenimientoProgramadoId])
+  @@map("ordenes_trabajo")
+}
+
+model TareaOrdenTrabajo {
+  id                String          @id @default(cuid())
+  ordenTrabajoId    String
+  ordenTrabajo      OrdenTrabajo    @relation(fields: [ordenTrabajoId], references: [id], onDelete: Cascade)
+
+  categoria         CategoriaTarea
+  descripcion       String
+  resultado         ResultadoTarea  @default(PENDIENTE)
+  observaciones     String?
+  orden             Int             @default(0)
+
+  createdAt         DateTime        @default(now())
+
+  @@index([ordenTrabajoId])
+  @@map("tareas_orden_trabajo")
+}
+
+model RepuestoOrdenTrabajo {
+  id                String          @id @default(cuid())
+  ordenTrabajoId    String
+  ordenTrabajo      OrdenTrabajo    @relation(fields: [ordenTrabajoId], references: [id], onDelete: Cascade)
+
+  nombre            String
+  cantidad          Int
+  precioUnitario    Decimal         @db.Decimal(12, 2)
+  subtotal          Decimal         @db.Decimal(12, 2)
+  repuestoId        String?
+
+  createdAt         DateTime        @default(now())
+
+  @@index([ordenTrabajoId])
+  @@map("repuestos_orden_trabajo")
+}
+
+model FotoInspeccion {
+  id                String          @id @default(cuid())
+  ordenTrabajoId    String
+  ordenTrabajo      OrdenTrabajo    @relation(fields: [ordenTrabajoId], references: [id], onDelete: Cascade)
+
+  url               String
+  tipo              String          // "CHECK_IN", "CHECK_OUT", "DURANTE", "REPUESTO"
+  descripcion       String?
+
+  createdAt         DateTime        @default(now())
+
+  @@index([ordenTrabajoId])
+  @@map("fotos_inspeccion")
+}
+
+model HistorialOT {
+  id                String          @id @default(cuid())
+  ordenTrabajoId    String
+  ordenTrabajo      OrdenTrabajo    @relation(fields: [ordenTrabajoId], references: [id], onDelete: Cascade)
+
+  estadoAnterior    EstadoOT
+  estadoNuevo       EstadoOT
+  descripcion       String?
+  userId            String?
+
+  createdAt         DateTime        @default(now())
+
+  @@index([ordenTrabajoId])
+  @@map("historial_ot")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PLANES DE MANTENIMIENTO (TEMPLATES)
+// ═══════════════════════════════════════════════════════════════
+
+model PlanMantenimiento {
+  id                String          @id @default(cuid())
+  nombre            String
+  tipoService       TipoService
+  descripcion       String?
+  kmIntervalo       Int?
+  diasIntervalo     Int?
+  activo            Boolean         @default(true)
+
+  tareas            TareaPlan[]
+  repuestos         RepuestoTareaPlan[]
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@map("planes_mantenimiento")
+}
+
+model TareaPlan {
+  id                String          @id @default(cuid())
+  planId            String
+  plan              PlanMantenimiento @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  categoria         CategoriaTarea
+  descripcion       String
+  orden             Int             @default(0)
+
+  createdAt         DateTime        @default(now())
+
+  @@index([planId])
+  @@map("tareas_plan")
+}
+
+model RepuestoTareaPlan {
+  id                String          @id @default(cuid())
+  planId            String
+  plan              PlanMantenimiento @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  nombre            String
+  cantidad          Int
+  repuestoId        String?
+
+  createdAt         DateTime        @default(now())
+
+  @@index([planId])
+  @@map("repuestos_tarea_plan")
+}

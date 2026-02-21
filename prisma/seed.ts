@@ -641,6 +641,76 @@ async function main() {
   });
   console.log("  ✅ Período contable actual");
 
+  // ══════════════════════════════════════════════════════════════
+  // PLANES DE MANTENIMIENTO
+  // ══════════════════════════════════════════════════════════════
+  console.log("📋 Creando planes de mantenimiento...");
+
+  await prisma.planMantenimiento.upsert({
+    where: { id: "plan-service-5000km" },
+    update: {},
+    create: {
+      id: "plan-service-5000km",
+      nombre: "Service 5000km Estándar",
+      tipoService: "SERVICE_5000KM",
+      descripcion: "Service preventivo cada 5000km para motos 125cc",
+      kmIntervalo: 5000,
+      tareas: {
+        create: [
+          { categoria: "LUBRICACION", descripcion: "Cambio de aceite motor", orden: 1 },
+          { categoria: "MOTOR", descripcion: "Cambio filtro de aceite", orden: 2 },
+          { categoria: "FRENOS", descripcion: "Revisión pastillas de freno", orden: 3 },
+          { categoria: "TRANSMISION", descripcion: "Revisión y lubricación cadena", orden: 4 },
+          { categoria: "NEUMATICOS", descripcion: "Control presión neumáticos", orden: 5 },
+          { categoria: "ELECTRICA", descripcion: "Revisión luces y batería", orden: 6 },
+          { categoria: "INSPECCION", descripcion: "Inspección visual general", orden: 7 },
+        ],
+      },
+      repuestos: {
+        create: [
+          { nombre: "Aceite motor 10W-40 1L", cantidad: 1 },
+          { nombre: "Filtro de aceite", cantidad: 1 },
+        ],
+      },
+    },
+  });
+
+  await prisma.planMantenimiento.upsert({
+    where: { id: "plan-service-10000km" },
+    update: {},
+    create: {
+      id: "plan-service-10000km",
+      nombre: "Service 10000km Completo",
+      tipoService: "SERVICE_10000KM",
+      descripcion: "Service completo cada 10000km — incluye filtro de aire y bujía",
+      kmIntervalo: 10000,
+      tareas: {
+        create: [
+          { categoria: "LUBRICACION", descripcion: "Cambio de aceite motor", orden: 1 },
+          { categoria: "MOTOR", descripcion: "Cambio filtro de aceite", orden: 2 },
+          { categoria: "MOTOR", descripcion: "Cambio filtro de aire", orden: 3 },
+          { categoria: "MOTOR", descripcion: "Cambio bujía", orden: 4 },
+          { categoria: "FRENOS", descripcion: "Revisión y ajuste frenos", orden: 5 },
+          { categoria: "TRANSMISION", descripcion: "Revisión cadena y piñón", orden: 6 },
+          { categoria: "SUSPENSION", descripcion: "Revisión suspensión delantera y trasera", orden: 7 },
+          { categoria: "NEUMATICOS", descripcion: "Control desgaste y presión neumáticos", orden: 8 },
+          { categoria: "ELECTRICA", descripcion: "Revisión completa sistema eléctrico", orden: 9 },
+          { categoria: "INSPECCION", descripcion: "Inspección visual general", orden: 10 },
+        ],
+      },
+      repuestos: {
+        create: [
+          { nombre: "Aceite motor 10W-40 1L", cantidad: 1 },
+          { nombre: "Filtro de aceite", cantidad: 1 },
+          { nombre: "Filtro de aire", cantidad: 1 },
+          { nombre: "Bujía NGK", cantidad: 1 },
+        ],
+      },
+    },
+  });
+
+  console.log("  ✅ Planes de mantenimiento (2)");
+
   console.log("✅ Seed completado");
 }
 
