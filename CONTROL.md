@@ -7,7 +7,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Fase Actual** | F1 — GESTIÓN DE FLOTA |
-| **Punto Actual** | 1.5 — siguiente punto |
+| **Punto Actual** | 1.6 — siguiente punto |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-21 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -27,6 +27,7 @@
 | REFACTOR-A | Pricing + Solicitudes | 2026-02-21 | Flujo real corregido: cliente paga → evaluación → espera → asignación. TarifaAlquiler + Solicitud (10 estados), 9 API routes, /admin/solicitudes + /admin/pricing, UI corrections |
 | REFACTOR-B | Auto-asignación + Entrega + Mantenimientos + Lease-to-Own | 2026-02-21 | Cierre del flujo: asignación automática al liberar moto, Registrar Entrega crea contrato+cuotas+mantenimientos, MantenimientoProgramado, lease-to-own plan 24m |
 | 1.4 | Pagos MercadoPago | 2026-02-21 | SDK MP (Checkout Pro + PreApproval + PaymentRefund), webhook, suscripción recurrente, refund, /admin/pagos, PagoMercadoPago + SuscripcionMP modelos |
+| 1.5 | Facturación | 2026-02-21 | Factura A/B (condición IVA), CAE stub, PDF con pdfkit, email con Resend, auto-generación en webhook, 4 API routes, /admin/facturas + detalle, KPIs dashboard |
 
 ## Decisiones Tomadas
 
@@ -45,7 +46,7 @@
 
 ## Próxima Acción
 
-Ir al chat CTO y pedir: **"Dame el prompt del punto 1.5"**
+Ir al chat CTO y pedir: **"Dame el prompt del punto 1.6"**
 
 ## Problemas Conocidos
 
@@ -57,13 +58,13 @@ Ir al chat CTO y pedir: **"Dame el prompt del punto 1.5"**
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 12 / 35 (+ REFACTOR-A + REFACTOR-B) |
+| Puntos completados | 13 / 35 (+ REFACTOR-A + REFACTOR-B) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
-| Fase actual | F1 — Gestión de Flota (4/? puntos + 2 refactors) |
-| Modelos Prisma | 25 (+ PagoMercadoPago + SuscripcionMP) |
-| Enums Prisma | + EstadoPagoMP + TipoPagoMP |
-| API routes | 56 (+ webhook, crear-con-pago, cuotas/generar-link-pago, procesar-cola, procesar-lease-to-own, mantenimientos GET, completar, no-asistio, entregar) |
-| Páginas | 18 (+ /admin/pagos) |
+| Fase actual | F1 — Gestión de Flota (5/? puntos + 2 refactors) |
+| Modelos Prisma | 26 (+ Factura) |
+| Enums Prisma | + TipoFactura + EstadoFactura |
+| API routes | 60 (+ /api/facturas GET, /api/facturas/[id] GET, /api/facturas/[id]/pdf GET, /api/facturas/[id]/enviar POST) |
+| Páginas | 20 (+ /admin/facturas, /admin/facturas/[id]) |
 | Tests | 0 |
 | PermissionProfiles seeded | 8 |
 | Componentes UI | DataTable, DataTableColumnHeader, PageHeader, AppSidebar, AppHeader, StatusBadge, KPICards, EventsChart, UsersByRole, RecentActivity, QuickActions, SolicitudesTable, PricingModelCard, MantenimientosTable |
