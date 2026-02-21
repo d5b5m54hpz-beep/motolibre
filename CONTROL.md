@@ -25,6 +25,7 @@
 | 1.2 | Gestión de Clientes | 2026-02-20 | CRUD + flujo aprobación, scoring automático, 5 API routes, listado + detalle con tabs, KPI dashboard |
 | 1.3 | Contratos de Alquiler | 2026-02-20 | Modelo Contrato + Cuota, flujo BORRADOR→ACTIVO→FIN, preview, 9 API routes, listado + detalle con cuotas |
 | REFACTOR-A | Pricing + Solicitudes | 2026-02-21 | Flujo real corregido: cliente paga → evaluación → espera → asignación. TarifaAlquiler + Solicitud (10 estados), 9 API routes, /admin/solicitudes + /admin/pricing, UI corrections |
+| REFACTOR-B | Auto-asignación + Entrega + Mantenimientos + Lease-to-Own | 2026-02-21 | Cierre del flujo: asignación automática al liberar moto, Registrar Entrega crea contrato+cuotas+mantenimientos, MantenimientoProgramado, lease-to-own plan 24m |
 
 ## Decisiones Tomadas
 
@@ -38,6 +39,7 @@
 | D006 | 2026-02-20 | Tailwind 4 (latest) — colores custom en @theme inline en globals.css |
 | D007 | 2026-02-20 | Deploy: Railway (GitHub auto-deploy). URL: motolibre-production.up.railway.app |
 | D008 | 2026-02-21 | Flujo negocio: cliente se autoregistra + paga primer mes → operador evalúa → lista espera → sistema asigna moto. Admin NO crea clientes ni contratos directamente. |
+| D009 | 2026-02-21 | Contrato se crea automáticamente al registrar entrega (NO existe "Crear Contrato" ni "Activar Contrato" manual) |
 
 ## Próxima Acción
 
@@ -53,14 +55,32 @@ Ir al chat CTO y pedir: **"Dame el prompt del punto 1.4"**
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 9 / 35 (+ REFACTOR-A) |
+| Puntos completados | 11 / 35 (+ REFACTOR-A + REFACTOR-B) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
-| Fase actual | F1 — Gestión de Flota (3/? puntos + REFACTOR-A) |
-| Modelos Prisma | 22 (+ Contrato, Cuota, TarifaAlquiler, Solicitud) |
-| Enums Prisma | + EstadoContrato, FrecuenciaPago, EstadoCuota, CondicionMoto, PlanDuracion, EstadoSolicitud |
-| API routes | 38 (+ 9 contratos + 9 REFACTOR-A: pricing/tarifas CRUD+bulk, solicitudes CRUD+aprobar+rechazar, public/tarifas, public/modelos) |
-| Páginas | 16 (+ /admin/contratos, /admin/contratos/[id], /admin/solicitudes, /admin/solicitudes/[id], /admin/pricing) |
+| Fase actual | F1 — Gestión de Flota (3/? puntos + 2 refactors) |
+| Modelos Prisma | 23 (+ MantenimientoProgramado) |
+| Enums Prisma | + EstadoMantenimiento |
+| API routes | 49 (+ 7 REFACTOR-B: entregar, procesar-cola, procesar-lease-to-own, mantenimientos GET, completar, no-asistio) |
+| Páginas | 17 (+ /admin/mantenimientos) |
 | Tests | 0 |
 | PermissionProfiles seeded | 8 |
-| Componentes UI | DataTable, DataTableColumnHeader, PageHeader, AppSidebar, AppHeader, StatusBadge, KPICards, EventsChart, UsersByRole, RecentActivity, QuickActions, SolicitudesTable, PricingModelCard |
+| Componentes UI | DataTable, DataTableColumnHeader, PageHeader, AppSidebar, AppHeader, StatusBadge, KPICards, EventsChart, UsersByRole, RecentActivity, QuickActions, SolicitudesTable, PricingModelCard, MantenimientosTable |
 | Deploy | Railway — motolibre-production.up.railway.app |
+
+## Flujo de Negocio Implementado
+
+```
+Cliente se autoregistra → sube docs → paga primer mes (MP, en 1.4)
+  ↓
+Solicitud PAGADA → Operador evalúa → aprueba → EN_ESPERA con prioridad
+  ↓
+Moto se libera → sistema detecta cola → ASIGNADA automáticamente (moto RESERVADA)
+  ↓
+Operador coordina entrega → Registrar Entrega →
+  - Contrato ACTIVO creado con cuotas semanales
+  - Moto → ALQUILADA
+  - Mantenimientos programados cada 30 días
+  - Solicitud → ENTREGADA
+  ↓
+Plan 24 meses → todas cuotas pagadas → procesarLeaseToOwn → Moto TRANSFERIDA
+```
