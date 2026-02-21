@@ -4,6 +4,7 @@ import { OPERATIONS, withEvent } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
 import { contratoCancelSchema } from "@/lib/validations/contrato";
 import { verificarColaAlLiberar } from "@/lib/asignacion-utils";
+import { cancelarSuscripcion } from "@/lib/mp-service";
 
 export async function POST(
   req: NextRequest,
@@ -79,6 +80,20 @@ export async function POST(
     userId,
     { motivo: parsed.data.motivoCancelacion }
   );
+
+  // Cancelar suscripción MP si existe
+  const suscripcion = await prisma.suscripcionMP.findUnique({ where: { contratoId: id } });
+  if (suscripcion) {
+    try {
+      await cancelarSuscripcion(suscripcion.mpPreapprovalId);
+      await prisma.suscripcionMP.update({
+        where: { contratoId: id },
+        data: { mpStatus: "cancelled" },
+      });
+    } catch (error) {
+      console.error("[Cancelar] Error cancelando suscripción MP:", error);
+    }
+  }
 
   // Auto-asignar si hay solicitudes en espera para este modelo
   verificarColaAlLiberar(contrato.motoId, userId ?? undefined).catch(console.error);

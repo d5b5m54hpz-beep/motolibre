@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/permissions";
 import { OPERATIONS, withEvent } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
 import { solicitudRejectSchema } from "@/lib/validations/solicitud";
+import { refundPago } from "@/lib/mp-service";
 
 export async function POST(
   req: NextRequest,
@@ -61,6 +62,20 @@ export async function POST(
     userId,
     { motivo: parsed.data.motivoRechazo }
   );
+
+  // Refund si ya pagó
+  if (solicitud.mpPaymentId) {
+    try {
+      await refundPago(solicitud.mpPaymentId);
+      await prisma.solicitud.update({
+        where: { id },
+        data: { estado: "REEMBOLSADA" },
+      });
+      console.log(`[Rechazo] Refund realizado para pago ${solicitud.mpPaymentId}`);
+    } catch (error) {
+      console.error("[Rechazo] Error en refund:", error);
+    }
+  }
 
   return NextResponse.json({ data: updated });
 }

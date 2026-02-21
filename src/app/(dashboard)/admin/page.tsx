@@ -35,6 +35,8 @@ async function getDashboardData() {
     solicitudesEnEspera,
     mantenimientosHoy,
     mantenimientosSemana,
+    totalRecaudadoMP,
+    pagosHoy,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
@@ -72,6 +74,13 @@ async function getDashboardData() {
     }),
     prisma.mantenimientoProgramado.count({
       where: { fechaProgramada: { gte: hoy, lt: semana }, estado: "PROGRAMADO" },
+    }),
+    prisma.pagoMercadoPago.aggregate({
+      where: { estado: "APROBADO" },
+      _sum: { monto: true },
+    }),
+    prisma.pagoMercadoPago.count({
+      where: { estado: "APROBADO", fechaPago: { gte: hoy } },
     }),
   ]);
 
@@ -111,7 +120,10 @@ async function getDashboardData() {
       contratos: { activos: contratosActivos, nuevosEsteMes: contratosNuevosEsteMes },
       solicitudes: { pendientes: solicitudesPendientes, enEspera: solicitudesEnEspera },
       mantenimientos: { hoy: mantenimientosHoy, semana: mantenimientosSemana },
-      pagos: { cobradoEsteMes: 0, pendientes: 0 },
+      pagos: {
+        cobradoEsteMes: Number(totalRecaudadoMP._sum.monto ?? 0),
+        pendientes: pagosHoy,
+      },
       facturacion: { facturadoEsteMes: 0 },
     },
     recentEvents: recentEvents.map((e) => ({

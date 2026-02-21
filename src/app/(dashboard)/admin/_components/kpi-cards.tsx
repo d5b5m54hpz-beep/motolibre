@@ -47,8 +47,8 @@ export function KPICards({ data }: KPICardsProps) {
       value: data.pagos.cobradoEsteMes > 0 ? formatMoney(data.pagos.cobradoEsteMes) : "—",
       subtitle:
         data.pagos.pendientes > 0
-          ? `${data.pagos.pendientes} pagos pendientes`
-          : "Se activa en Fase 1",
+          ? `${data.pagos.pendientes} confirmados hoy`
+          : "Sin pagos confirmados hoy",
       icon: DollarSign,
       color: "text-emerald-500",
     },

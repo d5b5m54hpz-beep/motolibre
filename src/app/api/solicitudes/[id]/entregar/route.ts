@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { generarFechasCuotas } from "@/lib/contrato-utils";
 import { generarFechasMantenimiento } from "@/lib/mantenimiento-utils";
 import { planToMeses } from "@/lib/pricing-utils";
+import { crearSuscripcionRecurrente } from "@/lib/mp-service";
 
 export async function POST(
   req: NextRequest,
@@ -129,6 +130,37 @@ export async function POST(
       mantenimientosGenerados: fechasMantenimiento.length,
     };
   });
+
+  // Crear suscripción recurrente en MP (no bloqueante si falla)
+  try {
+    const mpSub = await crearSuscripcionRecurrente({
+      contratoId: result.contrato.id,
+      clienteEmail: solicitud.cliente.email,
+      motoModelo: `${solicitud.marcaDeseada} ${solicitud.modeloDeseado}`,
+      monto: montoPeriodoSemanal,
+      frecuencia: frecuenciaInicial,
+      duracionMeses,
+      fechaInicio: fechaEntrega,
+    });
+
+    await prisma.suscripcionMP.create({
+      data: {
+        contratoId: result.contrato.id,
+        clienteEmail: solicitud.cliente.email,
+        mpPreapprovalId: mpSub.preapprovalId,
+        mpStatus: mpSub.status,
+        frecuencia: frecuenciaInicial,
+        monto: montoPeriodoSemanal,
+        fechaInicio: fechaEntrega,
+        fechaFin,
+        initPoint: mpSub.initPoint,
+      },
+    });
+
+    console.log(`[Entrega] Suscripción MP creada: ${mpSub.preapprovalId}`);
+  } catch (error) {
+    console.error("[Entrega] Error creando suscripción MP:", error);
+  }
 
   return NextResponse.json({ data: result });
 }

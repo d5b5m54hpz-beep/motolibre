@@ -3,13 +3,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ClipboardList, Clock, CreditCard, Wrench } from "lucide-react";
+import { ClipboardList, Clock, Wrench, DollarSign } from "lucide-react";
 
 export function QuickActions() {
   const actions = [
     { title: "Solicitudes Pendientes", href: "/admin/solicitudes?estado=PAGADA", icon: ClipboardList, color: "text-yellow-500" },
     { title: "Lista de Espera", href: "/admin/solicitudes?estado=EN_ESPERA", icon: Clock, color: "text-blue-500" },
-    { title: "Registrar Pago", href: "/admin/pagos?new=true", icon: CreditCard, color: "text-emerald-500" },
+    { title: "Ver Pagos", href: "/admin/pagos", icon: DollarSign, color: "text-emerald-500" },
     { title: "Mantenimientos Hoy", href: "/admin/mantenimientos?estado=PROGRAMADO", icon: Wrench, color: "text-orange-500" },
   ];
 
