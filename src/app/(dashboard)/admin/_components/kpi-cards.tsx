@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bike, Users, FileText, ClipboardList, Activity, DollarSign, Wrench } from "lucide-react";
+import { Bike, Users, FileText, ClipboardList, Activity, DollarSign, Wrench, Receipt } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 
 interface KPIData {
@@ -13,7 +13,7 @@ interface KPIData {
   solicitudes: { pendientes: number; enEspera: number };
   mantenimientos: { hoy: number; semana: number };
   pagos: { cobradoEsteMes: number; pendientes: number };
-  facturacion: { facturadoEsteMes: number };
+  facturacion: { facturadoEsteMes: number; facturasEmitidas: number };
 }
 
 interface KPICardsProps {
@@ -94,6 +94,15 @@ export function KPICards({ data }: KPICardsProps) {
             : "Sin mantenimientos próximos",
       icon: Wrench,
       color: "text-yellow-500",
+    },
+    {
+      title: "Facturado este Mes",
+      value: data.facturacion.facturadoEsteMes > 0
+        ? formatMoney(data.facturacion.facturadoEsteMes)
+        : "—",
+      subtitle: `${data.facturacion.facturasEmitidas} facturas emitidas`,
+      icon: Receipt,
+      color: "text-pink-500",
     },
   ];
 

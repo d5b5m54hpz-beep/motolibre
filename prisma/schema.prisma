@@ -934,3 +934,81 @@ model SuscripcionMP {
   @@index([mpPreapprovalId])
   @@map("suscripciones_mp")
 }
+
+// ═══════════════════════════════════════════════════════════════
+// FACTURAS
+// ═══════════════════════════════════════════════════════════════
+
+enum TipoFactura {
+  A    // RI → RI (discrimina IVA)
+  B    // RI → CF/Mono/Exento (IVA incluido)
+  C    // Monotributista → cualquiera
+}
+
+enum EstadoFactura {
+  GENERADA      // PDF generado, pendiente de envío
+  ENVIADA       // Email enviado al cliente
+  ANULADA       // Nota de crédito emitida
+}
+
+model Factura {
+  id              String         @id @default(cuid())
+
+  // ── Numeración ──
+  tipo            TipoFactura
+  puntoVenta      String         // "0001"
+  numero          Int            // secuencial por tipo+puntoVenta
+  numeroCompleto  String         @unique  // "A-0001-00000001"
+
+  // ── Emisor ──
+  emisorRazonSocial   String
+  emisorCuit          String
+  emisorCondicionIva  String
+  emisorDomicilio     String
+
+  // ── Receptor ──
+  receptorNombre      String
+  receptorCuit        String?
+  receptorCondicionIva String
+  receptorDomicilio   String?
+
+  // ── Montos ──
+  montoNeto       Decimal        @db.Decimal(12, 2)
+  montoIva        Decimal        @db.Decimal(12, 2)
+  montoTotal      Decimal        @db.Decimal(12, 2)
+
+  // ── CAE ──
+  cae             String?
+  caeVencimiento  DateTime?
+
+  // ── Concepto ──
+  concepto        String
+  periodoDesde    DateTime?
+  periodoHasta    DateTime?
+
+  // ── Relaciones ──
+  clienteId       String
+  contratoId      String?
+  pagoMPId        String?
+  cuotaId         String?
+
+  // ── Estado ──
+  estado          EstadoFactura  @default(GENERADA)
+  fechaEmision    DateTime       @default(now())
+  emailEnviado    Boolean        @default(false)
+  emailEnviadoAt  DateTime?
+
+  // ── PDF ──
+  pdfUrl          String?
+
+  // ── Metadata ──
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@unique([tipo, puntoVenta, numero])
+  @@index([clienteId])
+  @@index([contratoId])
+  @@index([estado])
+  @@index([fechaEmision])
+  @@map("facturas")
+}

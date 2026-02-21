@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { mpPreApproval } from "@/lib/mercadopago";
 import { consultarPago } from "@/lib/mp-service";
 import { OPERATIONS } from "@/lib/events";
+import { generarFacturaAutomatica } from "@/lib/facturacion-service";
 import type { EstadoPagoMP, TipoPagoMP } from "@prisma/client";
 
 // Tipo local para el response de pago de MP (los campos que usamos)
@@ -166,6 +167,28 @@ async function procesarPagoSolicitudAprobado(solicitudId: string, mpPaymentId: s
   });
 
   console.log(`[MP Webhook] Solicitud ${solicitudId} → PAGADA`);
+
+  // Generar factura automática para el primer mes
+  try {
+    const pago = await prisma.pagoMercadoPago.findUnique({ where: { mpPaymentId } });
+    if (pago) {
+      const solicitudData = await prisma.solicitud.findUnique({
+        where: { id: solicitudId },
+        include: { cliente: true },
+      });
+      if (solicitudData) {
+        await generarFacturaAutomatica({
+          pagoMPId: pago.id,
+          solicitudId,
+          clienteId: solicitudData.clienteId,
+          monto: Number(solicitudData.montoPrimerMes),
+          concepto: `Alquiler ${solicitudData.marcaDeseada} ${solicitudData.modeloDeseado} — Primer mes adelantado (Plan ${solicitudData.plan.replace("MESES_", "")} meses)`,
+        });
+      }
+    }
+  } catch (factError) {
+    console.error("[Webhook] Error generando factura primer mes:", factError);
+  }
 }
 
 /**
@@ -186,6 +209,28 @@ async function procesarPagoCuotaAprobado(cuotaId: string, monto: number) {
   });
 
   console.log(`[MP Webhook] Cuota ${cuotaId} → PAGADA ($${monto})`);
+
+  // Generar factura automática para la cuota individual
+  try {
+    const pago = await prisma.pagoMercadoPago.findFirst({ where: { cuotaId } });
+    const cuotaData = await prisma.cuota.findUnique({
+      where: { id: cuotaId },
+      include: { contrato: { include: { moto: true } } },
+    });
+    if (pago && cuotaData) {
+      await generarFacturaAutomatica({
+        pagoMPId: pago.id,
+        contratoId: cuotaData.contratoId,
+        cuotaId,
+        clienteId: cuotaData.contrato.clienteId,
+        monto,
+        concepto: `Alquiler ${cuotaData.contrato.moto.marca} ${cuotaData.contrato.moto.modelo} — Cuota ${cuotaData.numero}`,
+        periodoDesde: cuotaData.fechaVencimiento,
+      });
+    }
+  } catch (factError) {
+    console.error("[Webhook] Error generando factura cuota:", factError);
+  }
 }
 
 /**
@@ -228,6 +273,30 @@ async function procesarPagoRecurrenteAprobado(
   console.log(
     `[MP Webhook] Cuota ${cuota.numero} del contrato ${contratoId} → PAGADA (recurrente)`
   );
+
+  // Generar factura automática para el pago recurrente
+  try {
+    const pagoReg = await prisma.pagoMercadoPago.findFirst({ where: { mpPaymentId } });
+    if (pagoReg) {
+      const contratoData = await prisma.contrato.findUnique({
+        where: { id: contratoId },
+        include: { moto: true },
+      });
+      if (contratoData) {
+        await generarFacturaAutomatica({
+          pagoMPId: pagoReg.id,
+          contratoId,
+          cuotaId: cuota.id,
+          clienteId: contratoData.clienteId,
+          monto,
+          concepto: `Alquiler ${contratoData.moto.marca} ${contratoData.moto.modelo} — Cuota ${cuota.numero}`,
+          periodoDesde: cuota.fechaVencimiento,
+        });
+      }
+    }
+  } catch (factError) {
+    console.error("[Webhook] Error generando factura recurrente:", factError);
+  }
 
   const contrato = await prisma.contrato.findUnique({
     where: { id: contratoId },

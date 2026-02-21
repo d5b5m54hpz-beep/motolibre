@@ -37,6 +37,8 @@ async function getDashboardData() {
     mantenimientosSemana,
     totalRecaudadoMP,
     pagosHoy,
+    facturasEmitidas,
+    totalFacturado,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
@@ -82,6 +84,13 @@ async function getDashboardData() {
     prisma.pagoMercadoPago.count({
       where: { estado: "APROBADO", fechaPago: { gte: hoy } },
     }),
+    prisma.factura.count({
+      where: { fechaEmision: { gte: startOfMonth } },
+    }),
+    prisma.factura.aggregate({
+      where: { fechaEmision: { gte: startOfMonth }, estado: { not: "ANULADA" } },
+      _sum: { montoTotal: true },
+    }),
   ]);
 
   // Eventos por día — fallback seguro si raw query falla
@@ -124,7 +133,10 @@ async function getDashboardData() {
         cobradoEsteMes: Number(totalRecaudadoMP._sum.monto ?? 0),
         pendientes: pagosHoy,
       },
-      facturacion: { facturadoEsteMes: 0 },
+      facturacion: {
+        facturadoEsteMes: Number(totalFacturado._sum.montoTotal ?? 0),
+        facturasEmitidas,
+      },
     },
     recentEvents: recentEvents.map((e) => ({
       ...e,
