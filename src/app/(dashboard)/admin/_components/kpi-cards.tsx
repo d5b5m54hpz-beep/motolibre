@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bike, Users, FileText, ClipboardList, Activity, DollarSign, Wrench, Receipt, PiggyBank, FileInput, AlertTriangle } from "lucide-react";
+import { Bike, Users, FileText, ClipboardList, Activity, DollarSign, Wrench, Receipt, PiggyBank, FileInput, AlertTriangle, Ship } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import type { LucideIcon } from "lucide-react";
@@ -19,6 +19,7 @@ interface KPIData {
   gastos?: { pendientes: number };
   facturasCompra?: { pendientesPago: number };
   inventario?: { stockBajo: number };
+  embarques?: { activos: number };
 }
 
 interface KPICard {
@@ -166,6 +167,16 @@ export function KPICards({ data }: KPICardsProps) {
         : "Stock OK — sin alertas",
       icon: AlertTriangle,
       color: (data.inventario?.stockBajo ?? 0) > 0 ? "text-red-500" : "text-emerald-500",
+    },
+    {
+      title: "Embarques Activos",
+      numericValue: data.embarques?.activos ?? 0,
+      emptyLabel: "0",
+      subtitle: data.embarques?.activos
+        ? `${data.embarques.activos} embarques en curso`
+        : "Sin embarques activos",
+      icon: Ship,
+      color: "text-blue-500",
     },
   ];
 

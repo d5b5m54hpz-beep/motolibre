@@ -6,8 +6,8 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Fase Actual** | F3 — Operaciones |
-| **Punto Actual** | 3.5 — siguiente punto |
+| **Fase Actual** | F3 — Operaciones ✅ COMPLETA |
+| **Punto Actual** | 4.1 — siguiente punto (inicio Fase 4) |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-22 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -36,6 +36,7 @@
 | 3.2 | Talleres y Mecánicos | 2026-02-21 | 2 modelos (Taller, Mecanico), 1 enum (TipoTaller), tallerId/mecanicoId FK en OrdenTrabajo, 4 API routes (talleres CRUD + mecánicos CRUD), página /admin/talleres con tabla expandible y mecánicos, OT detalle muestra taller/mecánico vinculados con select FK, seed 2 talleres + 3 mecánicos |
 | 3.3 | Proveedores y Órdenes de Compra | 2026-02-22 | 3 modelos (Proveedor, OrdenCompra, ItemOrdenCompra), 2 enums (TipoProveedor, EstadoOrdenCompra), proveedorId FK en FacturaCompra, flujo OC 5 estados con validación transiciones, IVA 21% auto para RI nacionales, 7 API routes (proveedores CRUD + OC CRUD + estado + items + items/[itemId]), 3 páginas (proveedores listado, OC listado con Suspense, OC detalle con acciones por estado), recepción parcial/total, seed 2 proveedores, sidebar Supply Chain + Quick Actions |
 | 3.4 | Inventario de Repuestos | 2026-02-22 | 4 modelos (Repuesto, MovimientoStock, UbicacionDeposito, HistorialCostoRepuesto), 2 enums (CategoriaRepuesto 12 vals, TipoMovimientoStock 6 vals), registrarMovimiento() central, 10 API routes (repuestos CRUD + ajuste-stock + movimientos + sugerencia-compra + dashboard + ubicaciones CRUD), 4 páginas (inventario con stats/filtros, detalle con gauge+movimientos+historial, ubicaciones grilla visual, sugerencia compra con OC auto), integración OT egreso/devolución automática, integración OC ingreso+precio historial, seed 5 ubicaciones + 8 repuestos (4 stock bajo), sidebar +2 items, dashboard KPI Stock Bajo, Quick Action Stock Bajo |
+| 3.5 | Importaciones | 2026-02-22 | 5 modelos (EmbarqueImportacion, ItemEmbarque, DespachoAduanero, AsignacionCostoImportacion, PortalProveedorToken), 1 enum (EstadoEmbarque 10 vals), flujo 10 estados con validación transiciones, FOB→CIF→nacionalizado con distribución proporcional, 10 API routes (embarques CRUD + estado + items + despacho + confirmar-costos + recepción + generar-link-proveedor + supplier portal), 3 handlers contables completados (Merc.Tránsito/Prov.Exterior, despacho IVA CF, recepción inventario), 2 cuentas nuevas (Merc.Tránsito 1.1.05.001, Prov.Exterior 2.1.01.002, Inventario 1.1.06.001), portal proveedor público bilingüe /supplier/[token], 2 páginas admin (listado con stats, detalle con progress bar + despacho + costos + recepción), seed cuentas contables, dashboard KPI Embarques Activos, Quick Action Embarques en Tránsito — **FASE 3 COMPLETA** |
 
 ## Decisiones Tomadas
 
@@ -55,7 +56,7 @@
 
 ## Próxima Acción
 
-Ir al chat CTO y pedir: **"Dame el prompt del punto 3.5"**
+Ir al chat CTO y pedir: **"Dame el prompt del punto 4.1"** (inicio Fase 4 — Clientes)
 
 ## Problemas Conocidos
 
@@ -67,17 +68,18 @@ Ir al chat CTO y pedir: **"Dame el prompt del punto 3.5"**
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 21 / 35 (+ REFACTOR-A + REFACTOR-B) |
+| Puntos completados | 22 / 35 (+ REFACTOR-A + REFACTOR-B) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
 | **Fase F2** | ✅ COMPLETA (4 puntos: 2.1-2.4) |
-| Fase actual | F3 — Operaciones (3.1-3.4 completados) |
-| Modelos Prisma | 51 (+4 inventario) |
-| Enums | 30 (+2 CategoriaRepuesto, TipoMovimientoStock) |
-| API routes | 111 (+10 repuestos/ubicaciones) |
-| Páginas | 44 (+4 inventario, detalle, ubicaciones, sugerencia) |
-| Event handlers contables | 18 (10 completos + 8 stubs) |
-| Cuentas contables seeded | 65 (4 niveles FACPCE) |
+| **Fase F3** | ✅ COMPLETA (5 puntos: 3.1-3.5) |
+| Fase actual | F4 — Clientes (siguiente) |
+| Modelos Prisma | 56 (+5 importaciones) |
+| Enums | 31 (+1 EstadoEmbarque) |
+| API routes | 121 (+10 embarques/supplier) |
+| Páginas | 47 (+2 admin importaciones + 1 supplier portal) |
+| Event handlers contables | 18 (13 completos + 5 stubs) |
+| Cuentas contables seeded | 71 (+6 Merc.Tránsito, Inventario, Prov.Exterior) |
 | Tests | 0 |
 | PermissionProfiles seeded | 8 |
 | Deploy | Railway — motolibre-production.up.railway.app |

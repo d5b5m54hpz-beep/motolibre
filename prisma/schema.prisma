@@ -1895,3 +1895,160 @@ model HistorialCostoRepuesto {
   @@index([repuestoId])
   @@map("historial_costo_repuesto")
 }
+
+// ═══════════════════════════════════════════════════════════════
+// IMPORTACIONES
+// ═══════════════════════════════════════════════════════════════
+
+enum EstadoEmbarque {
+  BORRADOR
+  EN_TRANSITO
+  EN_PUERTO
+  EN_ADUANA
+  DESPACHADO_PARCIAL
+  DESPACHADO
+  COSTOS_FINALIZADOS
+  EN_RECEPCION
+  ALMACENADO
+  CANCELADO
+}
+
+model EmbarqueImportacion {
+  id                    String          @id @default(cuid())
+  numero                String          @unique
+  estado                EstadoEmbarque  @default(BORRADOR)
+
+  proveedorId           String
+  proveedorNombre       String
+
+  puertoOrigen          String?
+  puertoDestino         String          @default("Buenos Aires")
+  naviera               String?
+  numeroContenedor      String?
+  numeroBL              String?
+  tipoTransporte        String          @default("MARITIMO")
+
+  fechaEmbarque         DateTime?
+  fechaEstimadaArribo   DateTime?
+  fechaArriboPuerto     DateTime?
+  fechaIngresoAduana    DateTime?
+  fechaDespacho         DateTime?
+  fechaRecepcion        DateTime?
+
+  monedaFOB             String          @default("USD")
+  totalFOB              Decimal         @db.Decimal(14, 2) @default(0)
+  tipoCambio            Decimal?        @db.Decimal(10, 4)
+
+  costoFlete            Decimal?        @db.Decimal(14, 2) @default(0)
+  costoSeguro           Decimal?        @db.Decimal(14, 2) @default(0)
+  totalCIF              Decimal?        @db.Decimal(14, 2) @default(0)
+
+  derechosImportacion   Decimal?        @db.Decimal(14, 2) @default(0)
+  tasaEstadistica       Decimal?        @db.Decimal(14, 2) @default(0)
+  ivaImportacion        Decimal?        @db.Decimal(14, 2) @default(0)
+  ivaAdicional          Decimal?        @db.Decimal(14, 2) @default(0)
+  ingresosBrutos        Decimal?        @db.Decimal(14, 2) @default(0)
+  gastosDespacho        Decimal?        @db.Decimal(14, 2) @default(0)
+
+  totalNacionalizado    Decimal?        @db.Decimal(14, 2) @default(0)
+
+  observaciones         String?
+  creadoPor             String?
+
+  items                 ItemEmbarque[]
+  despachos             DespachoAduanero[]
+  costosAsignados       AsignacionCostoImportacion[]
+
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@index([estado])
+  @@index([proveedorId])
+  @@index([fechaEmbarque])
+  @@map("embarques_importacion")
+}
+
+model ItemEmbarque {
+  id                      String                @id @default(cuid())
+  embarqueId              String
+  embarque                EmbarqueImportacion   @relation(fields: [embarqueId], references: [id], onDelete: Cascade)
+
+  descripcion             String
+  codigoProveedor         String?
+  repuestoId              String?
+  esMoto                  Boolean               @default(false)
+
+  cantidad                Int
+  cantidadRecibida        Int                   @default(0)
+
+  precioFOBUnitario       Decimal               @db.Decimal(12, 2)
+  subtotalFOB             Decimal               @db.Decimal(14, 2)
+
+  costoNacionalizadoUnit  Decimal?              @db.Decimal(12, 2)
+  costoNacionalizadoTotal Decimal?              @db.Decimal(14, 2)
+
+  posicionArancelaria     String?
+  alicuotaDerechos        Decimal?              @db.Decimal(5, 2)
+
+  createdAt               DateTime              @default(now())
+
+  @@index([embarqueId])
+  @@map("items_embarque")
+}
+
+model DespachoAduanero {
+  id                  String                @id @default(cuid())
+  embarqueId          String
+  embarque            EmbarqueImportacion   @relation(fields: [embarqueId], references: [id], onDelete: Cascade)
+
+  numeroDespacho      String?
+  fechaDespacho       DateTime
+  despachante         String?
+
+  baseImponible       Decimal               @db.Decimal(14, 2)
+  derechosImportacion Decimal               @db.Decimal(14, 2)
+  tasaEstadistica     Decimal               @db.Decimal(14, 2)
+  ivaImportacion      Decimal               @db.Decimal(14, 2)
+  ivaAdicional        Decimal               @db.Decimal(14, 2)
+  ingresosBrutos      Decimal               @db.Decimal(14, 2) @default(0)
+  gastosVarios        Decimal               @db.Decimal(14, 2) @default(0)
+  totalDespacho       Decimal               @db.Decimal(14, 2)
+
+  observaciones       String?
+
+  createdAt           DateTime              @default(now())
+
+  @@index([embarqueId])
+  @@map("despachos_aduaneros")
+}
+
+model AsignacionCostoImportacion {
+  id                  String                @id @default(cuid())
+  embarqueId          String
+  embarque            EmbarqueImportacion   @relation(fields: [embarqueId], references: [id], onDelete: Cascade)
+
+  itemEmbarqueId      String
+  porcentajeFOB       Decimal               @db.Decimal(8, 4)
+  costoAsignado       Decimal               @db.Decimal(14, 2)
+
+  createdAt           DateTime              @default(now())
+
+  @@index([embarqueId])
+  @@index([itemEmbarqueId])
+  @@map("asignaciones_costo_importacion")
+}
+
+model PortalProveedorToken {
+  id                  String                @id @default(cuid())
+  token               String                @unique @default(cuid())
+  embarqueId          String
+  proveedorId         String
+  activo              Boolean               @default(true)
+  expiraAt            DateTime
+
+  createdAt           DateTime              @default(now())
+
+  @@index([token])
+  @@index([embarqueId])
+  @@map("portal_proveedor_tokens")
+}

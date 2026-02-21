@@ -568,11 +568,18 @@ async function main() {
     { codigo: "1.1.03.001", nombre: "IVA Crédito Fiscal", tipo: "ACTIVO", nivel: 4, padreCode: "1.1.03", aceptaMovimientos: true },
     // Otros Créditos
     { codigo: "1.1.04.001", nombre: "Depósitos Dados en Garantía", tipo: "ACTIVO", nivel: 4, padreCode: "1.1.04", aceptaMovimientos: true },
+    // Mercadería en Tránsito
+    { codigo: "1.1.05", nombre: "Mercadería en Tránsito", tipo: "ACTIVO", nivel: 3, padreCode: "1.1", aceptaMovimientos: false },
+    { codigo: "1.1.05.001", nombre: "Mercadería en Tránsito — Importación", tipo: "ACTIVO", nivel: 4, padreCode: "1.1.05", aceptaMovimientos: true },
+    // Inventario
+    { codigo: "1.1.06", nombre: "Inventario", tipo: "ACTIVO", nivel: 3, padreCode: "1.1", aceptaMovimientos: false },
+    { codigo: "1.1.06.001", nombre: "Inventario de Repuestos", tipo: "ACTIVO", nivel: 4, padreCode: "1.1.06", aceptaMovimientos: true },
     // Bienes de Uso
     { codigo: "1.2.01.001", nombre: "Rodados — Motos", tipo: "ACTIVO", nivel: 4, padreCode: "1.2.01", aceptaMovimientos: true },
     { codigo: "1.2.01.002", nombre: "(-) Amortización Acumulada Motos", tipo: "ACTIVO", nivel: 4, padreCode: "1.2.01", aceptaMovimientos: true, descripcion: "Cuenta regularizadora — saldo acreedor" },
     // Pasivo
     { codigo: "2.1.01.001", nombre: "Proveedores", tipo: "PASIVO", nivel: 4, padreCode: "2.1.01", aceptaMovimientos: true },
+    { codigo: "2.1.01.002", nombre: "Proveedores del Exterior", tipo: "PASIVO", nivel: 4, padreCode: "2.1.01", aceptaMovimientos: true },
     { codigo: "2.1.02.001", nombre: "IVA Débito Fiscal", tipo: "PASIVO", nivel: 4, padreCode: "2.1.02", aceptaMovimientos: true },
     { codigo: "2.1.03.001", nombre: "Depósitos de Clientes", tipo: "PASIVO", nivel: 4, padreCode: "2.1.03", aceptaMovimientos: true, descripcion: "Primer mes cobrado por adelantado" },
     { codigo: "2.1.04.001", nombre: "Ingresos Diferidos por Alquiler", tipo: "PASIVO", nivel: 4, padreCode: "2.1.04", aceptaMovimientos: true },

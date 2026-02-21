@@ -164,12 +164,15 @@ export const CUENTAS = {
   BANCO_BIND: "1.1.01.003",       // BIND
   CUENTAS_COBRAR: "1.1.02.001",   // Deudores por alquiler
   IVA_CF: "1.1.03.001",           // IVA Crédito Fiscal
+  DEPOSITOS_GARANTIA_ACTIVO: "1.1.04.001", // Depósitos dados en garantía
+  MERC_EN_TRANSITO: "1.1.05.001", // Mercadería en Tránsito — Importación
+  INVENTARIO_REPUESTOS: "1.1.06.001", // Inventario de Repuestos
   MOTOS: "1.2.01.001",            // Bienes de Uso — Motos
   AMORT_ACUM_MOTOS: "1.2.01.002", // (-) Amortización Acumulada Motos
-  DEPOSITOS_GARANTIA_ACTIVO: "1.1.04.001", // Depósitos dados en garantía
 
   // ── PASIVO ──
   PROVEEDORES: "2.1.01.001",      // Proveedores
+  PROVEEDORES_EXTERIOR: "2.1.01.002", // Proveedores del Exterior
   IVA_DF: "2.1.02.001",           // IVA Débito Fiscal
   DEPOSITOS_RECIBIDOS: "2.1.03.001", // Depósitos de clientes (primer mes)
   INGRESOS_DIFERIDOS: "2.1.04.001",  // Ingresos cobrados por adelantado

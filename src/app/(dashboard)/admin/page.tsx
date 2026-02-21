@@ -43,6 +43,7 @@ async function getDashboardData() {
     fcPendientesPago,
     otActivas,
     repuestosStockBajo,
+    embarquesActivos,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
@@ -101,6 +102,9 @@ async function getDashboardData() {
     prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
       `SELECT COUNT(*) as count FROM repuestos WHERE stock <= "stockMinimo" AND activo = true`
     ).then((r) => Number(r[0]?.count ?? 0)).catch(() => 0),
+    prisma.embarqueImportacion.count({
+      where: { estado: { notIn: ["ALMACENADO", "CANCELADO"] } },
+    }),
   ]);
 
   // Eventos por día — fallback seguro si raw query falla
@@ -150,6 +154,7 @@ async function getDashboardData() {
       gastos: { pendientes: gastosPendientes },
       facturasCompra: { pendientesPago: fcPendientesPago },
       inventario: { stockBajo: repuestosStockBajo as number },
+      embarques: { activos: embarquesActivos },
     },
     recentEvents: recentEvents.map((e) => ({
       ...e,

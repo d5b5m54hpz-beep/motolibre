@@ -331,27 +331,131 @@ export async function handleInventoryReception(event: BusinessEventData) {
 }
 
 // 11. Confirmación costos importación
+// DEBE: Mercadería en Tránsito  |  HABER: Proveedores Exterior
+// Monto: totalFOB × tipoCambio
 export async function handleImportConfirmCosts(event: BusinessEventData) {
   try {
-    console.log(`[Contabilidad] Stub: import.confirm_costs — ${event.entityId}`);
+    const meta = event.payload as Record<string, unknown> | undefined;
+    const totalFOB = Number(meta?.totalFOB || 0);
+    const tipoCambio = Number(meta?.tipoCambio || 0);
+    if (totalFOB <= 0 || tipoCambio <= 0) return;
+
+    const monto = Math.round(totalFOB * tipoCambio * 100) / 100;
+
+    const ctaMercTransito = await getCuentaPorCodigo(CUENTAS.MERC_EN_TRANSITO);
+    const ctaProvExterior = await getCuentaPorCodigo(CUENTAS.PROVEEDORES_EXTERIOR);
+
+    await crearAsiento({
+      fecha: new Date(),
+      tipo: "COMPRA",
+      descripcion: `Confirmación costos importación — Embarque ${event.entityId}`,
+      lineas: [
+        { cuentaId: ctaMercTransito.id, debe: monto, haber: 0, descripcion: "Mercadería en tránsito (FOB × TC)" },
+        { cuentaId: ctaProvExterior.id, debe: 0, haber: monto, descripcion: "Deuda proveedor exterior" },
+      ],
+      origenTipo: "EmbarqueImportacion",
+      origenId: event.entityId,
+      userId: "system",
+    });
+
+    console.log(`[Contabilidad] Asiento IMPORT CONFIRM COSTS creado — $${monto}`);
   } catch (error) {
     console.error("[Contabilidad] Error handler import.confirm_costs:", error);
   }
 }
 
 // 12. Despacho aduanero
+// DEBE: Mercadería en Tránsito (costos de despacho sin IVA)
+// DEBE: IVA Crédito Fiscal (IVA importación + IVA adicional)
+// HABER: Caja/Banco (total pagado en despacho)
 export async function handleImportDispatch(event: BusinessEventData) {
   try {
-    console.log(`[Contabilidad] Stub: import.dispatch — ${event.entityId}`);
+    const meta = event.payload as Record<string, unknown> | undefined;
+    const derechosImp = Number(meta?.derechosImportacion || 0);
+    const tasaEst = Number(meta?.tasaEstadistica || 0);
+    const ivaImp = Number(meta?.ivaImportacion || 0);
+    const ivaAdicional = Number(meta?.ivaAdicional || 0);
+    const iibb = Number(meta?.ingresosBrutos || 0);
+    const gastosVarios = Number(meta?.gastosVarios || 0);
+
+    const totalDespacho = derechosImp + tasaEst + ivaImp + ivaAdicional + iibb + gastosVarios;
+    if (totalDespacho <= 0) return;
+
+    const costosSinIva = derechosImp + tasaEst + iibb + gastosVarios;
+    const totalIva = ivaImp + ivaAdicional;
+
+    const ctaMercTransito = await getCuentaPorCodigo(CUENTAS.MERC_EN_TRANSITO);
+    const ctaIvaCF = await getCuentaPorCodigo(CUENTAS.IVA_CF);
+    const ctaCaja = await getCuentaPorCodigo(CUENTAS.CAJA);
+
+    const lineas: Array<{ cuentaId: string; debe: number; haber: number; descripcion?: string }> = [];
+
+    if (costosSinIva > 0) {
+      lineas.push({
+        cuentaId: ctaMercTransito.id,
+        debe: costosSinIva,
+        haber: 0,
+        descripcion: "Costos despacho (derechos + tasa + IIBB + gastos)",
+      });
+    }
+    if (totalIva > 0) {
+      lineas.push({
+        cuentaId: ctaIvaCF.id,
+        debe: totalIva,
+        haber: 0,
+        descripcion: "IVA importación + IVA adicional (CF)",
+      });
+    }
+    lineas.push({
+      cuentaId: ctaCaja.id,
+      debe: 0,
+      haber: totalDespacho,
+      descripcion: "Pago despacho aduanero",
+    });
+
+    await crearAsiento({
+      fecha: new Date(),
+      tipo: "COMPRA",
+      descripcion: `Despacho aduanero — Embarque ${event.entityId}`,
+      lineas,
+      origenTipo: "EmbarqueImportacion",
+      origenId: event.entityId,
+      userId: "system",
+    });
+
+    console.log(`[Contabilidad] Asiento IMPORT DISPATCH creado — $${totalDespacho}`);
   } catch (error) {
     console.error("[Contabilidad] Error handler import.dispatch:", error);
   }
 }
 
 // 13. Recepción de importación
+// DEBE: Inventario Repuestos (o Bienes de Uso si es moto)
+// HABER: Mercadería en Tránsito
+// Monto: costoNacionalizado de los items recibidos
 export async function handleImportReception(event: BusinessEventData) {
   try {
-    console.log(`[Contabilidad] Stub: import.reception — ${event.entityId}`);
+    const meta = event.payload as Record<string, unknown> | undefined;
+    const costoTotalRecibido = Number(meta?.costoTotalRecibido || 0);
+    if (costoTotalRecibido <= 0) return;
+
+    const ctaInventario = await getCuentaPorCodigo(CUENTAS.INVENTARIO_REPUESTOS);
+    const ctaMercTransito = await getCuentaPorCodigo(CUENTAS.MERC_EN_TRANSITO);
+
+    await crearAsiento({
+      fecha: new Date(),
+      tipo: "COMPRA",
+      descripcion: `Recepción importación — Embarque ${event.entityId}`,
+      lineas: [
+        { cuentaId: ctaInventario.id, debe: costoTotalRecibido, haber: 0, descripcion: "Ingreso a inventario" },
+        { cuentaId: ctaMercTransito.id, debe: 0, haber: costoTotalRecibido, descripcion: "Baja merc. en tránsito" },
+      ],
+      origenTipo: "EmbarqueImportacion",
+      origenId: event.entityId,
+      userId: "system",
+    });
+
+    console.log(`[Contabilidad] Asiento IMPORT RECEPTION creado — $${costoTotalRecibido}`);
   } catch (error) {
     console.error("[Contabilidad] Error handler import.reception:", error);
   }
