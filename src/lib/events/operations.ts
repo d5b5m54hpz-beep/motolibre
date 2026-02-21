@@ -15,6 +15,7 @@ export const OPERATIONS = {
       decommission: "fleet.moto.decommission",
       uploadDocument: "fleet.moto.uploadDocument",
       bulkUpdate: "fleet.moto.bulkUpdate",
+      depreciation: "fleet.moto.depreciation",
     },
     amortization: {
       calculate: "fleet.amortization.calculate",

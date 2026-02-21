@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { mpPreApproval } from "@/lib/mercadopago";
 import { consultarPago } from "@/lib/mp-service";
-import { OPERATIONS } from "@/lib/events";
+import { eventBus, OPERATIONS } from "@/lib/events";
+import { ensureInitialized } from "@/lib/init";
 import { generarFacturaAutomatica } from "@/lib/facturacion-service";
 import type { EstadoPagoMP, TipoPagoMP } from "@prisma/client";
 
@@ -28,6 +29,7 @@ interface MPPaymentData {
  * - subscription_authorized_payment: un pago de suscripción
  */
 export async function POST(req: NextRequest) {
+  ensureInitialized();
   try {
     const body = await req.json() as { type?: string; data?: { id?: string | number }; action?: string };
     const { type, data, action } = body;
@@ -84,7 +86,7 @@ async function procesarNotificacionPago(mpPaymentId: string) {
     ? payment.fee_details.reduce((sum, f) => sum + f.amount, 0)
     : undefined;
 
-  await prisma.pagoMercadoPago.upsert({
+  const pagoRegistro = await prisma.pagoMercadoPago.upsert({
     where: { mpPaymentId },
     update: {
       mpStatus: mpStatus ?? undefined,
@@ -136,6 +138,15 @@ async function procesarNotificacionPago(mpPaymentId: string) {
       const contratoId = externalRef.replace("contrato:", "");
       await procesarPagoRecurrenteAprobado(contratoId, payment.transaction_amount ?? 0, mpPaymentId);
     }
+
+    // Emitir evento para handlers contables (asiento automático)
+    await eventBus.emit(
+      OPERATIONS.commercial.payment.approve,
+      "PagoMercadoPago",
+      pagoRegistro.id,
+      { mpPaymentId, monto: payment.transaction_amount },
+      "system"
+    ).catch((err) => console.error("[MP Webhook] Error emitiendo evento contable:", err));
   }
 }
 

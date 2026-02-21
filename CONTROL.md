@@ -7,7 +7,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Fase Actual** | F2 — CONTABILIDAD |
-| **Punto Actual** | 2.2 — siguiente punto |
+| **Punto Actual** | 2.3 — siguiente punto |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-21 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -29,6 +29,7 @@
 | 1.4 | Pagos MercadoPago | 2026-02-21 | SDK MP (Checkout Pro + PreApproval + PaymentRefund), webhook, suscripción recurrente, refund, /admin/pagos, PagoMercadoPago + SuscripcionMP modelos |
 | 1.5 | Facturación | 2026-02-21 | Factura A/B (condición IVA), CAE stub, PDF con pdfkit, email con Resend, auto-generación en webhook, 4 API routes, /admin/facturas + detalle, KPIs dashboard |
 | 2.1 | Plan de Cuentas y Asientos Contables | 2026-02-21 | Plan FACPCE 65 cuentas (4 niveles), CuentaContable + AsientoContable + LineaAsiento + PeriodoContable, partida doble estricta, helper crearAsiento(), CUENTAS constante, 7 API routes, 5 páginas (árbol cuentas, asientos listado/detalle/nuevo, períodos), sidebar Contabilidad |
+| 2.2 | Handlers de Contabilidad Automática | 2026-02-21 | 16 event handlers contables (8 completos + 8 stubs), asientos automáticos en partida doble, eventBus.emit() conectado en webhook MP + facturación + rechazo solicitud, API diagnóstico /api/admin/contabilidad/verificar, prioridad P50 |
 
 ## Decisiones Tomadas
 
@@ -48,7 +49,7 @@
 
 ## Próxima Acción
 
-Ir al chat CTO y pedir: **"Dame el prompt del punto 2.2"**
+Ir al chat CTO y pedir: **"Dame el prompt del punto 2.3"**
 
 ## Problemas Conocidos
 
@@ -60,14 +61,15 @@ Ir al chat CTO y pedir: **"Dame el prompt del punto 2.2"**
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 14 / 35 (+ REFACTOR-A + REFACTOR-B) |
+| Puntos completados | 15 / 35 (+ REFACTOR-A + REFACTOR-B) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
-| Fase actual | F2 — Contabilidad (1/? puntos) |
+| Fase actual | F2 — Contabilidad (2/? puntos) |
 | Modelos Prisma | 30 (+ CuentaContable, AsientoContable, LineaAsiento, PeriodoContable) |
 | Enums Prisma | + TipoCuenta, TipoAsiento |
-| API routes | 67 (+ 7 contabilidad) |
+| API routes | 68 (+ 1 diagnóstico contabilidad) |
 | Páginas | 25 (+ /admin/cuentas-contables, /admin/asientos, /admin/asientos/nuevo, /admin/asientos/[id], /admin/periodos) |
+| Event handlers contables | 16 (8 completos + 8 stubs) |
 | Cuentas contables seeded | 65 (4 niveles FACPCE) |
 | Tests | 0 |
 | PermissionProfiles seeded | 8 |

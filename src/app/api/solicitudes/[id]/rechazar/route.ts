@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/lib/permissions";
-import { OPERATIONS, withEvent } from "@/lib/events";
+import { eventBus, OPERATIONS, withEvent } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
 import { solicitudRejectSchema } from "@/lib/validations/solicitud";
 import { refundPago } from "@/lib/mp-service";
@@ -72,6 +72,20 @@ export async function POST(
         data: { estado: "REEMBOLSADA" },
       });
       console.log(`[Rechazo] Refund realizado para pago ${solicitud.mpPaymentId}`);
+
+      // Emitir evento para asiento contable de refund
+      const pago = await prisma.pagoMercadoPago.findFirst({
+        where: { mpPaymentId: solicitud.mpPaymentId },
+      });
+      if (pago) {
+        await eventBus.emit(
+          OPERATIONS.commercial.payment.refund,
+          "PagoMercadoPago",
+          pago.id,
+          { mpPaymentId: solicitud.mpPaymentId, solicitudId: id },
+          userId
+        ).catch((err) => console.error("[Rechazo] Error emitiendo evento refund:", err));
+      }
     } catch (error) {
       console.error("[Rechazo] Error en refund:", error);
     }

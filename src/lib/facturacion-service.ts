@@ -9,6 +9,7 @@ import {
 } from "@/lib/facturacion-utils";
 import { generarPDFFactura } from "@/lib/factura-pdf";
 import { enviarFacturaEmail } from "@/lib/email";
+import { eventBus, OPERATIONS } from "@/lib/events";
 
 /**
  * Genera factura automáticamente para un pago aprobado.
@@ -75,6 +76,15 @@ export async function generarFacturaAutomatica(params: {
       cuotaId: params.cuotaId,
     },
   });
+
+  // Emitir evento para asiento contable de factura
+  await eventBus.emit(
+    OPERATIONS.invoicing.invoice.create,
+    "Factura",
+    factura.id,
+    { tipo: factura.tipo, montoTotal: Number(factura.montoTotal) },
+    "system"
+  ).catch((err) => console.error("[Facturación] Error emitiendo evento contable:", err));
 
   // Generar PDF y enviar email (no bloqueante — errores no abortan la factura)
   try {
