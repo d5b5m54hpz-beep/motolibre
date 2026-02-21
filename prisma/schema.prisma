@@ -1444,6 +1444,10 @@ model OrdenTrabajo {
   mantenimientoProgramadoId String?
   solicitadoPor       String?
 
+  // ── Taller/Mecánico FK ──
+  tallerId            String?
+  mecanicoId          String?
+
   // ── Contabilidad ──
   asientoId           String?
 
@@ -1579,4 +1583,55 @@ model RepuestoTareaPlan {
 
   @@index([planId])
   @@map("repuestos_tarea_plan")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TALLERES Y MECÁNICOS
+// ═══════════════════════════════════════════════════════════════
+
+enum TipoTaller {
+  INTERNO
+  EXTERNO
+}
+
+model Taller {
+  id              String      @id @default(cuid())
+  nombre          String
+  tipo            TipoTaller
+  direccion       String?
+  telefono        String?
+  email           String?
+  contacto        String?
+  especialidades  String[]
+  activo          Boolean     @default(true)
+  notas           String?
+
+  mecanicos       Mecanico[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([tipo])
+  @@index([activo])
+  @@map("talleres")
+}
+
+model Mecanico {
+  id              String      @id @default(cuid())
+  nombre          String
+  apellido        String
+  telefono        String?
+  email           String?
+  especialidad    String?
+  activo          Boolean     @default(true)
+
+  tallerId        String
+  taller          Taller      @relation(fields: [tallerId], references: [id])
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([tallerId])
+  @@index([activo])
+  @@map("mecanicos")
 }

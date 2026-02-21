@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,8 +32,6 @@ import {
   DollarSign,
   Timer,
 } from "lucide-react";
-import Link from "next/link";
-
 interface OT {
   id: string;
   numero: string;
@@ -89,6 +87,14 @@ const PRIORIDAD_COLORS: Record<string, string> = {
 };
 
 export default function OrdenesTrabajoPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-12 text-muted-foreground">Cargando...</div>}>
+      <OrdenesTrabajoContent />
+    </Suspense>
+  );
+}
+
+function OrdenesTrabajoContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [ordenes, setOrdenes] = useState<OT[]>([]);

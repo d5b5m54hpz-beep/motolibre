@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -90,6 +90,8 @@ interface OTDetalle {
   fechaCheckOut: string | null;
   tallerNombre: string | null;
   mecanicoNombre: string | null;
+  tallerId: string | null;
+  mecanicoId: string | null;
   descripcion: string;
   diagnostico: string | null;
   observaciones: string | null;
@@ -132,7 +134,6 @@ const RESULTADOS = ["PENDIENTE", "OK", "REQUIERE_ATENCION", "REEMPLAZADO", "NO_A
 
 export default function OTDetallePage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const [ot, setOT] = useState<OTDetalle | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -146,6 +147,10 @@ export default function OTDetallePage() {
   const [nuevoRepuesto, setNuevoRepuesto] = useState({ nombre: "", cantidad: 1, precioUnitario: 0 });
   const [actionForm, setActionForm] = useState<Record<string, string | number>>({});
 
+  // Talleres/Mecánicos for selects
+  const [talleres, setTalleres] = useState<Array<{ id: string; nombre: string; tipo: string; mecanicos: Array<{ id: string; nombre: string; apellido: string }> }>>([]);
+  const [mecanicosFiltrados, setMecanicosFiltrados] = useState<Array<{ id: string; nombre: string; apellido: string }>>([]);
+
   const fetchOT = useCallback(async () => {
     const res = await fetch(`/api/mantenimientos/ordenes/${id}`);
     if (res.ok) {
@@ -158,6 +163,15 @@ export default function OTDetallePage() {
   useEffect(() => {
     void fetchOT();
   }, [fetchOT]);
+
+  useEffect(() => {
+    void fetch("/api/talleres").then(async (r) => {
+      if (r.ok) {
+        const j = await r.json();
+        setTalleres(j.data);
+      }
+    });
+  }, []);
 
   async function cambiarEstado(nuevoEstado: string, extras?: Record<string, unknown>) {
     const res = await fetch(`/api/mantenimientos/ordenes/${id}/estado`, {
@@ -354,17 +368,37 @@ export default function OTDetallePage() {
                 </div>
                 <div>
                   <Label>Taller</Label>
-                  <Input
-                    placeholder="Nombre del taller"
-                    onChange={(e) => setActionForm({ ...actionForm, tallerNombre: e.target.value })}
-                  />
+                  <Select
+                    onValueChange={(v) => {
+                      setActionForm({ ...actionForm, tallerId: v });
+                      const t = talleres.find((x) => x.id === v);
+                      setMecanicosFiltrados(t?.mecanicos ?? []);
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Seleccionar taller" /></SelectTrigger>
+                    <SelectContent>
+                      {talleres.filter((t) => t.tipo !== undefined).map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Mecánico</Label>
-                  <Input
-                    placeholder="Nombre del mecánico"
-                    onChange={(e) => setActionForm({ ...actionForm, mecanicoNombre: e.target.value })}
-                  />
+                  <Select
+                    onValueChange={(v) => setActionForm({ ...actionForm, mecanicoId: v })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Seleccionar mecánico" /></SelectTrigger>
+                    <SelectContent>
+                      {mecanicosFiltrados.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.nombre} {m.apellido}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </>
             )}
@@ -450,11 +484,25 @@ export default function OTDetallePage() {
               </div>
               <div>
                 <p className="text-muted-foreground">Taller</p>
-                <p className="font-medium">{ot.tallerNombre ?? "-"}</p>
+                <p className="font-medium">
+                  {ot.tallerId ? (
+                    <Link href={`/admin/talleres`} className="text-blue-500 hover:underline">
+                      {ot.tallerNombre ?? "Ver taller"}
+                    </Link>
+                  ) : (
+                    ot.tallerNombre ?? "-"
+                  )}
+                </p>
               </div>
               <div>
                 <p className="text-muted-foreground">Mecánico</p>
-                <p className="font-medium">{ot.mecanicoNombre ?? "-"}</p>
+                <p className="font-medium">
+                  {ot.mecanicoId ? (
+                    <span className="text-blue-500">{ot.mecanicoNombre ?? "Asignado"}</span>
+                  ) : (
+                    ot.mecanicoNombre ?? "-"
+                  )}
+                </p>
               </div>
               <div>
                 <p className="text-muted-foreground">Km Ingreso</p>

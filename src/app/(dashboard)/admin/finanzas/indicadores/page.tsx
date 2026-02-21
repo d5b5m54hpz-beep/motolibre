@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatMoney } from "@/lib/format";
 import {
-  Gauge, TrendingUp, CreditCard, BarChart3,
+  TrendingUp, CreditCard, BarChart3,
 } from "lucide-react";
 
 interface Indicadores {

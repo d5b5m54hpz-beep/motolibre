@@ -52,6 +52,13 @@ interface FlujoCaja {
 const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#8b5cf6"];
 const EGRESO_COLORS = ["#ef4444", "#f97316", "#eab308", "#6366f1", "#ec4899"];
 
+function VariationBadge({ value }: { value: number }) {
+  if (value === 0) return <span className="text-xs text-muted-foreground flex items-center"><Minus className="h-3 w-3 mr-1" /> 0%</span>;
+  return value > 0
+    ? <span className="text-xs text-emerald-500 flex items-center"><ArrowUpRight className="h-3 w-3 mr-1" /> +{value.toFixed(1)}%</span>
+    : <span className="text-xs text-red-500 flex items-center"><ArrowDownRight className="h-3 w-3 mr-1" /> {value.toFixed(1)}%</span>;
+}
+
 export default function FinanzasDashboardPage() {
   const [resumen, setResumen] = useState<Resumen | null>(null);
   const [indicadores, setIndicadores] = useState<Indicadores | null>(null);
@@ -108,13 +115,6 @@ export default function FinanzasDashboardPage() {
     ...d,
     fecha: d.fecha.slice(8, 10),
   })) ?? [];
-
-  function VariationBadge({ value }: { value: number }) {
-    if (value === 0) return <span className="text-xs text-muted-foreground flex items-center"><Minus className="h-3 w-3 mr-1" /> 0%</span>;
-    return value > 0
-      ? <span className="text-xs text-emerald-500 flex items-center"><ArrowUpRight className="h-3 w-3 mr-1" /> +{value.toFixed(1)}%</span>
-      : <span className="text-xs text-red-500 flex items-center"><ArrowDownRight className="h-3 w-3 mr-1" /> {value.toFixed(1)}%</span>;
-  }
 
   return (
     <div className="space-y-6">

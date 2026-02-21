@@ -711,6 +711,50 @@ async function main() {
 
   console.log("  ✅ Planes de mantenimiento (2)");
 
+  // ══════════════════════════════════════════════════════════════
+  // TALLERES Y MECÁNICOS
+  // ══════════════════════════════════════════════════════════════
+  console.log("🔧 Creando talleres y mecánicos...");
+
+  await prisma.taller.upsert({
+    where: { id: "taller-interno-central" },
+    update: {},
+    create: {
+      id: "taller-interno-central",
+      nombre: "Taller MotoLibre Central",
+      tipo: "INTERNO",
+      direccion: "Tucumán 141, CABA",
+      especialidades: ["motor", "frenos", "electricidad", "general"],
+      mecanicos: {
+        create: [
+          { nombre: "Carlos", apellido: "Gómez", especialidad: "Motor" },
+          { nombre: "Diego", apellido: "Martínez", especialidad: "General" },
+        ],
+      },
+    },
+  });
+
+  await prisma.taller.upsert({
+    where: { id: "taller-externo-ruiz" },
+    update: {},
+    create: {
+      id: "taller-externo-ruiz",
+      nombre: "Taller Ruiz Motos",
+      tipo: "EXTERNO",
+      direccion: "Av. Juan B. Justo 3456, CABA",
+      contacto: "Roberto Ruiz",
+      telefono: "11-5555-1234",
+      especialidades: ["suspensión", "carrocería"],
+      mecanicos: {
+        create: [
+          { nombre: "Roberto", apellido: "Ruiz", especialidad: "Suspensión" },
+        ],
+      },
+    },
+  });
+
+  console.log("  ✅ Talleres (2) + Mecánicos (3)");
+
   console.log("✅ Seed completado");
 }
 

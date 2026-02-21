@@ -12,15 +12,6 @@ const FRECUENCIA_LABEL: Record<string, string> = {
   MENSUAL: "Mensual",
 };
 
-const ESTADO_MANT_LABEL: Record<string, string> = {
-  PROGRAMADO: "Programado",
-  NOTIFICADO: "Notificado",
-  COMPLETADO: "Completado",
-  NO_ASISTIO: "No asistió",
-  CANCELADO: "Cancelado",
-  REPROGRAMADO: "Reprogramado",
-};
-
 export default async function ContratoDetailPage({
   params,
 }: {

@@ -65,8 +65,22 @@ export async function POST(
       break;
     case "PROGRAMADA":
       if (body.fechaProgramada) updateData.fechaProgramada = new Date(body.fechaProgramada);
-      if (body.tallerNombre) updateData.tallerNombre = body.tallerNombre;
-      if (body.mecanicoNombre) updateData.mecanicoNombre = body.mecanicoNombre;
+      if (body.tallerId) {
+        updateData.tallerId = body.tallerId;
+        // Auto-fill tallerNombre from FK
+        const taller = await prisma.taller.findUnique({ where: { id: body.tallerId }, select: { nombre: true } });
+        if (taller) updateData.tallerNombre = taller.nombre;
+      } else if (body.tallerNombre) {
+        updateData.tallerNombre = body.tallerNombre;
+      }
+      if (body.mecanicoId) {
+        updateData.mecanicoId = body.mecanicoId;
+        // Auto-fill mecanicoNombre from FK
+        const mec = await prisma.mecanico.findUnique({ where: { id: body.mecanicoId }, select: { nombre: true, apellido: true } });
+        if (mec) updateData.mecanicoNombre = `${mec.nombre} ${mec.apellido}`;
+      } else if (body.mecanicoNombre) {
+        updateData.mecanicoNombre = body.mecanicoNombre;
+      }
       break;
     case "EN_EJECUCION":
       if (body.kmIngreso) {
