@@ -5,6 +5,18 @@ import { consultarPago } from "@/lib/mp-service";
 import { OPERATIONS } from "@/lib/events";
 import type { EstadoPagoMP, TipoPagoMP } from "@prisma/client";
 
+// Tipo local para el response de pago de MP (los campos que usamos)
+interface MPPaymentData {
+  external_reference?: string | null;
+  status?: string | null;
+  status_detail?: string | null;
+  payment_method_id?: string | null;
+  payment_type_id?: string | null;
+  transaction_amount?: number | null;
+  transaction_details?: { net_received_amount?: number | null } | null;
+  fee_details?: Array<{ amount: number }> | null;
+}
+
 /**
  * Webhook de MercadoPago.
  * Recibe notificaciones de pagos y suscripciones.
@@ -16,7 +28,7 @@ import type { EstadoPagoMP, TipoPagoMP } from "@prisma/client";
  */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await req.json() as { type?: string; data?: { id?: string | number }; action?: string };
     const { type, data, action } = body;
 
     console.log(`[MP Webhook] type=${type}, action=${action}, data=`, JSON.stringify(data));
@@ -50,47 +62,49 @@ export async function GET() {
  * Procesa una notificación de pago.
  */
 async function procesarNotificacionPago(mpPaymentId: string) {
-  const payment = await consultarPago(mpPaymentId);
+  const rawPayment = await consultarPago(mpPaymentId);
 
-  if (!payment) {
+  if (!rawPayment) {
     console.error(`[MP Webhook] Pago ${mpPaymentId} no encontrado en MP`);
     return;
   }
 
-  const externalRef = payment.external_reference || "";
-  const mpStatus = payment.status;
+  // Castear a nuestro tipo local para acceder a los campos del SDK sin usar 'any'
+  const payment = rawPayment as unknown as MPPaymentData;
+
+  const externalRef = payment.external_reference ?? "";
+  const mpStatus = payment.status ?? undefined;
 
   console.log(`[MP Webhook] Pago ${mpPaymentId}: status=${mpStatus}, ref=${externalRef}`);
 
-  const estadoInterno = mapearEstadoMP(mpStatus || "");
+  const estadoInterno = mapearEstadoMP(mpStatus ?? "");
 
-  const feeTotal =
-    Array.isArray((payment as any).fee_details)
-      ? (payment as any).fee_details.reduce((sum: number, f: { amount: number }) => sum + f.amount, 0)
-      : undefined;
+  const feeTotal = Array.isArray(payment.fee_details)
+    ? payment.fee_details.reduce((sum, f) => sum + f.amount, 0)
+    : undefined;
 
   await prisma.pagoMercadoPago.upsert({
     where: { mpPaymentId },
     update: {
       mpStatus: mpStatus ?? undefined,
-      mpStatusDetail: (payment as any).status_detail ?? undefined,
+      mpStatusDetail: payment.status_detail ?? undefined,
       mpPaymentMethodId: payment.payment_method_id ?? undefined,
       mpPaymentTypeId: payment.payment_type_id ?? undefined,
       estado: estadoInterno,
-      montoNeto: (payment as any).transaction_details?.net_received_amount ?? undefined,
+      montoNeto: payment.transaction_details?.net_received_amount ?? undefined,
       comisionMP: feeTotal ?? undefined,
       fechaPago: mpStatus === "approved" ? new Date() : undefined,
     },
     create: {
       mpPaymentId,
       tipo: identificarTipoPago(externalRef),
-      monto: (payment as any).transaction_amount || 0,
+      monto: payment.transaction_amount ?? 0,
       mpStatus: mpStatus ?? undefined,
-      mpStatusDetail: (payment as any).status_detail ?? undefined,
+      mpStatusDetail: payment.status_detail ?? undefined,
       mpPaymentMethodId: payment.payment_method_id ?? undefined,
       mpPaymentTypeId: payment.payment_type_id ?? undefined,
       estado: estadoInterno,
-      montoNeto: (payment as any).transaction_details?.net_received_amount ?? undefined,
+      montoNeto: payment.transaction_details?.net_received_amount ?? undefined,
       comisionMP: feeTotal ?? undefined,
       fechaPago: mpStatus === "approved" ? new Date() : undefined,
       ...(externalRef.startsWith("solicitud:")
@@ -115,15 +129,11 @@ async function procesarNotificacionPago(mpPaymentId: string) {
     }
     if (externalRef.startsWith("cuota:")) {
       const cuotaId = externalRef.split(":")[1] ?? "";
-      await procesarPagoCuotaAprobado(cuotaId, Number((payment as any).transaction_amount));
+      await procesarPagoCuotaAprobado(cuotaId, payment.transaction_amount ?? 0);
     }
     if (externalRef.startsWith("contrato:")) {
       const contratoId = externalRef.replace("contrato:", "");
-      await procesarPagoRecurrenteAprobado(
-        contratoId,
-        Number((payment as any).transaction_amount),
-        mpPaymentId
-      );
+      await procesarPagoRecurrenteAprobado(contratoId, payment.transaction_amount ?? 0, mpPaymentId);
     }
   }
 }

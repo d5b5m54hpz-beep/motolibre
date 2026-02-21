@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { solicitudCreateSchema } from "@/lib/validations/solicitud";
 import { crearPreferenciaPrimerMes } from "@/lib/mp-service";
-import { getTarifaVigente, planToMeses } from "@/lib/pricing-utils";
+import { getTarifaVigente } from "@/lib/pricing-utils";
 import { OPERATIONS } from "@/lib/events";
 
 export async function POST(req: NextRequest) {
