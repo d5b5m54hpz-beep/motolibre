@@ -6,8 +6,8 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Fase Actual** | F2 — CONTABILIDAD |
-| **Punto Actual** | 2.4 — siguiente punto |
+| **Fase Actual** | F3 — SIGUIENTE FASE |
+| **Punto Actual** | 3.1 — siguiente punto |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-21 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -31,6 +31,7 @@
 | 2.1 | Plan de Cuentas y Asientos Contables | 2026-02-21 | Plan FACPCE 65 cuentas (4 niveles), CuentaContable + AsientoContable + LineaAsiento + PeriodoContable, partida doble estricta, helper crearAsiento(), CUENTAS constante, 7 API routes, 5 páginas (árbol cuentas, asientos listado/detalle/nuevo, períodos), sidebar Contabilidad |
 | 2.2 | Handlers de Contabilidad Automática | 2026-02-21 | 16 event handlers contables (8 completos + 8 stubs), asientos automáticos en partida doble, eventBus.emit() conectado en webhook MP + facturación + rechazo solicitud, API diagnóstico /api/admin/contabilidad/verificar, prioridad P50 |
 | 2.3 | Gastos + Presupuestos + NC + FC | 2026-02-21 | 4 modelos (Gasto, PresupuestoMensual, NotaCredito, FacturaCompra), 6 enums, 10 API routes, 4 páginas admin, 2 handlers contables nuevos (NC completo + purchaseInvoice create/pay), gastos-utils helper, 4 validaciones Zod, KPIs dashboard |
+| 2.4 | Reportes Financieros | 2026-02-21 | 5 APIs cálculo tiempo real (resumen, estado-resultados, flujo-caja, indicadores, rentabilidad), 5 páginas con Recharts (dashboard financiero, EERR formato contable, flujo diario, indicadores 3 secciones, rentabilidad por moto con gráfico barras), sidebar grupo Finanzas 5 items, Quick Actions +2 — **FASE 2 COMPLETA** |
 
 ## Decisiones Tomadas
 
@@ -50,7 +51,7 @@
 
 ## Próxima Acción
 
-Ir al chat CTO y pedir: **"Dame el prompt del punto 2.4"**
+Ir al chat CTO y pedir: **"Dame el prompt del punto 3.1"** (inicio Fase 3)
 
 ## Problemas Conocidos
 
@@ -62,14 +63,14 @@ Ir al chat CTO y pedir: **"Dame el prompt del punto 2.4"**
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 16 / 35 (+ REFACTOR-A + REFACTOR-B) |
+| Puntos completados | 17 / 35 (+ REFACTOR-A + REFACTOR-B) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
-| Fase actual | F2 — Contabilidad (3/? puntos) |
-| Modelos Prisma | 34 (+ Gasto, PresupuestoMensual, NotaCredito, FacturaCompra) |
-| Enums Prisma | + CategoriaGasto, EstadoGasto, TipoNotaCredito, EstadoNotaCredito, TipoFacturaCompra, EstadoFacturaCompra |
-| API routes | 78 (+ 10 gastos/presupuestos/NC/FC) |
-| Páginas | 29 (+ /admin/gastos, /admin/presupuestos, /admin/notas-credito, /admin/facturas-compra) |
+| **Fase F2** | ✅ COMPLETA (4 puntos: 2.1-2.4) |
+| Fase actual | F3 — siguiente fase |
+| Modelos Prisma | 34 |
+| API routes | 83 (+ 5 finanzas) |
+| Páginas | 34 (+ 5 finanzas: dashboard, EERR, flujo-caja, indicadores, rentabilidad) |
 | Event handlers contables | 18 (10 completos + 8 stubs) |
 | Cuentas contables seeded | 65 (4 niveles FACPCE) |
 | Tests | 0 |

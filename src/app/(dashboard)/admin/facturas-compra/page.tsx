@@ -89,7 +89,7 @@ export default function FacturasCompraPage() {
     setLoading(false);
   }, [filtroEstado]);
 
-  useEffect(() => { fetchFacturas(); }, [fetchFacturas]);
+  useEffect(() => { void fetchFacturas(); }, [fetchFacturas]);
 
   function calcularIVA() {
     const neto = Number(form.montoNeto) || 0;

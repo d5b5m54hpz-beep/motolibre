@@ -71,7 +71,7 @@ export default function NotasCreditoPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchNCs(); }, [fetchNCs]);
+  useEffect(() => { void fetchNCs(); }, [fetchNCs]);
 
   async function loadFacturas() {
     const res = await fetch("/api/facturas?limit=100");

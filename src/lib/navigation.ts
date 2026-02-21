@@ -4,6 +4,7 @@ import {
   TrendingUp, PiggyBank, Calculator, BookOpen, FileSpreadsheet,
   BarChart3, UserCog, Shield, Bell, AlertTriangle, Settings,
   Bot, Mail, Languages, ClipboardList, Gauge, Calendar,
+  ArrowUpDown, Target,
   type LucideIcon,
 } from "lucide-react";
 
@@ -64,10 +65,13 @@ export const navigation: NavGroup[] = [
   {
     title: "Finanzas",
     items: [
-      { title: "Dashboard Financiero", href: "/admin/finanzas", icon: TrendingUp },
+      { title: "Dashboard", href: "/admin/finanzas", icon: BarChart3 },
+      { title: "Estado Resultados", href: "/admin/finanzas/estado-resultados", icon: TrendingUp },
+      { title: "Flujo de Caja", href: "/admin/finanzas/flujo-caja", icon: ArrowUpDown },
+      { title: "Indicadores", href: "/admin/finanzas/indicadores", icon: Gauge },
+      { title: "Rentabilidad", href: "/admin/finanzas/rentabilidad", icon: Target },
       { title: "Gastos", href: "/admin/gastos", icon: PiggyBank },
       { title: "Presupuestos", href: "/admin/presupuestos", icon: ClipboardList },
-      { title: "Rentabilidad", href: "/admin/rentabilidad", icon: Gauge },
     ],
   },
   {

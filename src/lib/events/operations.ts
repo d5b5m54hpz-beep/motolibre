@@ -175,6 +175,9 @@ export const OPERATIONS = {
       match: "finance.bankReconciliation.match",
       approve: "finance.bankReconciliation.approve",
     },
+    report: {
+      view: "finance.report.view",
+    },
   },
 
   // ── RRHH ──

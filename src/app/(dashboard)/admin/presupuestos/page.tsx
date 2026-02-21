@@ -73,7 +73,7 @@ export default function PresupuestosPage() {
     setLoading(false);
   }, [anio, mes]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { void fetchData(); }, [fetchData]);
 
   function getEjecutado(cat: string): number {
     const real = gastosReales.find((g) => g.categoria === cat);
