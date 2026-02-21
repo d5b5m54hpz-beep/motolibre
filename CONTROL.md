@@ -7,7 +7,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Fase Actual** | F1 — GESTIÓN DE FLOTA |
-| **Punto Actual** | 1.4 — siguiente punto |
+| **Punto Actual** | 1.5 — siguiente punto |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-21 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -26,6 +26,7 @@
 | 1.3 | Contratos de Alquiler | 2026-02-20 | Modelo Contrato + Cuota, flujo BORRADOR→ACTIVO→FIN, preview, 9 API routes, listado + detalle con cuotas |
 | REFACTOR-A | Pricing + Solicitudes | 2026-02-21 | Flujo real corregido: cliente paga → evaluación → espera → asignación. TarifaAlquiler + Solicitud (10 estados), 9 API routes, /admin/solicitudes + /admin/pricing, UI corrections |
 | REFACTOR-B | Auto-asignación + Entrega + Mantenimientos + Lease-to-Own | 2026-02-21 | Cierre del flujo: asignación automática al liberar moto, Registrar Entrega crea contrato+cuotas+mantenimientos, MantenimientoProgramado, lease-to-own plan 24m |
+| 1.4 | Pagos MercadoPago | 2026-02-21 | SDK MP (Checkout Pro + PreApproval + PaymentRefund), webhook, suscripción recurrente, refund, /admin/pagos, PagoMercadoPago + SuscripcionMP modelos |
 
 ## Decisiones Tomadas
 
@@ -40,10 +41,11 @@
 | D007 | 2026-02-20 | Deploy: Railway (GitHub auto-deploy). URL: motolibre-production.up.railway.app |
 | D008 | 2026-02-21 | Flujo negocio: cliente se autoregistra + paga primer mes → operador evalúa → lista espera → sistema asigna moto. Admin NO crea clientes ni contratos directamente. |
 | D009 | 2026-02-21 | Contrato se crea automáticamente al registrar entrega (NO existe "Crear Contrato" ni "Activar Contrato" manual) |
+| D010 | 2026-02-21 | Pagos 100% automáticos vía MP webhook. Admin NO registra pagos manualmente. PaymentRefund.create (no Payment.refund) para reembolsos. |
 
 ## Próxima Acción
 
-Ir al chat CTO y pedir: **"Dame el prompt del punto 1.4"**
+Ir al chat CTO y pedir: **"Dame el prompt del punto 1.5"**
 
 ## Problemas Conocidos
 
@@ -55,13 +57,13 @@ Ir al chat CTO y pedir: **"Dame el prompt del punto 1.4"**
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 11 / 35 (+ REFACTOR-A + REFACTOR-B) |
+| Puntos completados | 12 / 35 (+ REFACTOR-A + REFACTOR-B) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
-| Fase actual | F1 — Gestión de Flota (3/? puntos + 2 refactors) |
-| Modelos Prisma | 23 (+ MantenimientoProgramado) |
-| Enums Prisma | + EstadoMantenimiento |
-| API routes | 49 (+ 7 REFACTOR-B: entregar, procesar-cola, procesar-lease-to-own, mantenimientos GET, completar, no-asistio) |
-| Páginas | 17 (+ /admin/mantenimientos) |
+| Fase actual | F1 — Gestión de Flota (4/? puntos + 2 refactors) |
+| Modelos Prisma | 25 (+ PagoMercadoPago + SuscripcionMP) |
+| Enums Prisma | + EstadoPagoMP + TipoPagoMP |
+| API routes | 56 (+ webhook, crear-con-pago, cuotas/generar-link-pago, procesar-cola, procesar-lease-to-own, mantenimientos GET, completar, no-asistio, entregar) |
+| Páginas | 18 (+ /admin/pagos) |
 | Tests | 0 |
 | PermissionProfiles seeded | 8 |
 | Componentes UI | DataTable, DataTableColumnHeader, PageHeader, AppSidebar, AppHeader, StatusBadge, KPICards, EventsChart, UsersByRole, RecentActivity, QuickActions, SolicitudesTable, PricingModelCard, MantenimientosTable |
@@ -70,7 +72,7 @@ Ir al chat CTO y pedir: **"Dame el prompt del punto 1.4"**
 ## Flujo de Negocio Implementado
 
 ```
-Cliente se autoregistra → sube docs → paga primer mes (MP, en 1.4)
+Cliente se autoregistra → sube docs → POST /api/solicitudes/crear-con-pago → link MP Checkout Pro
   ↓
 Solicitud PAGADA → Operador evalúa → aprueba → EN_ESPERA con prioridad
   ↓
