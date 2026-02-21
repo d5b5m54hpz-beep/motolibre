@@ -3,7 +3,6 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { ContratosTable } from "./_components/contratos-table";
-import { ContratoFormDialog } from "./_components/contrato-form-dialog";
 
 async function getContratos() {
   return prisma.contrato.findMany({
@@ -38,7 +37,6 @@ export default async function ContratosPage() {
       <PageHeader
         title="Contratos de Alquiler"
         description={`${stats.total} contratos${stats.byEstado["ACTIVO"] ? ` · ${stats.byEstado["ACTIVO"]} activos` : ""}`}
-        actions={<ContratoFormDialog />}
       />
 
       {stats.total > 0 && (

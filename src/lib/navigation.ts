@@ -38,11 +38,18 @@ export const navigation: NavGroup[] = [
   {
     title: "Comercial",
     items: [
+      { title: "Solicitudes", href: "/admin/solicitudes", icon: ClipboardList },
       { title: "Clientes", href: "/admin/clientes", icon: Users },
       { title: "Contratos", href: "/admin/contratos", icon: FileText },
       { title: "Pagos", href: "/admin/pagos", icon: CreditCard },
       { title: "Facturas", href: "/admin/facturas", icon: Receipt },
       { title: "Notas de Crédito", href: "/admin/notas-credito", icon: FileSpreadsheet },
+    ],
+  },
+  {
+    title: "Pricing",
+    items: [
+      { title: "Tarifas de Alquiler", href: "/admin/pricing", icon: DollarSign },
     ],
   },
   {

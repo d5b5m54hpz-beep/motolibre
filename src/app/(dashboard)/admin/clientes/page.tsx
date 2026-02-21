@@ -3,7 +3,6 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { ClientesTable } from "./_components/clientes-table";
-import { ClienteFormDialog } from "./_components/cliente-form-dialog";
 
 async function getClientes() {
   return prisma.cliente.findMany({
@@ -42,7 +41,6 @@ export default async function ClientesPage() {
       <PageHeader
         title="Gestión de Clientes"
         description={`${stats.total} clientes${stats.pendientes > 0 ? ` · ${stats.pendientes} pendientes de aprobación` : ""}`}
-        actions={<ClienteFormDialog />}
       />
 
       {stats.total > 0 && (

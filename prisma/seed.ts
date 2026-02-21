@@ -429,6 +429,65 @@ async function main() {
   });
   console.log("  ✅ 2 clientes demo");
 
+  // Tarifas demo
+  const clienteDemo1 = await prisma.cliente.findUnique({ where: { dni: "33456789" } });
+  const tarifasDemo = [
+    // Honda CB 125F — Nueva
+    { marca: "Honda", modelo: "CB 125F", condicion: "NUEVA" as const, plan: "MESES_3" as const, frecuencia: "SEMANAL" as const, precio: 25000 },
+    { marca: "Honda", modelo: "CB 125F", condicion: "NUEVA" as const, plan: "MESES_6" as const, frecuencia: "SEMANAL" as const, precio: 23000 },
+    { marca: "Honda", modelo: "CB 125F", condicion: "NUEVA" as const, plan: "MESES_6" as const, frecuencia: "MENSUAL" as const, precio: 90000 },
+    { marca: "Honda", modelo: "CB 125F", condicion: "NUEVA" as const, plan: "MESES_12" as const, frecuencia: "SEMANAL" as const, precio: 21000 },
+    { marca: "Honda", modelo: "CB 125F", condicion: "NUEVA" as const, plan: "MESES_12" as const, frecuencia: "MENSUAL" as const, precio: 82000 },
+    { marca: "Honda", modelo: "CB 125F", condicion: "NUEVA" as const, plan: "MESES_24" as const, frecuencia: "SEMANAL" as const, precio: 19000 },
+    { marca: "Honda", modelo: "CB 125F", condicion: "NUEVA" as const, plan: "MESES_24" as const, frecuencia: "MENSUAL" as const, precio: 75000 },
+    // Honda CB 125F — Usada
+    { marca: "Honda", modelo: "CB 125F", condicion: "USADA" as const, plan: "MESES_3" as const, frecuencia: "SEMANAL" as const, precio: 20000 },
+    { marca: "Honda", modelo: "CB 125F", condicion: "USADA" as const, plan: "MESES_6" as const, frecuencia: "SEMANAL" as const, precio: 18000 },
+    { marca: "Honda", modelo: "CB 125F", condicion: "USADA" as const, plan: "MESES_6" as const, frecuencia: "MENSUAL" as const, precio: 70000 },
+    { marca: "Honda", modelo: "CB 125F", condicion: "USADA" as const, plan: "MESES_12" as const, frecuencia: "SEMANAL" as const, precio: 16000 },
+    { marca: "Honda", modelo: "CB 125F", condicion: "USADA" as const, plan: "MESES_12" as const, frecuencia: "MENSUAL" as const, precio: 62000 },
+    { marca: "Honda", modelo: "CB 125F", condicion: "USADA" as const, plan: "MESES_24" as const, frecuencia: "SEMANAL" as const, precio: 14000 },
+    { marca: "Honda", modelo: "CB 125F", condicion: "USADA" as const, plan: "MESES_24" as const, frecuencia: "MENSUAL" as const, precio: 55000 },
+    // Yamaha YBR 125 — Nueva
+    { marca: "Yamaha", modelo: "YBR 125", condicion: "NUEVA" as const, plan: "MESES_6" as const, frecuencia: "SEMANAL" as const, precio: 24000 },
+    { marca: "Yamaha", modelo: "YBR 125", condicion: "NUEVA" as const, plan: "MESES_6" as const, frecuencia: "MENSUAL" as const, precio: 93000 },
+    { marca: "Yamaha", modelo: "YBR 125", condicion: "NUEVA" as const, plan: "MESES_12" as const, frecuencia: "SEMANAL" as const, precio: 22000 },
+    { marca: "Yamaha", modelo: "YBR 125", condicion: "NUEVA" as const, plan: "MESES_12" as const, frecuencia: "MENSUAL" as const, precio: 85000 },
+    { marca: "Yamaha", modelo: "YBR 125", condicion: "NUEVA" as const, plan: "MESES_24" as const, frecuencia: "SEMANAL" as const, precio: 20000 },
+    { marca: "Yamaha", modelo: "YBR 125", condicion: "NUEVA" as const, plan: "MESES_24" as const, frecuencia: "MENSUAL" as const, precio: 78000 },
+  ];
+  await prisma.tarifaAlquiler.createMany({
+    data: tarifasDemo.map((t) => ({ ...t, creadoPor: admin.id })),
+    skipDuplicates: true,
+  });
+  console.log(`  ✅ ${tarifasDemo.length} tarifas demo`);
+
+  // Solicitud demo
+  if (clienteDemo1) {
+    await prisma.solicitud.upsert({
+      where: { id: "demo-solicitud-1" },
+      update: {},
+      create: {
+        id: "demo-solicitud-1",
+        clienteId: clienteDemo1.id,
+        marcaDeseada: "Honda",
+        modeloDeseado: "CB 125F",
+        condicionDeseada: "NUEVA",
+        plan: "MESES_12",
+        precioSemanal: 21000,
+        precioMensual: 82000,
+        montoPrimerMes: 82000,
+        estado: "EN_ESPERA",
+        mpPaymentId: "demo-mp-123",
+        fechaPago: new Date(),
+        evaluadoPor: admin.id,
+        fechaEvaluacion: new Date(),
+        prioridadEspera: 1,
+      },
+    });
+    console.log("  ✅ 1 solicitud demo (en espera)");
+  }
+
   console.log("✅ Seed completado");
 }
 

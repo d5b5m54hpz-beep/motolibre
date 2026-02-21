@@ -26,6 +26,8 @@ async function getDashboardData() {
     clientesPendientes,
     contratosActivos,
     contratosNuevosEsteMes,
+    solicitudesPendientes,
+    solicitudesEnEspera,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
@@ -56,6 +58,8 @@ async function getDashboardData() {
     prisma.cliente.count({ where: { estado: "PENDIENTE" } }),
     prisma.contrato.count({ where: { estado: "ACTIVO" } }),
     prisma.contrato.count({ where: { createdAt: { gte: startOfMonth } } }),
+    prisma.solicitud.count({ where: { estado: { in: ["PAGADA", "EN_EVALUACION"] } } }),
+    prisma.solicitud.count({ where: { estado: "EN_ESPERA" } }),
   ]);
 
   // Eventos por día — fallback seguro si raw query falla
@@ -92,6 +96,7 @@ async function getDashboardData() {
       },
       clientes: { total: clientesTotal, pendientes: clientesPendientes },
       contratos: { activos: contratosActivos, nuevosEsteMes: contratosNuevosEsteMes },
+      solicitudes: { pendientes: solicitudesPendientes, enEspera: solicitudesEnEspera },
       pagos: { cobradoEsteMes: 0, pendientes: 0 },
       facturacion: { facturadoEsteMes: 0 },
     },

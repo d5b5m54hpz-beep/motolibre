@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bike, Users, FileText, CreditCard, TrendingUp, Activity, DollarSign } from "lucide-react";
+import { Bike, Users, FileText, ClipboardList, Activity, DollarSign } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 
 interface KPIData {
@@ -10,6 +10,7 @@ interface KPIData {
   motos: { total: number; disponibles: number; alquiladas: number; enService: number };
   clientes: { total: number; pendientes: number };
   contratos: { activos: number; nuevosEsteMes: number };
+  solicitudes: { pendientes: number; enEspera: number };
   pagos: { cobradoEsteMes: number; pendientes: number };
   facturacion: { facturadoEsteMes: number };
 }
@@ -70,14 +71,16 @@ export function KPICards({ data }: KPICardsProps) {
       color: "text-purple-500",
     },
     {
-      title: "Facturado este Mes",
-      value:
-        data.facturacion.facturadoEsteMes > 0
-          ? formatMoney(data.facturacion.facturadoEsteMes)
-          : "—",
-      subtitle: "Se activa en Fase 1",
-      icon: TrendingUp,
-      color: "text-yellow-500",
+      title: "Solicitudes",
+      value: data.solicitudes.pendientes + data.solicitudes.enEspera || "—",
+      subtitle:
+        data.solicitudes.pendientes > 0
+          ? `${data.solicitudes.pendientes} por evaluar · ${data.solicitudes.enEspera} en espera`
+          : data.solicitudes.enEspera > 0
+            ? `${data.solicitudes.enEspera} en lista de espera`
+            : "Sin solicitudes activas",
+      icon: ClipboardList,
+      color: "text-orange-500",
     },
   ];
 

@@ -311,6 +311,7 @@ model Moto {
   baja             BajaMoto?
   amortizaciones   Amortizacion[]
   contratos        Contrato[]
+  solicitudes      Solicitud[]
 
   @@index([estado])
   @@index([marca, modelo])
@@ -524,6 +525,7 @@ model Cliente {
   documentos      DocumentoCliente[]
   puntajes        PuntajeRider[]
   contratos       Contrato[]
+  solicitudes     Solicitud[]
 
   @@index([estado])
   @@index([email])
@@ -643,6 +645,7 @@ model Contrato {
 
   // ── Relaciones ──
   cuotas            Cuota[]
+  solicitud         Solicitud?
 
   @@index([clienteId])
   @@index([motoId])
@@ -673,4 +676,128 @@ model Cuota {
   @@index([estado])
   @@index([fechaVencimiento])
   @@map("cuotas")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PRICING — TARIFAS DE ALQUILER
+// ═══════════════════════════════════════════════════════════════
+
+enum CondicionMoto {
+  NUEVA
+  USADA
+}
+
+enum PlanDuracion {
+  MESES_3
+  MESES_6
+  MESES_9
+  MESES_12
+  MESES_24
+}
+
+model TarifaAlquiler {
+  id              String          @id @default(cuid())
+
+  // ── Dimensiones ──
+  marca           String
+  modelo          String
+  condicion       CondicionMoto
+  plan            PlanDuracion
+  frecuencia      FrecuenciaPago
+
+  // ── Precio ──
+  precio          Decimal         @db.Decimal(12, 2)
+
+  // ── Validez ──
+  activo          Boolean         @default(true)
+  vigenciaDesde   DateTime        @default(now())
+  vigenciaHasta   DateTime?
+
+  // ── Metadata ──
+  creadoPor       String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([marca, modelo, condicion, plan, frecuencia, vigenciaDesde])
+  @@index([marca, modelo])
+  @@index([condicion, plan, frecuencia])
+  @@index([activo])
+  @@map("tarifas_alquiler")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SOLICITUDES DE ALQUILER
+// ═══════════════════════════════════════════════════════════════
+
+enum EstadoSolicitud {
+  PAGO_PENDIENTE
+  PAGADA
+  EN_EVALUACION
+  APROBADA
+  EN_ESPERA
+  ASIGNADA
+  ENTREGADA
+  RECHAZADA
+  CANCELADA
+  REEMBOLSADA
+}
+
+model Solicitud {
+  id                String           @id @default(cuid())
+
+  // ── Cliente ──
+  clienteId         String
+  cliente           Cliente          @relation(fields: [clienteId], references: [id])
+
+  // ── Qué quiere ──
+  marcaDeseada      String
+  modeloDeseado     String
+  condicionDeseada  CondicionMoto
+  plan              PlanDuracion
+
+  // ── Precios ──
+  precioSemanal     Decimal          @db.Decimal(12, 2)
+  precioMensual     Decimal?         @db.Decimal(12, 2)
+  montoPrimerMes    Decimal          @db.Decimal(12, 2)
+
+  // ── Estado ──
+  estado            EstadoSolicitud  @default(PAGO_PENDIENTE)
+
+  // ── Pago adelantado ──
+  mpPaymentId       String?
+  mpPreferenceId    String?
+  fechaPago         DateTime?
+
+  // ── Evaluación ──
+  evaluadoPor       String?
+  fechaEvaluacion   DateTime?
+  motivoRechazo     String?
+
+  // ── Asignación ──
+  motoAsignadaId    String?
+  moto              Moto?            @relation(fields: [motoAsignadaId], references: [id])
+  fechaAsignacion   DateTime?
+
+  // ── Entrega ──
+  fechaEntrega      DateTime?
+
+  // ── Contrato generado ──
+  contratoId        String?          @unique
+  contrato          Contrato?        @relation(fields: [contratoId], references: [id])
+
+  // ── Lista de espera ──
+  prioridadEspera   Int?
+
+  // ── Notas ──
+  notas             String?
+
+  // ── Metadata ──
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([clienteId])
+  @@index([estado])
+  @@index([marcaDeseada, modeloDeseado])
+  @@index([prioridadEspera])
+  @@map("solicitudes")
 }

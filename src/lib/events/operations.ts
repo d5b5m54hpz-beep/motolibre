@@ -46,6 +46,19 @@ export const OPERATIONS = {
     },
   },
 
+  // ── Solicitudes ──
+  solicitud: {
+    create: "solicitud.create",
+    pay: "solicitud.pay",
+    evaluate: "solicitud.evaluate",
+    approve: "solicitud.approve",
+    reject: "solicitud.reject",
+    assignMoto: "solicitud.assignMoto",
+    deliver: "solicitud.deliver",
+    cancel: "solicitud.cancel",
+    refund: "solicitud.refund",
+  },
+
   // ── Facturación ──
   invoicing: {
     invoice: {
@@ -136,6 +149,7 @@ export const OPERATIONS = {
       create: "pricing.rental.create",
       update: "pricing.rental.update",
       simulate: "pricing.rental.simulate",
+      deactivate: "pricing.rental.deactivate",
     },
     parts: {
       update: "pricing.parts.update",
