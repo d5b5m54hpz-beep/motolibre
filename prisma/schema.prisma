@@ -312,6 +312,7 @@ model Moto {
   amortizaciones   Amortizacion[]
   contratos        Contrato[]
   solicitudes      Solicitud[]
+  mantenimientos   MantenimientoProgramado[] @relation("MantenimientosMoto")
 
   @@index([estado])
   @@index([marca, modelo])
@@ -526,6 +527,7 @@ model Cliente {
   puntajes        PuntajeRider[]
   contratos       Contrato[]
   solicitudes     Solicitud[]
+  mantenimientos  MantenimientoProgramado[]
 
   @@index([estado])
   @@index([email])
@@ -643,9 +645,14 @@ model Contrato {
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
+  // ── Lease-to-own ──
+  esLeaseToOwn      Boolean         @default(false)
+  transferidaAt     DateTime?
+
   // ── Relaciones ──
   cuotas            Cuota[]
   solicitud         Solicitud?
+  mantenimientos    MantenimientoProgramado[]
 
   @@index([clienteId])
   @@index([motoId])
@@ -800,4 +807,55 @@ model Solicitud {
   @@index([marcaDeseada, modeloDeseado])
   @@index([prioridadEspera])
   @@map("solicitudes")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MANTENIMIENTOS PROGRAMADOS
+// ═══════════════════════════════════════════════════════════════
+
+enum EstadoMantenimiento {
+  PROGRAMADO
+  NOTIFICADO
+  COMPLETADO
+  NO_ASISTIO
+  CANCELADO
+  REPROGRAMADO
+}
+
+model MantenimientoProgramado {
+  id              String               @id @default(cuid())
+
+  // ── Relaciones ──
+  contratoId      String
+  contrato        Contrato             @relation(fields: [contratoId], references: [id])
+  motoId          String
+  moto            Moto                 @relation("MantenimientosMoto", fields: [motoId], references: [id])
+  clienteId       String
+  cliente         Cliente              @relation(fields: [clienteId], references: [id])
+
+  // ── Programación ──
+  numero          Int
+  fechaProgramada DateTime
+  fechaRealizada  DateTime?
+
+  // ── Estado ──
+  estado          EstadoMantenimiento  @default(PROGRAMADO)
+  notas           String?
+  notasOperador   String?
+
+  // ── Si se reprogramó ──
+  fechaOriginal        DateTime?
+  motivoReprogramacion String?
+
+  // ── Metadata ──
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@unique([contratoId, numero])
+  @@index([contratoId])
+  @@index([motoId])
+  @@index([clienteId])
+  @@index([fechaProgramada])
+  @@index([estado])
+  @@map("mantenimientos_programados")
 }

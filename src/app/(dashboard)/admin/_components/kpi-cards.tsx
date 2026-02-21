@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bike, Users, FileText, ClipboardList, Activity, DollarSign } from "lucide-react";
+import { Bike, Users, FileText, ClipboardList, Activity, DollarSign, Wrench } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 
 interface KPIData {
@@ -11,6 +11,7 @@ interface KPIData {
   clientes: { total: number; pendientes: number };
   contratos: { activos: number; nuevosEsteMes: number };
   solicitudes: { pendientes: number; enEspera: number };
+  mantenimientos: { hoy: number; semana: number };
   pagos: { cobradoEsteMes: number; pendientes: number };
   facturacion: { facturadoEsteMes: number };
 }
@@ -81,6 +82,18 @@ export function KPICards({ data }: KPICardsProps) {
             : "Sin solicitudes activas",
       icon: ClipboardList,
       color: "text-orange-500",
+    },
+    {
+      title: "Mantenimientos",
+      value: data.mantenimientos.semana || "—",
+      subtitle:
+        data.mantenimientos.hoy > 0
+          ? `${data.mantenimientos.hoy} hoy · ${data.mantenimientos.semana} esta semana`
+          : data.mantenimientos.semana > 0
+            ? `${data.mantenimientos.semana} esta semana`
+            : "Sin mantenimientos próximos",
+      icon: Wrench,
+      color: "text-yellow-500",
     },
   ];
 

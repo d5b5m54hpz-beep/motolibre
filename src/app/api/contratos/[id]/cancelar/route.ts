@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/permissions";
 import { OPERATIONS, withEvent } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
 import { contratoCancelSchema } from "@/lib/validations/contrato";
+import { verificarColaAlLiberar } from "@/lib/asignacion-utils";
 
 export async function POST(
   req: NextRequest,
@@ -78,6 +79,9 @@ export async function POST(
     userId,
     { motivo: parsed.data.motivoCancelacion }
   );
+
+  // Auto-asignar si hay solicitudes en espera para este modelo
+  verificarColaAlLiberar(contrato.motoId, userId ?? undefined).catch(console.error);
 
   return NextResponse.json({ data: updated });
 }

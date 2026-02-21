@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Truck } from "lucide-react";
 
 interface SolicitudActionsProps {
   solicitudId: string;
@@ -24,7 +24,64 @@ export function SolicitudActions({ solicitudId, estado }: SolicitudActionsProps)
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [entregaOpen, setEntregaOpen] = useState(false);
   const [motivo, setMotivo] = useState("");
+
+  if (estado === "ASIGNADA") {
+    return (
+      <div className="flex gap-2 flex-wrap">
+        <Dialog open={entregaOpen} onOpenChange={setEntregaOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-green-600 hover:bg-green-700">
+              <Truck className="mr-2 h-4 w-4" />
+              Registrar Entrega
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Registrar Entrega de Moto</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Al confirmar, se creará el contrato automáticamente con cuotas y se programará la agenda de mantenimientos. Esta acción no puede deshacerse.
+              </p>
+              {error && <p className="text-sm text-red-500">{error}</p>}
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setEntregaOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  className="bg-green-600 hover:bg-green-700"
+                  disabled={loading === "entregar"}
+                  onClick={async () => {
+                    setLoading("entregar");
+                    setError(null);
+                    try {
+                      const res = await fetch(`/api/solicitudes/${solicitudId}/entregar`, {
+                        method: "POST",
+                      });
+                      const json = await res.json();
+                      if (!res.ok) {
+                        setError(json.error ?? "Error al registrar entrega");
+                        return;
+                      }
+                      setEntregaOpen(false);
+                      router.refresh();
+                    } finally {
+                      setLoading(null);
+                    }
+                  }}
+                >
+                  {loading === "entregar" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Confirmar Entrega
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
 
   if (estado !== "PAGADA" && estado !== "EN_EVALUACION") {
     return null;

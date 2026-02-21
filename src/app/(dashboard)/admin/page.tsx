@@ -12,6 +12,11 @@ async function getDashboardData() {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const hoy = new Date(now);
+  hoy.setHours(0, 0, 0, 0);
+  const manana = new Date(hoy);
+  manana.setDate(manana.getDate() + 1);
+  const semana = new Date(hoy.getTime() + 7 * 86400000);
 
   const [
     totalUsers,
@@ -28,6 +33,8 @@ async function getDashboardData() {
     contratosNuevosEsteMes,
     solicitudesPendientes,
     solicitudesEnEspera,
+    mantenimientosHoy,
+    mantenimientosSemana,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
@@ -60,6 +67,12 @@ async function getDashboardData() {
     prisma.contrato.count({ where: { createdAt: { gte: startOfMonth } } }),
     prisma.solicitud.count({ where: { estado: { in: ["PAGADA", "EN_EVALUACION"] } } }),
     prisma.solicitud.count({ where: { estado: "EN_ESPERA" } }),
+    prisma.mantenimientoProgramado.count({
+      where: { fechaProgramada: { gte: hoy, lt: manana }, estado: "PROGRAMADO" },
+    }),
+    prisma.mantenimientoProgramado.count({
+      where: { fechaProgramada: { gte: hoy, lt: semana }, estado: "PROGRAMADO" },
+    }),
   ]);
 
   // Eventos por día — fallback seguro si raw query falla
@@ -97,6 +110,7 @@ async function getDashboardData() {
       clientes: { total: clientesTotal, pendientes: clientesPendientes },
       contratos: { activos: contratosActivos, nuevosEsteMes: contratosNuevosEsteMes },
       solicitudes: { pendientes: solicitudesPendientes, enEspera: solicitudesEnEspera },
+      mantenimientos: { hoy: mantenimientosHoy, semana: mantenimientosSemana },
       pagos: { cobradoEsteMes: 0, pendientes: 0 },
       facturacion: { facturadoEsteMes: 0 },
     },

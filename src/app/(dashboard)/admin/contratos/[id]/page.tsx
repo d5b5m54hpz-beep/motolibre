@@ -12,12 +12,13 @@ const FRECUENCIA_LABEL: Record<string, string> = {
   MENSUAL: "Mensual",
 };
 
-const ESTADO_CUOTA_LABEL: Record<string, string> = {
-  PENDIENTE: "Pendiente",
-  PAGADA: "Pagada",
-  PARCIAL: "Parcial",
-  VENCIDA: "Vencida",
-  CANCELADA: "Cancelada",
+const ESTADO_MANT_LABEL: Record<string, string> = {
+  PROGRAMADO: "Programado",
+  NOTIFICADO: "Notificado",
+  COMPLETADO: "Completado",
+  NO_ASISTIO: "No asistió",
+  CANCELADO: "Cancelado",
+  REPROGRAMADO: "Reprogramado",
 };
 
 export default async function ContratoDetailPage({
@@ -36,6 +37,7 @@ export default async function ContratoDetailPage({
       cliente: true,
       moto: true,
       cuotas: { orderBy: { numero: "asc" } },
+      mantenimientos: { orderBy: { numero: "asc" } },
     },
   });
 
@@ -54,6 +56,16 @@ export default async function ContratoDetailPage({
       .reduce((sum, c) => sum + Number(c.monto), 0),
   };
 
+  const progresoPercent =
+    cuotasResumen.total > 0
+      ? Math.round((cuotasResumen.pagadas / cuotasResumen.total) * 100)
+      : 0;
+
+  const todasPagadas =
+    cuotasResumen.total > 0 &&
+    cuotasResumen.pendientes === 0 &&
+    cuotasResumen.vencidas === 0;
+
   const now = new Date();
 
   return (
@@ -61,9 +73,14 @@ export default async function ContratoDetailPage({
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold">Contrato</h1>
             <StatusBadge status={contrato.estado} />
+            {contrato.esLeaseToOwn && (
+              <span className="rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-xs font-semibold px-2.5 py-1">
+                LEASE-TO-OWN (24 meses)
+              </span>
+            )}
           </div>
           <p className="text-sm text-muted-foreground font-mono">{contrato.id}</p>
         </div>
@@ -74,6 +91,18 @@ export default async function ContratoDetailPage({
           precioCompraDefault={contrato.precioCompra ? Number(contrato.precioCompra) : null}
         />
       </div>
+
+      {/* Alerta lease-to-own completado */}
+      {contrato.esLeaseToOwn && todasPagadas && contrato.estado === "ACTIVO" && (
+        <div className="rounded-lg border border-purple-200 bg-purple-50 dark:bg-purple-950/20 p-4">
+          <p className="font-semibold text-purple-700 dark:text-purple-300">
+            ¡Plan 24 meses completado! Moto lista para transferencia automática.
+          </p>
+          <p className="text-sm text-purple-600 dark:text-purple-400 mt-1">
+            Ejecuta el proceso lease-to-own para transferir la moto al rider.
+          </p>
+        </div>
+      )}
 
       {/* Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -178,23 +207,23 @@ export default async function ContratoDetailPage({
           </div>
         </div>
 
-        {/* Resumen cuotas */}
+        {/* Resumen cuotas con progreso */}
         {cuotasResumen.total > 0 && (
           <div className="rounded-lg border p-4 space-y-3">
             <h2 className="font-semibold text-sm">Resumen cuotas</h2>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Total cuotas</span>
-                <span>{cuotasResumen.total}</span>
+                <span className="text-muted-foreground">Progreso</span>
+                <span className="font-medium">{cuotasResumen.pagadas}/{cuotasResumen.total}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Pagadas</span>
-                <span className="text-green-500 font-medium">{cuotasResumen.pagadas}</span>
+              {/* Barra de progreso */}
+              <div className="w-full bg-muted rounded-full h-2">
+                <div
+                  className="bg-green-500 h-2 rounded-full transition-all"
+                  style={{ width: `${progresoPercent}%` }}
+                />
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Pendientes</span>
-                <span className="font-medium">{cuotasResumen.pendientes}</span>
-              </div>
+              <p className="text-xs text-muted-foreground">{progresoPercent}% completado</p>
               {cuotasResumen.vencidas > 0 && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Vencidas</span>
@@ -254,17 +283,13 @@ export default async function ContratoDetailPage({
                         {formatMoney(Number(cuota.monto))}
                       </td>
                       <td className="p-3">
-                        <StatusBadge
-                          status={isVencida ? "VENCIDA" : cuota.estado}
-                        />
+                        <StatusBadge status={isVencida ? "VENCIDA" : cuota.estado} />
                       </td>
                       <td className="p-3 text-muted-foreground">
                         {cuota.fechaPago ? formatDate(cuota.fechaPago) : "—"}
                       </td>
                       <td className="p-3 text-right">
-                        {cuota.montoPagado
-                          ? formatMoney(Number(cuota.montoPagado))
-                          : "—"}
+                        {cuota.montoPagado ? formatMoney(Number(cuota.montoPagado)) : "—"}
                       </td>
                     </tr>
                   );
@@ -278,6 +303,64 @@ export default async function ContratoDetailPage({
       {contrato.cuotas.length === 0 && contrato.estado === "BORRADOR" && (
         <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
           <p>Las cuotas se generarán automáticamente al activar el contrato.</p>
+        </div>
+      )}
+
+      {/* Mantenimientos programados */}
+      {contrato.mantenimientos.length > 0 && (
+        <div className="rounded-lg border">
+          <div className="p-4 border-b flex items-center justify-between">
+            <h2 className="font-semibold">
+              Mantenimientos Programados ({contrato.mantenimientos.length})
+            </h2>
+            <Link
+              href={`/admin/mantenimientos?contratoId=${contrato.id}`}
+              className="text-sm text-blue-500 hover:underline"
+            >
+              Ver todos
+            </Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/30">
+                  <th className="text-left p-3 font-medium">N°</th>
+                  <th className="text-left p-3 font-medium">Fecha Programada</th>
+                  <th className="text-left p-3 font-medium">Estado</th>
+                  <th className="text-left p-3 font-medium">Fecha Realizada</th>
+                  <th className="text-left p-3 font-medium">Notas Operador</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contrato.mantenimientos.map((mant) => {
+                  const isVencido =
+                    mant.estado === "PROGRAMADO" && new Date(mant.fechaProgramada) < now;
+                  return (
+                    <tr
+                      key={mant.id}
+                      className={`border-b last:border-0 ${isVencido ? "bg-orange-50 dark:bg-orange-950/20" : ""}`}
+                    >
+                      <td className="p-3 font-mono">#{mant.numero}</td>
+                      <td className="p-3">
+                        <span className={isVencido ? "text-orange-500 font-medium" : ""}>
+                          {formatDate(mant.fechaProgramada)}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <StatusBadge status={mant.estado} />
+                      </td>
+                      <td className="p-3 text-muted-foreground">
+                        {mant.fechaRealizada ? formatDate(mant.fechaRealizada) : "—"}
+                      </td>
+                      <td className="p-3 text-muted-foreground text-xs">
+                        {mant.notasOperador ?? "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

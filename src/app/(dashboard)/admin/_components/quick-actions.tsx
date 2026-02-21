@@ -10,7 +10,7 @@ export function QuickActions() {
     { title: "Solicitudes Pendientes", href: "/admin/solicitudes?estado=PAGADA", icon: ClipboardList, color: "text-yellow-500" },
     { title: "Lista de Espera", href: "/admin/solicitudes?estado=EN_ESPERA", icon: Clock, color: "text-blue-500" },
     { title: "Registrar Pago", href: "/admin/pagos?new=true", icon: CreditCard, color: "text-emerald-500" },
-    { title: "Orden de Trabajo", href: "/admin/mantenimientos?new=true", icon: Wrench, color: "text-orange-500" },
+    { title: "Mantenimientos Hoy", href: "/admin/mantenimientos?estado=PROGRAMADO", icon: Wrench, color: "text-orange-500" },
   ];
 
   return (
