@@ -37,6 +37,7 @@
 | 3.3 | Proveedores y Órdenes de Compra | 2026-02-22 | 3 modelos (Proveedor, OrdenCompra, ItemOrdenCompra), 2 enums (TipoProveedor, EstadoOrdenCompra), proveedorId FK en FacturaCompra, flujo OC 5 estados con validación transiciones, IVA 21% auto para RI nacionales, 7 API routes (proveedores CRUD + OC CRUD + estado + items + items/[itemId]), 3 páginas (proveedores listado, OC listado con Suspense, OC detalle con acciones por estado), recepción parcial/total, seed 2 proveedores, sidebar Supply Chain + Quick Actions |
 | 3.4 | Inventario de Repuestos | 2026-02-22 | 4 modelos (Repuesto, MovimientoStock, UbicacionDeposito, HistorialCostoRepuesto), 2 enums (CategoriaRepuesto 12 vals, TipoMovimientoStock 6 vals), registrarMovimiento() central, 10 API routes (repuestos CRUD + ajuste-stock + movimientos + sugerencia-compra + dashboard + ubicaciones CRUD), 4 páginas (inventario con stats/filtros, detalle con gauge+movimientos+historial, ubicaciones grilla visual, sugerencia compra con OC auto), integración OT egreso/devolución automática, integración OC ingreso+precio historial, seed 5 ubicaciones + 8 repuestos (4 stock bajo), sidebar +2 items, dashboard KPI Stock Bajo, Quick Action Stock Bajo |
 | 3.5 | Importaciones | 2026-02-22 | 5 modelos (EmbarqueImportacion, ItemEmbarque, DespachoAduanero, AsignacionCostoImportacion, PortalProveedorToken), 1 enum (EstadoEmbarque 10 vals), flujo 10 estados con validación transiciones, FOB→CIF→nacionalizado con distribución proporcional, 10 API routes (embarques CRUD + estado + items + despacho + confirmar-costos + recepción + generar-link-proveedor + supplier portal), 3 handlers contables completados (Merc.Tránsito/Prov.Exterior, despacho IVA CF, recepción inventario), 2 cuentas nuevas (Merc.Tránsito 1.1.05.001, Prov.Exterior 2.1.01.002, Inventario 1.1.06.001), portal proveedor público bilingüe /supplier/[token], 2 páginas admin (listado con stats, detalle con progress bar + despacho + costos + recepción), seed cuentas contables, dashboard KPI Embarques Activos, Quick Action Embarques en Tránsito — **FASE 3 COMPLETA** |
+| REFACTOR-UI-1 | Design System Infrastructure | 2026-02-22 | Dark-first crypto/fintech theme. Google Fonts (Inter, Space Grotesk, JetBrains Mono), CSS variables dark/light, Tailwind 4 @theme inline config, ThemeProvider + ThemeToggle, sidebar gradient logo + topbar greeting + bell, mobile bottom tab bar, DSCard/DSCardHero/DSStatCard/DSBadge, Button re-estilizado gradiente accent, Skeleton shimmer, scrollbar custom |
 
 ## Decisiones Tomadas
 
@@ -56,7 +57,7 @@
 
 ## Próxima Acción
 
-Ir al chat CTO y pedir: **"Dame el prompt del punto 4.1"** (inicio Fase 4 — Clientes)
+Pedir: **"Dame el prompt de REFACTOR-UI-2"** (aplicar DS a páginas existentes)
 
 ## Problemas Conocidos
 
@@ -68,7 +69,7 @@ Ir al chat CTO y pedir: **"Dame el prompt del punto 4.1"** (inicio Fase 4 — Cl
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 22 / 35 (+ REFACTOR-A + REFACTOR-B) |
+| Puntos completados | 22 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
 | **Fase F2** | ✅ COMPLETA (4 puntos: 2.1-2.4) |
