@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Bike, Users, FileText, CreditCard, Receipt,
-  Wrench, Building2, Package, Truck, Ship, DollarSign,
+  Wrench, Building2, Package, Truck, Ship, DollarSign, ShoppingCart,
   TrendingUp, PiggyBank, Calculator, BookOpen, FileSpreadsheet,
   BarChart3, UserCog, Shield, Bell, AlertTriangle, Settings,
   Bot, Mail, Languages, ClipboardList, Gauge, Calendar,
@@ -58,8 +58,9 @@ export const navigation: NavGroup[] = [
   {
     title: "Supply Chain",
     items: [
-      { title: "Inventario", href: "/admin/repuestos", icon: Package },
       { title: "Proveedores", href: "/admin/proveedores", icon: Truck },
+      { title: "Órdenes de Compra", href: "/admin/ordenes-compra", icon: ShoppingCart },
+      { title: "Inventario", href: "/admin/repuestos", icon: Package },
       { title: "Importaciones", href: "/admin/importaciones", icon: Ship },
       { title: "Precios Repuestos", href: "/admin/pricing-repuestos", icon: DollarSign },
     ],

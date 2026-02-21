@@ -755,6 +755,40 @@ async function main() {
 
   console.log("  ✅ Talleres (2) + Mecánicos (3)");
 
+  // ── Proveedores ──────────────────────────────────────────────
+  await prisma.proveedor.upsert({
+    where: { id: "prov-nacional-repuestos" },
+    update: {},
+    create: {
+      id: "prov-nacional-repuestos",
+      nombre: "Repuestos Moto Argentina SRL",
+      cuit: "30-12345678-9",
+      tipoProveedor: "NACIONAL",
+      condicionIva: "Responsable Inscripto",
+      categorias: ["repuestos", "aceites", "filtros"],
+      direccion: "Av. Warnes 2345, CABA",
+      telefono: "11-4555-6789",
+      email: "ventas@repuestosmoto.com.ar",
+      contacto: "María López",
+    },
+  });
+
+  await prisma.proveedor.upsert({
+    where: { id: "prov-internacional-china" },
+    update: {},
+    create: {
+      id: "prov-internacional-china",
+      nombre: "Guangzhou Motor Parts Co.",
+      tipoProveedor: "INTERNACIONAL",
+      pais: "China",
+      categorias: ["repuestos", "motos"],
+      email: "sales@gzmotorparts.com",
+      contacto: "Mr. Zhang Wei",
+    },
+  });
+
+  console.log("  ✅ Proveedores (2)");
+
   console.log("✅ Seed completado");
 }
 
