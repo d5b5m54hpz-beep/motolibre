@@ -67,7 +67,7 @@ export function AprobarRechazarButtons({ clienteId }: { clienteId: string }) {
       <Button
         size="sm"
         variant="outline"
-        className="border-green-500 text-green-500 hover:bg-green-500/10"
+        className="border-positive text-positive hover:bg-positive/10"
         onClick={handleAprobar}
         disabled={loading !== null}
       >
@@ -78,7 +78,7 @@ export function AprobarRechazarButtons({ clienteId }: { clienteId: string }) {
       <Button
         size="sm"
         variant="outline"
-        className="border-red-500 text-red-500 hover:bg-red-500/10"
+        className="border-negative text-negative hover:bg-negative/10"
         onClick={() => setRechazarOpen(true)}
         disabled={loading !== null}
       >
@@ -92,7 +92,7 @@ export function AprobarRechazarButtons({ clienteId }: { clienteId: string }) {
             <DialogTitle>Rechazar Cliente</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-t-secondary">
               Ingresá el motivo del rechazo. El cliente no será notificado automáticamente.
             </p>
             <Textarea

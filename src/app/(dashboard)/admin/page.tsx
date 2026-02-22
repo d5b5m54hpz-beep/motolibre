@@ -175,7 +175,7 @@ export default async function AdminDashboardPage() {
   const data = await getDashboardData();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Dashboard"
         description={`Bienvenido, ${session.user.name} — MotoLibre S.A.`}

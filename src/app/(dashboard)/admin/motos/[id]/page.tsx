@@ -87,7 +87,7 @@ export default async function MotoDetallePage({
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Estado</span>
+                  <span className="text-t-secondary">Estado</span>
                   <StatusBadge status={moto.estado} />
                 </div>
                 <Row label="Estado Legal" value={moto.estadoLegal} />
@@ -137,7 +137,7 @@ export default async function MotoDetallePage({
                 <CardTitle className="text-sm">Notas</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">{moto.notas}</p>
+                <p className="text-sm text-t-secondary">{moto.notas}</p>
               </CardContent>
             </Card>
           )}
@@ -148,24 +148,24 @@ export default async function MotoDetallePage({
           <Card>
             <CardContent className="pt-4">
               {moto.historialEstados.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
+                <p className="text-sm text-t-secondary text-center py-8">
                   Sin cambios de estado registrados
                 </p>
               ) : (
                 <div className="space-y-3">
                   {moto.historialEstados.map((h) => (
-                    <div key={h.id} className="flex items-start gap-3 border-l-2 border-muted pl-4 pb-3">
+                    <div key={h.id} className="flex items-start gap-3 border-l-2 border-border pl-4 pb-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <StatusBadge status={h.estadoAnterior} />
-                          <span className="text-muted-foreground text-xs">→</span>
+                          <span className="text-t-tertiary text-xs">→</span>
                           <StatusBadge status={h.estadoNuevo} />
                         </div>
                         {h.motivo && (
-                          <p className="text-xs text-muted-foreground mt-1">{h.motivo}</p>
+                          <p className="text-xs text-t-secondary mt-1">{h.motivo}</p>
                         )}
                       </div>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      <span className="text-xs text-t-tertiary whitespace-nowrap">
                         {formatDateTime(h.createdAt.toISOString())}
                       </span>
                     </div>
@@ -181,13 +181,13 @@ export default async function MotoDetallePage({
           <Card>
             <CardContent className="pt-4">
               {moto.lecturasKm.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
+                <p className="text-sm text-t-secondary text-center py-8">
                   Sin lecturas de KM registradas
                 </p>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-muted-foreground border-b">
+                    <tr className="text-t-secondary border-b border-border">
                       <th className="text-left pb-2">KM</th>
                       <th className="text-left pb-2">Fuente</th>
                       <th className="text-left pb-2">Notas</th>
@@ -196,15 +196,15 @@ export default async function MotoDetallePage({
                   </thead>
                   <tbody>
                     {moto.lecturasKm.map((l) => (
-                      <tr key={l.id} className="border-b last:border-0">
+                      <tr key={l.id} className="border-b border-border last:border-0 hover:bg-bg-card-hover transition-colors">
                         <td className="py-2 tabular-nums font-medium">
                           {l.km.toLocaleString("es-AR")}
                         </td>
                         <td className="py-2">
                           <Badge variant="outline" className="text-xs">{l.fuente}</Badge>
                         </td>
-                        <td className="py-2 text-muted-foreground">{l.notas ?? "—"}</td>
-                        <td className="py-2 text-right text-muted-foreground">
+                        <td className="py-2 text-t-secondary">{l.notas ?? "—"}</td>
+                        <td className="py-2 text-right text-t-tertiary">
                           {formatDate(l.createdAt.toISOString())}
                         </td>
                       </tr>
@@ -221,22 +221,22 @@ export default async function MotoDetallePage({
           <Card>
             <CardContent className="pt-4">
               {moto.documentos.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
+                <p className="text-sm text-t-secondary text-center py-8">
                   Sin documentos. El upload a R2 se conecta en F2.
                 </p>
               ) : (
                 <div className="space-y-2">
                   {moto.documentos.map((d) => (
-                    <div key={d.id} className="flex items-center justify-between border rounded-md p-3">
+                    <div key={d.id} className="flex items-center justify-between border border-border rounded-2xl p-3">
                       <div>
-                        <p className="text-sm font-medium">{d.nombre}</p>
-                        <p className="text-xs text-muted-foreground">{d.tipo}</p>
+                        <p className="text-sm font-medium text-t-primary">{d.nombre}</p>
+                        <p className="text-xs text-t-secondary">{d.tipo}</p>
                       </div>
                       <a
                         href={d.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-[#23e0ff] hover:underline"
+                        className="text-xs text-accent-DEFAULT hover:underline"
                       >
                         Ver
                       </a>
@@ -253,13 +253,13 @@ export default async function MotoDetallePage({
           <Card>
             <CardContent className="pt-4">
               {moto.amortizaciones.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
+                <p className="text-sm text-t-secondary text-center py-8">
                   El cálculo automático de amortizaciones se implementa en F2 (Contabilidad).
                 </p>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-muted-foreground border-b">
+                    <tr className="text-t-secondary border-b border-border">
                       <th className="text-left pb-2">Período</th>
                       <th className="text-right pb-2">Cuota</th>
                       <th className="text-right pb-2">Acumulado</th>
@@ -268,7 +268,7 @@ export default async function MotoDetallePage({
                   </thead>
                   <tbody>
                     {moto.amortizaciones.map((a) => (
-                      <tr key={a.id} className="border-b last:border-0">
+                      <tr key={a.id} className="border-b border-border last:border-0 hover:bg-bg-card-hover transition-colors">
                         <td className="py-2 font-mono">{a.periodo}</td>
                         <td className="py-2 text-right tabular-nums">{formatMoney(Number(a.monto))}</td>
                         <td className="py-2 text-right tabular-nums">{formatMoney(Number(a.acumulado))}</td>
@@ -289,8 +289,8 @@ export default async function MotoDetallePage({
 function Row({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div className="flex justify-between gap-2">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-right">{value ?? "—"}</span>
+      <span className="text-t-secondary">{label}</span>
+      <span className="font-medium text-right text-t-primary">{value ?? "—"}</span>
     </div>
   );
 }

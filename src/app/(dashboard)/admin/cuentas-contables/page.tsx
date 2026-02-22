@@ -18,11 +18,11 @@ interface CuentaRow {
 
 function tipoBadgeColor(tipo: string) {
   switch (tipo) {
-    case "ACTIVO": return "bg-blue-500/10 text-blue-500 border-blue-500/20";
-    case "PASIVO": return "bg-red-500/10 text-red-500 border-red-500/20";
-    case "PATRIMONIO": return "bg-purple-500/10 text-purple-500 border-purple-500/20";
-    case "INGRESO": return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
-    case "EGRESO": return "bg-orange-500/10 text-orange-500 border-orange-500/20";
+    case "ACTIVO": return "bg-ds-info/10 text-ds-info border-ds-info/20";
+    case "PASIVO": return "bg-negative/10 text-negative border-negative/20";
+    case "PATRIMONIO": return "bg-accent-DEFAULT/10 text-accent-DEFAULT border-accent-DEFAULT/20";
+    case "INGRESO": return "bg-positive/10 text-positive border-positive/20";
+    case "EGRESO": return "bg-warning/10 text-warning border-warning/20";
     default: return "";
   }
 }
@@ -33,22 +33,22 @@ function CuentaRow({ cuenta }: { cuenta: CuentaRow }) {
 
   return (
     <div
-      className={`flex items-center gap-3 py-2 px-4 hover:bg-muted/50 transition-colors ${
+      className={`flex items-center gap-3 py-2 px-4 hover:bg-bg-card-hover transition-colors ${
         cuenta.nivel === 1 ? "font-bold border-t border-border" : ""
       } ${cuenta.nivel === 2 ? "font-semibold" : ""}`}
       style={{ paddingLeft: `${16 + indent}px` }}
     >
       {isMovimiento ? (
-        <ArrowRightLeft className="h-4 w-4 text-motolibre-cyan shrink-0" />
+        <ArrowRightLeft className="h-4 w-4 text-accent-DEFAULT shrink-0" />
       ) : (
-        <Folder className="h-4 w-4 text-muted-foreground shrink-0" />
+        <Folder className="h-4 w-4 text-t-secondary shrink-0" />
       )}
 
-      <span className="font-mono text-sm text-muted-foreground w-28 shrink-0">
+      <span className="font-mono text-sm text-t-tertiary w-28 shrink-0">
         {cuenta.codigo}
       </span>
 
-      <span className="flex-1 text-sm truncate">
+      <span className={`flex-1 text-sm truncate ${isMovimiento ? "text-t-primary font-medium" : "text-t-secondary font-semibold"}`}>
         {cuenta.nombre}
       </span>
 
@@ -57,19 +57,19 @@ function CuentaRow({ cuenta }: { cuenta: CuentaRow }) {
       </Badge>
 
       {isMovimiento && (
-        <Badge variant="outline" className="text-xs bg-motolibre-cyan/10 text-motolibre-cyan border-motolibre-cyan/20">
+        <Badge variant="outline" className="text-xs bg-accent-DEFAULT/10 text-accent-DEFAULT border-accent-DEFAULT/20">
           Mov
         </Badge>
       )}
 
       {isMovimiento && cuenta._count.lineasAsiento > 0 && (
-        <span className="text-xs text-muted-foreground w-16 text-right">
+        <span className="text-xs text-t-tertiary w-16 text-right">
           {cuenta._count.lineasAsiento} mov.
         </span>
       )}
 
       {!cuenta.activa && (
-        <Badge variant="outline" className="text-xs bg-red-500/10 text-red-500">
+        <Badge variant="outline" className="text-xs bg-negative/10 text-negative">
           Inactiva
         </Badge>
       )}
@@ -90,9 +90,9 @@ export default async function CuentasContablesPage() {
   const cuentasResumen = totalCuentas - cuentasMovimiento;
 
   const stats = [
-    { title: "Total Cuentas", value: totalCuentas, icon: BookOpen, color: "text-[#23e0ff]" },
-    { title: "Cuentas de Movimiento", value: cuentasMovimiento, icon: ArrowRightLeft, color: "text-emerald-500" },
-    { title: "Cuentas Resumen", value: cuentasResumen, icon: Folder, color: "text-yellow-500" },
+    { title: "Total Cuentas", value: totalCuentas, icon: BookOpen, color: "text-accent-DEFAULT" },
+    { title: "Cuentas de Movimiento", value: cuentasMovimiento, icon: ArrowRightLeft, color: "text-positive" },
+    { title: "Cuentas Resumen", value: cuentasResumen, icon: Folder, color: "text-warning" },
   ];
 
   return (
@@ -106,7 +106,7 @@ export default async function CuentasContablesPage() {
         {stats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-t-secondary">
                 {stat.title}
               </CardTitle>
               <stat.icon className={`h-4 w-4 ${stat.color}`} />

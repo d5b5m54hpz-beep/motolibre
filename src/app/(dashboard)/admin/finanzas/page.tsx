@@ -49,14 +49,14 @@ interface FlujoCaja {
   diario: Array<{ fecha: string; entradas: number; salidas: number; saldo: number }>;
 }
 
-const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#8b5cf6"];
-const EGRESO_COLORS = ["#ef4444", "#f97316", "#eab308", "#6366f1", "#ec4899"];
+const COLORS = ["#00D68F", "#4DA6FF", "#FFB020", "#7B61FF"];
+const EGRESO_COLORS = ["#FF4D6A", "#FF8C42", "#FFB020", "#7B61FF", "#EC4899"];
 
 function VariationBadge({ value }: { value: number }) {
-  if (value === 0) return <span className="text-xs text-muted-foreground flex items-center"><Minus className="h-3 w-3 mr-1" /> 0%</span>;
+  if (value === 0) return <span className="text-xs text-t-tertiary flex items-center"><Minus className="h-3 w-3 mr-1" /> 0%</span>;
   return value > 0
-    ? <span className="text-xs text-emerald-500 flex items-center"><ArrowUpRight className="h-3 w-3 mr-1" /> +{value.toFixed(1)}%</span>
-    : <span className="text-xs text-red-500 flex items-center"><ArrowDownRight className="h-3 w-3 mr-1" /> {value.toFixed(1)}%</span>;
+    ? <span className="text-xs text-positive flex items-center"><ArrowUpRight className="h-3 w-3 mr-1" /> +{value.toFixed(1)}%</span>
+    : <span className="text-xs text-negative flex items-center"><ArrowDownRight className="h-3 w-3 mr-1" /> {value.toFixed(1)}%</span>;
 }
 
 export default function FinanzasDashboardPage() {
@@ -86,7 +86,7 @@ export default function FinanzasDashboardPage() {
     return (
       <div className="space-y-6">
         <PageHeader title="Dashboard Financiero" description="Vista ejecutiva de finanzas" />
-        <div className="text-center py-12 text-muted-foreground">Cargando datos financieros...</div>
+        <div className="text-center py-12 text-t-secondary">Cargando datos financieros...</div>
       </div>
     );
   }
@@ -126,11 +126,11 @@ export default function FinanzasDashboardPage() {
           <CardContent className="pt-6">
             <div className="flex justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Ingresos del Mes</p>
-                <p className="text-2xl font-bold">{formatMoney(resumen.ingresosMes)}</p>
+                <p className="text-sm text-t-secondary">Ingresos del Mes</p>
+                <p className="text-2xl font-bold text-t-primary">{formatMoney(resumen.ingresosMes)}</p>
                 <VariationBadge value={resumen.variacionIngresos} />
               </div>
-              <TrendingUp className="h-8 w-8 text-emerald-500" />
+              <TrendingUp className="h-8 w-8 text-positive" />
             </div>
           </CardContent>
         </Card>
@@ -138,11 +138,11 @@ export default function FinanzasDashboardPage() {
           <CardContent className="pt-6">
             <div className="flex justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Egresos del Mes</p>
-                <p className="text-2xl font-bold">{formatMoney(resumen.egresosMes)}</p>
+                <p className="text-sm text-t-secondary">Egresos del Mes</p>
+                <p className="text-2xl font-bold text-t-primary">{formatMoney(resumen.egresosMes)}</p>
                 <VariationBadge value={resumen.variacionEgresos} />
               </div>
-              <TrendingDown className="h-8 w-8 text-red-500" />
+              <TrendingDown className="h-8 w-8 text-negative" />
             </div>
           </CardContent>
         </Card>
@@ -150,13 +150,13 @@ export default function FinanzasDashboardPage() {
           <CardContent className="pt-6">
             <div className="flex justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Resultado Neto</p>
-                <p className={`text-2xl font-bold ${resumen.resultadoNeto >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                <p className="text-sm text-t-secondary">Resultado Neto</p>
+                <p className={`text-2xl font-bold ${resumen.resultadoNeto >= 0 ? "text-positive" : "text-negative"}`}>
                   {formatMoney(resumen.resultadoNeto)}
                 </p>
-                <p className="text-xs text-muted-foreground">Ant: {formatMoney(resumen.resultadoMesAnterior)}</p>
+                <p className="text-xs text-t-tertiary">Ant: {formatMoney(resumen.resultadoMesAnterior)}</p>
               </div>
-              <DollarSign className={`h-8 w-8 ${resumen.resultadoNeto >= 0 ? "text-emerald-500" : "text-red-500"}`} />
+              <DollarSign className={`h-8 w-8 ${resumen.resultadoNeto >= 0 ? "text-positive" : "text-negative"}`} />
             </div>
           </CardContent>
         </Card>
@@ -164,11 +164,11 @@ export default function FinanzasDashboardPage() {
           <CardContent className="pt-6">
             <div className="flex justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Saldo Disponible</p>
-                <p className="text-2xl font-bold">{formatMoney(saldoDisponible)}</p>
-                <p className="text-xs text-muted-foreground">Caja + MP + Banco</p>
+                <p className="text-sm text-t-secondary">Saldo Disponible</p>
+                <p className="text-2xl font-bold text-t-primary">{formatMoney(saldoDisponible)}</p>
+                <p className="text-xs text-t-tertiary">Caja + MP + Banco</p>
               </div>
-              <Wallet className="h-8 w-8 text-blue-500" />
+              <Wallet className="h-8 w-8 text-ds-info" />
             </div>
           </CardContent>
         </Card>
@@ -183,16 +183,26 @@ export default function FinanzasDashboardPage() {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={flujoDiario}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="fecha" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
+                <CartesianGrid stroke="#1E1E2A" strokeDasharray="3 3" opacity={0.5} />
+                <XAxis dataKey="fecha" tick={{ fill: "#44445A", fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "#44445A", fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+                  contentStyle={{ backgroundColor: "#13131A", border: "1px solid #1E1E2A", borderRadius: "12px", color: "#FFFFFF" }}
                   formatter={(value) => formatMoney(Number(value))}
                 />
-                <Area type="monotone" dataKey="entradas" stackId="1" stroke="#22c55e" fill="#22c55e" fillOpacity={0.3} name="Entradas" />
-                <Area type="monotone" dataKey="salidas" stackId="2" stroke="#ef4444" fill="#ef4444" fillOpacity={0.3} name="Salidas" />
-                <Area type="monotone" dataKey="saldo" stroke="#3b82f6" fill="none" strokeWidth={2} name="Saldo" />
+                <defs>
+                  <linearGradient id="colorEntradas" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#00D68F" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#00D68F" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorSalidas" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#FF4D6A" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#FF4D6A" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <Area type="monotone" dataKey="entradas" stackId="1" stroke="#00D68F" fill="url(#colorEntradas)" name="Entradas" />
+                <Area type="monotone" dataKey="salidas" stackId="2" stroke="#FF4D6A" fill="url(#colorSalidas)" name="Salidas" />
+                <Area type="monotone" dataKey="saldo" stroke="#4DA6FF" fill="none" strokeWidth={2} name="Saldo" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -207,7 +217,7 @@ export default function FinanzasDashboardPage() {
           </CardHeader>
           <CardContent>
             {ingresosPie.length === 0 ? (
-              <p className="text-center py-8 text-muted-foreground">Sin ingresos en el período</p>
+              <p className="text-center py-8 text-t-secondary">Sin ingresos en el período</p>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
@@ -226,7 +236,7 @@ export default function FinanzasDashboardPage() {
           </CardHeader>
           <CardContent>
             {egresosPie.length === 0 ? (
-              <p className="text-center py-8 text-muted-foreground">Sin egresos en el período</p>
+              <p className="text-center py-8 text-t-secondary">Sin egresos en el período</p>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
@@ -246,30 +256,30 @@ export default function FinanzasDashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-6 text-center">
-              <p className="text-sm text-muted-foreground">Margen Operativo</p>
-              <p className={`text-2xl font-bold ${indicadores.margenOperativo >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+              <p className="text-sm text-t-secondary">Margen Operativo</p>
+              <p className={`text-2xl font-bold ${indicadores.margenOperativo >= 0 ? "text-positive" : "text-negative"}`}>
                 {indicadores.margenOperativo.toFixed(1)}%
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6 text-center">
-              <p className="text-sm text-muted-foreground">Ocupación Flota</p>
-              <p className="text-2xl font-bold text-blue-500">{indicadores.tasaOcupacion.toFixed(1)}%</p>
+              <p className="text-sm text-t-secondary">Ocupación Flota</p>
+              <p className="text-2xl font-bold text-ds-info">{indicadores.tasaOcupacion.toFixed(1)}%</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6 text-center">
-              <p className="text-sm text-muted-foreground">Morosidad</p>
-              <p className={`text-2xl font-bold ${indicadores.tasaMorosidad > 10 ? "text-red-500" : "text-emerald-500"}`}>
+              <p className="text-sm text-t-secondary">Morosidad</p>
+              <p className={`text-2xl font-bold ${indicadores.tasaMorosidad > 10 ? "text-negative" : "text-positive"}`}>
                 {indicadores.tasaMorosidad.toFixed(1)}%
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6 text-center">
-              <p className="text-sm text-muted-foreground">Ejec. Presupuestaria</p>
-              <p className={`text-2xl font-bold ${indicadores.ejecucionPresupuestaria > 100 ? "text-red-500" : "text-blue-500"}`}>
+              <p className="text-sm text-t-secondary">Ejec. Presupuestaria</p>
+              <p className={`text-2xl font-bold ${indicadores.ejecucionPresupuestaria > 100 ? "text-negative" : "text-ds-info"}`}>
                 {indicadores.ejecucionPresupuestaria.toFixed(1)}%
               </p>
             </CardContent>
@@ -280,27 +290,27 @@ export default function FinanzasDashboardPage() {
       {/* Row 5: Accounts receivable/payable */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link href="/admin/contratos">
-          <Card className="hover:border-emerald-500/50 transition-colors cursor-pointer">
+          <Card className="hover:border-positive/50 transition-colors cursor-pointer">
             <CardContent className="pt-6">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-sm text-muted-foreground">Cuentas por Cobrar</p>
-                  <p className="text-2xl font-bold text-emerald-500">{formatMoney(resumen.cuentasPorCobrar)}</p>
+                  <p className="text-sm text-t-secondary">Cuentas por Cobrar</p>
+                  <p className="text-2xl font-bold text-positive">{formatMoney(resumen.cuentasPorCobrar)}</p>
                 </div>
-                <CreditCard className="h-8 w-8 text-emerald-500" />
+                <CreditCard className="h-8 w-8 text-positive" />
               </div>
             </CardContent>
           </Card>
         </Link>
         <Link href="/admin/facturas-compra?estado=PENDIENTE">
-          <Card className="hover:border-red-500/50 transition-colors cursor-pointer">
+          <Card className="hover:border-negative/50 transition-colors cursor-pointer">
             <CardContent className="pt-6">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-sm text-muted-foreground">Cuentas por Pagar</p>
-                  <p className="text-2xl font-bold text-red-500">{formatMoney(resumen.cuentasPorPagar)}</p>
+                  <p className="text-sm text-t-secondary">Cuentas por Pagar</p>
+                  <p className="text-2xl font-bold text-negative">{formatMoney(resumen.cuentasPorPagar)}</p>
                 </div>
-                <Receipt className="h-8 w-8 text-red-500" />
+                <Receipt className="h-8 w-8 text-negative" />
               </div>
             </CardContent>
           </Card>

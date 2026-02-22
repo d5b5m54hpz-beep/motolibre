@@ -58,11 +58,11 @@ interface OCDetalle {
 }
 
 const ESTADO_COLORS: Record<string, string> = {
-  BORRADOR: "bg-gray-500/10 text-gray-500",
-  ENVIADA: "bg-blue-500/10 text-blue-500",
-  CONFIRMADA: "bg-purple-500/10 text-purple-500",
-  RECIBIDA: "bg-emerald-500/10 text-emerald-500",
-  CANCELADA: "bg-red-500/10 text-red-500",
+  BORRADOR: "bg-t-secondary/10 text-t-secondary",
+  ENVIADA: "bg-info-bg text-ds-info",
+  CONFIRMADA: "bg-accent-DEFAULT/10 text-accent-DEFAULT",
+  RECIBIDA: "bg-positive-bg text-positive",
+  CANCELADA: "bg-negative-bg text-negative",
 };
 
 export default function OCDetallePage() {
@@ -158,7 +158,7 @@ export default function OCDetallePage() {
           {oc.estado === "CONFIRMADA" && (
             <Dialog open={recepcionOpen} onOpenChange={setRecepcionOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-emerald-600 hover:bg-emerald-700">
+                <Button className="bg-positive hover:bg-positive/80">
                   <Package className="h-4 w-4 mr-2" /> Registrar Recepción
                 </Button>
               </DialogTrigger>
@@ -257,7 +257,7 @@ export default function OCDetallePage() {
             {oc.fechaEntregaEstimada && <p>Entrega estimada: {formatDate(new Date(oc.fechaEntregaEstimada))}</p>}
             {oc.fechaRecepcion && <p>Recepción: {formatDate(new Date(oc.fechaRecepcion))}</p>}
             {oc.observaciones && <p>Observaciones: {oc.observaciones}</p>}
-            {oc.motivoCancelacion && <p className="text-red-500">Motivo cancelación: {oc.motivoCancelacion}</p>}
+            {oc.motivoCancelacion && <p className="text-negative">Motivo cancelación: {oc.motivoCancelacion}</p>}
           </CardContent>
         </Card>
       </div>
@@ -287,7 +287,7 @@ export default function OCDetallePage() {
                     <td className="py-3 px-2 text-xs font-mono text-muted-foreground">{item.codigo || "-"}</td>
                     <td className="py-3 px-2 text-center">{item.cantidad}</td>
                     <td className="py-3 px-2 text-center">
-                      <span className={item.cantidadRecibida >= item.cantidad ? "text-emerald-500" : item.cantidadRecibida > 0 ? "text-amber-500" : "text-muted-foreground"}>
+                      <span className={item.cantidadRecibida >= item.cantidad ? "text-positive" : item.cantidadRecibida > 0 ? "text-warning" : "text-muted-foreground"}>
                         {item.cantidadRecibida}
                       </span>
                     </td>

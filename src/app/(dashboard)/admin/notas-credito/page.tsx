@@ -203,26 +203,26 @@ export default function NotasCreditoPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Cargando...</div>
+            <div className="text-center py-8 text-t-secondary">Cargando...</div>
           ) : ncs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No hay notas de crédito</div>
+            <div className="text-center py-8 text-t-secondary">No hay notas de crédito</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Número</th>
-                    <th className="text-center py-3 px-2 font-medium text-muted-foreground">Tipo</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Factura</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Receptor</th>
-                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Monto</th>
-                    <th className="text-center py-3 px-2 font-medium text-muted-foreground">Estado</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Fecha</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Número</th>
+                    <th className="text-center py-3 px-2 font-medium text-t-secondary">Tipo</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Factura</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Receptor</th>
+                    <th className="text-right py-3 px-2 font-medium text-t-secondary">Monto</th>
+                    <th className="text-center py-3 px-2 font-medium text-t-secondary">Estado</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Fecha</th>
                   </tr>
                 </thead>
                 <tbody>
                   {ncs.map((nc) => (
-                    <tr key={nc.id} className="border-b hover:bg-muted/50 transition-colors">
+                    <tr key={nc.id} className="border-b border-border hover:bg-bg-card-hover transition-colors">
                       <td className="py-3 px-2 font-mono text-xs">{nc.numeroCompleto}</td>
                       <td className="py-3 px-2 text-center">
                         <Badge variant="outline">{tipoLabel[nc.tipo] || nc.tipo}</Badge>
@@ -232,9 +232,9 @@ export default function NotasCreditoPage() {
                       <td className="py-3 px-2 text-right font-mono">{formatMoney(nc.montoTotal)}</td>
                       <td className="py-3 px-2 text-center">
                         <Badge variant="outline" className={
-                          nc.estado === "GENERADA" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
-                          nc.estado === "ANULADA" ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                          "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                          nc.estado === "GENERADA" ? "bg-positive-bg text-positive border-positive/20" :
+                          nc.estado === "ANULADA" ? "bg-negative-bg text-negative border-negative/20" :
+                          "bg-info-bg text-ds-info border-ds-info/20"
                         }>
                           {nc.estado}
                         </Badge>

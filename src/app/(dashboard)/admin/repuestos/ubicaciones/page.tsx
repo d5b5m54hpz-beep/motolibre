@@ -168,16 +168,16 @@ export default function UbicacionesPage() {
                 {Array.from(sectors.entries()).map(([sector, items]) => (
                   <div key={sector}>
                     <h3 className="font-medium text-sm text-muted-foreground mb-2">Sector {sector}</h3>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                       {items.map((u) => (
                         <button
                           key={u.id}
                           onClick={() => handleSelect(u.id)}
-                          className={`p-3 rounded-lg border text-left transition-colors hover:bg-muted/50 ${
-                            selected === u.id ? "border-primary bg-primary/5" : "border-border"
+                          className={`p-3 rounded-2xl border bg-bg-card/80 backdrop-blur-sm text-left transition-colors hover:bg-bg-card-hover ${
+                            selected === u.id ? "border-accent-DEFAULT bg-accent-DEFAULT/5" : "border-border"
                           }`}
                         >
-                          <p className="font-mono font-bold text-sm">{u.codigo}</p>
+                          <p className="font-mono text-lg font-bold text-accent-DEFAULT">{u.codigo}</p>
                           <p className="text-xs text-muted-foreground truncate">{u.nombre}</p>
                           <div className="flex items-center gap-1 mt-1">
                             <Package className="h-3 w-3 text-muted-foreground" />

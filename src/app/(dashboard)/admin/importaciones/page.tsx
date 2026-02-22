@@ -44,16 +44,16 @@ interface ItemForm {
 }
 
 const ESTADO_COLORS: Record<string, string> = {
-  BORRADOR: "bg-gray-100 text-gray-700",
-  EN_TRANSITO: "bg-blue-100 text-blue-700",
-  EN_PUERTO: "bg-indigo-100 text-indigo-700",
-  EN_ADUANA: "bg-yellow-100 text-yellow-700",
-  DESPACHADO_PARCIAL: "bg-orange-100 text-orange-700",
-  DESPACHADO: "bg-emerald-100 text-emerald-700",
-  COSTOS_FINALIZADOS: "bg-teal-100 text-teal-700",
-  EN_RECEPCION: "bg-purple-100 text-purple-700",
-  ALMACENADO: "bg-green-100 text-green-700",
-  CANCELADO: "bg-red-100 text-red-700",
+  BORRADOR: "bg-t-secondary/10 text-t-secondary",
+  EN_TRANSITO: "bg-info-bg text-ds-info",
+  EN_PUERTO: "bg-info-bg text-ds-info",
+  EN_ADUANA: "bg-warning-bg text-warning",
+  DESPACHADO_PARCIAL: "bg-warning-bg text-warning",
+  DESPACHADO: "bg-positive-bg text-positive",
+  COSTOS_FINALIZADOS: "bg-positive-bg text-positive",
+  EN_RECEPCION: "bg-accent-DEFAULT/10 text-accent-DEFAULT",
+  ALMACENADO: "bg-positive-bg text-positive",
+  CANCELADO: "bg-negative-bg text-negative",
 };
 
 const ESTADO_LABELS: Record<string, string> = {
@@ -178,7 +178,7 @@ function ImportacionesContent() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Embarques Activos</CardTitle>
-            <Ship className="h-4 w-4 text-blue-500" />
+            <Ship className="h-4 w-4 text-ds-info" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activos}</div>
@@ -187,7 +187,7 @@ function ImportacionesContent() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">En Tránsito</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-500" />
+            <Clock className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{enTransito}</div>
@@ -196,7 +196,7 @@ function ImportacionesContent() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">FOB Pendiente (USD)</CardTitle>
-            <DollarSign className="h-4 w-4 text-emerald-500" />
+            <DollarSign className="h-4 w-4 text-positive" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${totalFOBPendiente.toLocaleString("es-AR", { minimumFractionDigits: 2 })}</div>
@@ -205,7 +205,7 @@ function ImportacionesContent() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Items</CardTitle>
-            <Package className="h-4 w-4 text-purple-500" />
+            <Package className="h-4 w-4 text-accent-DEFAULT" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{embarques.reduce((sum, e) => sum + e._count.items, 0)}</div>
@@ -326,7 +326,7 @@ function ImportacionesContent() {
                       </div>
                       <div className="col-span-1 flex justify-center">
                         {items.length > 1 && (
-                          <Button variant="ghost" size="sm" onClick={() => removeItem(idx)} className="h-8 w-8 p-0 text-red-500">
+                          <Button variant="ghost" size="sm" onClick={() => removeItem(idx)} className="h-8 w-8 p-0 text-negative">
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         )}
@@ -335,7 +335,7 @@ function ImportacionesContent() {
                   ))}
                 </div>
                 <p className="text-sm text-right mt-2 font-medium">
-                  Total FOB: <span className="text-emerald-600">USD ${totalFOBItems.toLocaleString("es-AR", { minimumFractionDigits: 2 })}</span>
+                  Total FOB: <span className="text-positive">USD ${totalFOBItems.toLocaleString("es-AR", { minimumFractionDigits: 2 })}</span>
                 </p>
               </div>
 
@@ -351,7 +351,7 @@ function ImportacionesContent() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-muted/50">
+                <tr className="border-b border-border bg-bg-input">
                   <th className="text-left p-3">Número</th>
                   <th className="text-left p-3">Proveedor</th>
                   <th className="text-center p-3">Estado</th>
@@ -368,7 +368,7 @@ function ImportacionesContent() {
                   <tr><td colSpan={7} className="text-center p-8 text-muted-foreground">Sin embarques</td></tr>
                 ) : (
                   embarques.map((e) => (
-                    <tr key={e.id} className="border-b hover:bg-muted/30">
+                    <tr key={e.id} className="border-b hover:bg-bg-card-hover">
                       <td className="p-3 font-medium">{e.numero}</td>
                       <td className="p-3">{e.proveedorNombre}</td>
                       <td className="p-3 text-center">

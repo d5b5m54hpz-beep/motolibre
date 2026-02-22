@@ -65,7 +65,7 @@ export default async function ClienteDetallePage({
       />
 
       {cliente.motivoRechazo && (
-        <div className="rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+        <div className="rounded-2xl border border-negative/30 bg-negative-bg p-3 text-sm text-negative">
           <strong>Motivo de rechazo:</strong> {cliente.motivoRechazo}
         </div>
       )}
@@ -171,7 +171,7 @@ export default async function ClienteDetallePage({
                 <CardTitle className="text-sm">Notas</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">{cliente.notas}</p>
+                <p className="text-sm text-t-secondary">{cliente.notas}</p>
               </CardContent>
             </Card>
           )}
@@ -182,7 +182,7 @@ export default async function ClienteDetallePage({
           <Card>
             <CardContent className="pt-4">
               {cliente.documentos.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
+                <p className="text-sm text-t-secondary text-center py-8">
                   Sin documentos. El upload a R2 se conecta en fases posteriores.
                 </p>
               ) : (
@@ -190,11 +190,11 @@ export default async function ClienteDetallePage({
                   {cliente.documentos.map((d) => (
                     <div
                       key={d.id}
-                      className="flex items-center justify-between border rounded-md p-3"
+                      className="flex items-center justify-between border border-border rounded-2xl p-3"
                     >
                       <div>
-                        <p className="text-sm font-medium">{d.nombre}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm font-medium text-t-primary">{d.nombre}</p>
+                        <p className="text-xs text-t-secondary">
                           {d.tipo.replace(/_/g, " ")}
                         </p>
                       </div>
@@ -206,7 +206,7 @@ export default async function ClienteDetallePage({
                           href={d.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-[#23e0ff] hover:underline"
+                          className="text-xs text-accent-DEFAULT hover:underline"
                         >
                           Ver
                         </a>
@@ -229,10 +229,10 @@ export default async function ClienteDetallePage({
                   <span
                     className={`text-2xl font-bold ${
                       scoreAvg >= 70
-                        ? "text-green-500"
+                        ? "text-positive"
                         : scoreAvg >= 40
-                          ? "text-yellow-500"
-                          : "text-red-500"
+                          ? "text-warning"
+                          : "text-negative"
                     }`}
                   >
                     {scoreAvg}/100
@@ -242,13 +242,13 @@ export default async function ClienteDetallePage({
             </CardHeader>
             <CardContent>
               {cliente.puntajes.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
+                <p className="text-sm text-t-secondary text-center py-8">
                   Sin puntajes registrados todavía.
                 </p>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-muted-foreground border-b">
+                    <tr className="text-t-secondary border-b border-border">
                       <th className="text-left pb-2">Categoría</th>
                       <th className="text-right pb-2">Valor</th>
                       <th className="text-left pb-2 pl-4">Motivo</th>
@@ -257,15 +257,15 @@ export default async function ClienteDetallePage({
                   </thead>
                   <tbody>
                     {cliente.puntajes.map((p) => (
-                      <tr key={p.id} className="border-b last:border-0">
+                      <tr key={p.id} className="border-b border-border last:border-0 hover:bg-bg-card-hover transition-colors">
                         <td className="py-2">
                           <Badge variant="outline" className="text-xs">
                             {p.categoria.replace(/_/g, " ")}
                           </Badge>
                         </td>
                         <td className="py-2 text-right tabular-nums font-medium">{p.valor}</td>
-                        <td className="py-2 pl-4 text-muted-foreground">{p.motivo ?? "—"}</td>
-                        <td className="py-2 text-right text-muted-foreground">
+                        <td className="py-2 pl-4 text-t-secondary">{p.motivo ?? "—"}</td>
+                        <td className="py-2 text-right text-t-tertiary">
                           {formatDate(p.createdAt.toISOString())}
                         </td>
                       </tr>
@@ -282,7 +282,7 @@ export default async function ClienteDetallePage({
           <Card>
             <CardContent className="pt-4">
               {historial.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
+                <p className="text-sm text-t-secondary text-center py-8">
                   Sin eventos registrados.
                 </p>
               ) : (
@@ -290,13 +290,13 @@ export default async function ClienteDetallePage({
                   {historial.map((h) => (
                     <div
                       key={h.id}
-                      className="flex items-center justify-between border-l-2 border-muted pl-4 pb-3"
+                      className="flex items-center justify-between border-l-2 border-border pl-4 pb-3"
                     >
                       <div>
                         <p className="text-sm font-mono">{h.operationId}</p>
                         <StatusBadge status={h.status} className="text-xs mt-1" />
                       </div>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      <span className="text-xs text-t-tertiary whitespace-nowrap">
                         {formatDateTime(h.createdAt.toISOString())}
                       </span>
                     </div>
@@ -314,8 +314,8 @@ export default async function ClienteDetallePage({
 function Row({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div className="flex justify-between gap-2">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-right">{value ?? "—"}</span>
+      <span className="text-t-secondary">{label}</span>
+      <span className="font-medium text-right text-t-primary">{value ?? "—"}</span>
     </div>
   );
 }

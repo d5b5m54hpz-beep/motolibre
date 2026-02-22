@@ -249,7 +249,7 @@ export default function EmbarqueDetallePage() {
               const isCurrent = idx === currentIdx;
               return (
                 <div key={estado} className="flex-1 flex flex-col items-center">
-                  <div className={`w-full h-2 rounded-full ${isCompleted ? "bg-[#23e0ff]" : "bg-gray-200"}`} />
+                  <div className={`w-full h-2 rounded-full ${isCompleted ? "bg-accent-DEFAULT" : "bg-border"}`} />
                   <span className={`mt-1 text-[10px] text-center leading-tight ${isCurrent ? "font-bold text-foreground" : isCompleted ? "text-muted-foreground" : "text-muted-foreground/50"}`}>
                     {ESTADO_LABELS[estado]}
                   </span>
@@ -416,7 +416,7 @@ export default function EmbarqueDetallePage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-muted/50">
+                <tr className="border-b bg-bg-input">
                   <th className="text-left p-3">Descripción</th>
                   <th className="text-left p-3">Código</th>
                   <th className="text-center p-3">Cant.</th>
@@ -436,12 +436,12 @@ export default function EmbarqueDetallePage() {
                   <tr key={item.id} className="border-b">
                     <td className="p-3">
                       {item.descripcion}
-                      {item.esMoto && <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1 rounded">Moto</span>}
+                      {item.esMoto && <span className="ml-1 text-xs bg-info-bg text-ds-info px-1 rounded">Moto</span>}
                     </td>
                     <td className="p-3 text-muted-foreground">{item.codigoProveedor || "—"}</td>
                     <td className="p-3 text-center">{item.cantidad}</td>
                     <td className="p-3 text-center">
-                      <span className={item.cantidadRecibida >= item.cantidad ? "text-green-600 font-medium" : ""}>
+                      <span className={item.cantidadRecibida >= item.cantidad ? "text-positive font-medium" : ""}>
                         {item.cantidadRecibida}
                       </span>
                     </td>
@@ -455,7 +455,7 @@ export default function EmbarqueDetallePage() {
                     )}
                   </tr>
                 ))}
-                <tr className="bg-muted/50 font-medium">
+                <tr className="bg-bg-input font-medium">
                   <td colSpan={5} className="p-3 text-right">Total FOB:</td>
                   <td className="p-3 text-right font-mono">USD {Number(embarque.totalFOB).toLocaleString("es-AR", { minimumFractionDigits: 2 })}</td>
                   {embarque.costosAsignados.length > 0 && (
@@ -490,7 +490,7 @@ export default function EmbarqueDetallePage() {
               <div className="flex justify-between"><span>+ Ingresos Brutos</span><span className="font-mono">{formatMoney(Number(embarque.ingresosBrutos || 0))}</span></div>
               <div className="flex justify-between"><span>+ Gastos Despacho</span><span className="font-mono">{formatMoney(Number(embarque.gastosDespacho || 0))}</span></div>
               <hr />
-              <div className="flex justify-between font-bold text-lg"><span>TOTAL NACIONALIZADO</span><span className="font-mono text-emerald-600">{formatMoney(Number(embarque.totalNacionalizado || 0))}</span></div>
+              <div className="flex justify-between font-bold text-lg"><span>TOTAL NACIONALIZADO</span><span className="font-mono text-positive">{formatMoney(Number(embarque.totalNacionalizado || 0))}</span></div>
             </div>
           </CardContent>
         </Card>
@@ -503,7 +503,7 @@ export default function EmbarqueDetallePage() {
           <CardContent className="p-0">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-muted/50">
+                <tr className="border-b bg-bg-input">
                   <th className="text-left p-3">Item</th>
                   <th className="text-right p-3">% FOB</th>
                   <th className="text-right p-3">Costo Asignado</th>
@@ -533,7 +533,7 @@ export default function EmbarqueDetallePage() {
           <CardContent className="p-0">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-muted/50">
+                <tr className="border-b bg-bg-input">
                   <th className="text-left p-3">N° Despacho</th>
                   <th className="text-left p-3">Fecha</th>
                   <th className="text-left p-3">Despachante</th>

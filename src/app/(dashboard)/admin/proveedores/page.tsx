@@ -137,7 +137,7 @@ export default function ProveedoresPage() {
                 <p className="text-sm text-muted-foreground">Proveedores Activos</p>
                 <p className="text-2xl font-bold">{activos.length}</p>
               </div>
-              <Truck className="h-8 w-8 text-blue-500" />
+              <Truck className="h-8 w-8 text-ds-info" />
             </div>
           </CardContent>
         </Card>
@@ -148,7 +148,7 @@ export default function ProveedoresPage() {
                 <p className="text-sm text-muted-foreground">Nacionales</p>
                 <p className="text-2xl font-bold">{nacionales}</p>
               </div>
-              <Building2 className="h-8 w-8 text-emerald-500" />
+              <Building2 className="h-8 w-8 text-positive" />
             </div>
           </CardContent>
         </Card>
@@ -159,7 +159,7 @@ export default function ProveedoresPage() {
                 <p className="text-sm text-muted-foreground">Internacionales</p>
                 <p className="text-2xl font-bold">{internacionales}</p>
               </div>
-              <Globe2 className="h-8 w-8 text-purple-500" />
+              <Globe2 className="h-8 w-8 text-accent-DEFAULT" />
             </div>
           </CardContent>
         </Card>
@@ -304,7 +304,7 @@ export default function ProveedoresPage() {
                 </thead>
                 <tbody>
                   {proveedores.map((p) => (
-                    <tr key={p.id} className="border-b hover:bg-muted/50 transition-colors">
+                    <tr key={p.id} className="border-b hover:bg-bg-card-hover transition-colors">
                       <td className="py-3 px-2">
                         <div>
                           <span className="font-medium">{p.nombre}</span>
@@ -312,7 +312,7 @@ export default function ProveedoresPage() {
                         </div>
                       </td>
                       <td className="py-3 px-2 text-center">
-                        <Badge variant="outline" className={p.tipoProveedor === "NACIONAL" ? "bg-emerald-500/10 text-emerald-500" : "bg-purple-500/10 text-purple-500"}>
+                        <Badge variant="outline" className={p.tipoProveedor === "NACIONAL" ? "bg-info-bg text-ds-info" : "bg-accent-DEFAULT/10 text-accent-DEFAULT"}>
                           {p.tipoProveedor}
                         </Badge>
                       </td>

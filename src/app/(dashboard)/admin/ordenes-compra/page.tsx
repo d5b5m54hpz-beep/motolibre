@@ -50,11 +50,11 @@ interface Proveedor {
 const ESTADOS_OC = ["BORRADOR", "ENVIADA", "CONFIRMADA", "RECIBIDA", "CANCELADA"];
 
 const ESTADO_COLORS: Record<string, string> = {
-  BORRADOR: "bg-gray-500/10 text-gray-500",
-  ENVIADA: "bg-blue-500/10 text-blue-500",
-  CONFIRMADA: "bg-purple-500/10 text-purple-500",
-  RECIBIDA: "bg-emerald-500/10 text-emerald-500",
-  CANCELADA: "bg-red-500/10 text-red-500",
+  BORRADOR: "bg-t-secondary/10 text-t-secondary",
+  ENVIADA: "bg-info-bg text-ds-info",
+  CONFIRMADA: "bg-accent-DEFAULT/10 text-accent-DEFAULT",
+  RECIBIDA: "bg-positive-bg text-positive",
+  CANCELADA: "bg-negative-bg text-negative",
 };
 
 export default function OrdenesCompraPage() {
@@ -170,7 +170,7 @@ function OrdenesCompraContent() {
                 <p className="text-sm text-muted-foreground">OCs Activas</p>
                 <p className="text-2xl font-bold">{ocsActivas}</p>
               </div>
-              <ShoppingCart className="h-8 w-8 text-blue-500" />
+              <ShoppingCart className="h-8 w-8 text-ds-info" />
             </div>
           </CardContent>
         </Card>
@@ -179,9 +179,9 @@ function OrdenesCompraContent() {
             <div className="flex justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Pendientes Confirmación</p>
-                <p className="text-2xl font-bold text-amber-500">{ocsPendientes}</p>
+                <p className="text-2xl font-bold text-warning">{ocsPendientes}</p>
               </div>
-              <Clock className="h-8 w-8 text-amber-500" />
+              <Clock className="h-8 w-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -192,7 +192,7 @@ function OrdenesCompraContent() {
                 <p className="text-sm text-muted-foreground">Monto Pendiente</p>
                 <p className="text-2xl font-bold">{formatMoney(montoPendiente)}</p>
               </div>
-              <DollarSign className="h-8 w-8 text-emerald-500" />
+              <DollarSign className="h-8 w-8 text-positive" />
             </div>
           </CardContent>
         </Card>
@@ -287,7 +287,7 @@ function OrdenesCompraContent() {
                         <div className="col-span-1">
                           {items.length > 1 && (
                             <Button type="button" variant="ghost" size="sm" onClick={() => removeItem(idx)}>
-                              <Trash2 className="h-4 w-4 text-red-500" />
+                              <Trash2 className="h-4 w-4 text-negative" />
                             </Button>
                           )}
                         </div>
@@ -343,7 +343,7 @@ function OrdenesCompraContent() {
                   {ordenes.map((oc) => (
                     <tr
                       key={oc.id}
-                      className="border-b hover:bg-muted/50 transition-colors cursor-pointer"
+                      className="border-b hover:bg-bg-card-hover transition-colors cursor-pointer"
                       onClick={() => router.push(`/admin/ordenes-compra/${oc.id}`)}
                     >
                       <td className="py-3 px-2 font-mono font-medium">{oc.numero}</td>

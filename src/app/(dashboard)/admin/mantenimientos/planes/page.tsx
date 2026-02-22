@@ -409,7 +409,7 @@ export default function PlanesMantenimientoPage() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-red-500"
+                      className="text-negative"
                       onClick={(e) => { e.stopPropagation(); handleDelete(plan.id); }}
                     >
                       <Trash2 className="h-4 w-4" />

@@ -69,21 +69,21 @@ const TIPOS_OT = ["PREVENTIVO", "CORRECTIVO", "EMERGENCIA"];
 const PRIORIDADES = ["BAJA", "MEDIA", "ALTA", "URGENTE"];
 
 const ESTADO_COLORS: Record<string, string> = {
-  SOLICITADA: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  APROBADA: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
-  PROGRAMADA: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-  EN_ESPERA_REPUESTOS: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-  EN_EJECUCION: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
-  EN_REVISION: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-  COMPLETADA: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-  CANCELADA: "bg-red-500/10 text-red-500 border-red-500/20",
+  SOLICITADA: "bg-t-secondary/10 text-t-secondary border-border",
+  APROBADA: "bg-info-bg text-ds-info border-ds-info/20",
+  PROGRAMADA: "bg-accent-DEFAULT/10 text-accent-DEFAULT border-accent-DEFAULT/20",
+  EN_ESPERA_REPUESTOS: "bg-warning-bg text-warning border-warning/20",
+  EN_EJECUCION: "bg-accent-DEFAULT/10 text-accent-DEFAULT border-accent-DEFAULT/20",
+  EN_REVISION: "bg-info-bg text-ds-info border-ds-info/20",
+  COMPLETADA: "bg-positive-bg text-positive border-positive/20",
+  CANCELADA: "bg-negative-bg text-negative border-negative/20",
 };
 
 const PRIORIDAD_COLORS: Record<string, string> = {
-  BAJA: "bg-gray-500/10 text-gray-500",
-  MEDIA: "bg-blue-500/10 text-blue-500",
-  ALTA: "bg-orange-500/10 text-orange-500",
-  URGENTE: "bg-red-500/10 text-red-500",
+  BAJA: "bg-t-tertiary/10 text-t-tertiary",
+  MEDIA: "bg-info-bg text-ds-info",
+  ALTA: "bg-warning-bg text-warning",
+  URGENTE: "bg-negative-bg text-negative",
 };
 
 export default function OrdenesTrabajoPage() {
@@ -191,7 +191,7 @@ function OrdenesTrabajoContent() {
                   <p className="text-sm text-muted-foreground">OTs Activas</p>
                   <p className="text-2xl font-bold">{stats.otActivas}</p>
                 </div>
-                <Clock className="h-8 w-8 text-blue-500" />
+                <Clock className="h-8 w-8 text-ds-info" />
               </div>
             </CardContent>
           </Card>
@@ -200,9 +200,9 @@ function OrdenesTrabajoContent() {
               <div className="flex justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Completadas (mes)</p>
-                  <p className="text-2xl font-bold text-emerald-500">{stats.otCompletadasMes}</p>
+                  <p className="text-2xl font-bold text-positive">{stats.otCompletadasMes}</p>
                 </div>
-                <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+                <CheckCircle2 className="h-8 w-8 text-positive" />
               </div>
             </CardContent>
           </Card>
@@ -213,7 +213,7 @@ function OrdenesTrabajoContent() {
                   <p className="text-sm text-muted-foreground">Costo Total (mes)</p>
                   <p className="text-2xl font-bold">{formatMoney(stats.costoTotalMes)}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-amber-500" />
+                <DollarSign className="h-8 w-8 text-warning" />
               </div>
             </CardContent>
           </Card>
@@ -228,7 +228,7 @@ function OrdenesTrabajoContent() {
                       : "N/A"}
                   </p>
                 </div>
-                <Timer className="h-8 w-8 text-purple-500" />
+                <Timer className="h-8 w-8 text-accent-DEFAULT" />
               </div>
             </CardContent>
           </Card>
@@ -393,7 +393,7 @@ function OrdenesTrabajoContent() {
                   {ordenes.map((ot) => (
                     <tr
                       key={ot.id}
-                      className="border-b hover:bg-muted/50 transition-colors cursor-pointer"
+                      className="border-b hover:bg-bg-card-hover transition-colors cursor-pointer"
                       onClick={() => router.push(`/admin/mantenimientos/ordenes/${ot.id}`)}
                     >
                       <td className="py-3 px-2 font-mono font-medium">{ot.numero}</td>

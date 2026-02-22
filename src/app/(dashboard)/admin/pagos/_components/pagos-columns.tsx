@@ -70,7 +70,7 @@ export const pagosColumns: ColumnDef<PagoMercadoPago>[] = [
         return (
           <Link
             href={`/admin/solicitudes/${solicitudId}`}
-            className="text-[#23e0ff] hover:underline text-sm"
+            className="text-accent-DEFAULT hover:underline text-sm"
           >
             Solicitud
           </Link>
@@ -80,7 +80,7 @@ export const pagosColumns: ColumnDef<PagoMercadoPago>[] = [
         return (
           <Link
             href={`/admin/contratos/${contratoId}`}
-            className="text-[#23e0ff] hover:underline text-sm"
+            className="text-accent-DEFAULT hover:underline text-sm"
           >
             Contrato
           </Link>

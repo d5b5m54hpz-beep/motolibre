@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -82,27 +82,27 @@ export default function EstadoResultadosPage() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
+      <div className="bg-bg-card/80 backdrop-blur-sm rounded-2xl border border-border p-8 font-mono">
+        <CardHeader className="px-0 pt-0">
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
             Estado de Resultados — {MESES[mes]} {anio}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <div>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Cargando...</div>
+            <div className="text-center py-8 text-t-secondary">Cargando...</div>
           ) : !data ? (
-            <div className="text-center py-8 text-muted-foreground">Sin datos</div>
+            <div className="text-center py-8 text-t-secondary">Sin datos</div>
           ) : (
-            <div className="font-mono text-sm space-y-1 max-w-lg">
+            <div className="text-sm space-y-1 max-w-lg">
               {/* INGRESOS */}
-              <div className="border-b-2 border-foreground pb-1 mb-2">
-                <p className="font-bold text-base">ESTADO DE RESULTADOS</p>
-                <p className="text-muted-foreground text-xs">Período: {MESES[mes]} {anio}</p>
+              <div className="border-b-2 border-accent-DEFAULT pb-1 mb-2">
+                <p className="font-bold text-base text-t-primary">ESTADO DE RESULTADOS</p>
+                <p className="text-t-tertiary text-xs">Período: {MESES[mes]} {anio}</p>
               </div>
 
-              <p className="font-bold mt-4">INGRESOS</p>
+              <p className="font-bold mt-4 text-t-primary">INGRESOS</p>
               <Row label="Ingresos por Alquiler" value={data.ingresos.alquiler} />
               <Row label="Ingresos por Venta de Motos" value={data.ingresos.ventaMotos} />
               <Row label="Ingresos por Repuestos" value={data.ingresos.repuestos} />
@@ -110,7 +110,7 @@ export default function EstadoResultadosPage() {
               <Divider />
               <TotalRow label="TOTAL INGRESOS" value={data.ingresos.total} />
 
-              <p className="font-bold mt-4">COSTOS OPERATIVOS</p>
+              <p className="font-bold mt-4 text-t-primary">COSTOS OPERATIVOS</p>
               <Row label="Depreciación" value={data.costos.depreciacion} negative />
               <Row label="Mantenimiento" value={data.costos.mantenimiento} negative />
               <Row label="Seguros" value={data.costos.seguros} negative />
@@ -120,7 +120,7 @@ export default function EstadoResultadosPage() {
               <div className="py-1" />
               <TotalRow label="RESULTADO BRUTO" value={data.resultadoBruto} highlight />
 
-              <p className="font-bold mt-4">GASTOS DE ADMINISTRACIÓN</p>
+              <p className="font-bold mt-4 text-t-primary">GASTOS DE ADMINISTRACIÓN</p>
               <Row label="Gastos Administrativos" value={data.gastos.administrativos} negative />
               <Row label="Gastos Bancarios" value={data.gastos.bancarios} negative />
               <Row label="Impuestos y Tasas" value={data.gastos.impuestos} negative />
@@ -128,18 +128,18 @@ export default function EstadoResultadosPage() {
               <Divider />
               <TotalRow label="TOTAL GASTOS" value={data.gastos.total} negative />
 
-              <div className="border-t-2 border-b-2 border-foreground py-2 mt-4">
+              <div className="border-t-2 border-accent-DEFAULT pt-3 mt-4">
                 <div className="flex justify-between">
-                  <span className="font-bold">RESULTADO NETO</span>
-                  <span className={`font-bold ${data.resultadoNeto >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                  <span className="text-lg font-bold text-t-primary">RESULTADO NETO</span>
+                  <span className={`text-lg font-bold ${data.resultadoNeto >= 0 ? "text-positive" : "text-negative"}`}>
                     {formatContable(data.resultadoNeto)}
                   </span>
                 </div>
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -147,15 +147,15 @@ export default function EstadoResultadosPage() {
 function Row({ label, value, negative = false }: { label: string; value: number; negative?: boolean }) {
   return (
     <div className="flex justify-between py-0.5 pl-4">
-      <span className="text-muted-foreground">{label}</span>
-      <span>{negative ? formatContable(value, true) : formatMoney(value)}</span>
+      <span className="text-t-secondary">{label}</span>
+      <span className={negative ? "text-sm text-negative" : "text-sm text-t-primary"}>{negative ? formatContable(value, true) : formatMoney(value)}</span>
     </div>
   );
 }
 
 function TotalRow({ label, value, negative = false, highlight = false }: { label: string; value: number; negative?: boolean; highlight?: boolean }) {
   return (
-    <div className={`flex justify-between py-1 font-bold ${highlight ? "text-blue-500" : ""}`}>
+    <div className={`flex justify-between font-bold border-t border-border pt-2 ${highlight ? "text-accent-DEFAULT" : "text-t-primary"}`}>
       <span>{label}</span>
       <span>{negative ? formatContable(value, true) : formatMoney(value)}</span>
     </div>
@@ -163,5 +163,5 @@ function TotalRow({ label, value, negative = false, highlight = false }: { label
 }
 
 function Divider() {
-  return <div className="border-t border-muted-foreground/30 my-1 ml-4" />;
+  return <div className="border-t border-border my-1 ml-4" />;
 }

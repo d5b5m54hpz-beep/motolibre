@@ -100,12 +100,12 @@ export default async function MantenimientosPage({
       {/* Stats */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Programados hoy", value: stats.hoyCount, color: "text-orange-500" },
-          { label: "Esta semana", value: stats.semanaCount, color: "text-blue-500" },
-          { label: "Completados este mes", value: stats.completadosMes, color: "text-green-500" },
-          { label: "No asistieron este mes", value: stats.noAsistioMes, color: "text-red-500" },
+          { label: "Programados hoy", value: stats.hoyCount, color: "text-warning" },
+          { label: "Esta semana", value: stats.semanaCount, color: "text-ds-info" },
+          { label: "Completados este mes", value: stats.completadosMes, color: "text-positive" },
+          { label: "No asistieron este mes", value: stats.noAsistioMes, color: "text-negative" },
         ].map((s) => (
-          <div key={s.label} className="rounded-lg border p-3">
+          <div key={s.label} className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm p-3">
             <p className="text-xs text-muted-foreground">{s.label}</p>
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
           </div>

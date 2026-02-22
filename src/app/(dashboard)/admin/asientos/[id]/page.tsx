@@ -44,37 +44,37 @@ export default async function AsientoDetallePage({
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Detalle del Asiento</CardTitle>
             {asiento.cerrado ? (
-              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500">Cerrado</Badge>
+              <Badge variant="outline" className="bg-positive/10 text-positive">Cerrado</Badge>
             ) : (
-              <Badge variant="outline" className="bg-blue-500/10 text-blue-500">Abierto</Badge>
+              <Badge variant="outline" className="bg-ds-info/10 text-ds-info">Abierto</Badge>
             )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
-              <p className="text-sm text-muted-foreground">Fecha</p>
+              <p className="text-sm text-t-secondary">Fecha</p>
               <p className="font-medium">{formatDate(asiento.fecha)}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Tipo</p>
+              <p className="text-sm text-t-secondary">Tipo</p>
               <Badge variant="outline">{asiento.tipo}</Badge>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Período</p>
+              <p className="text-sm text-t-secondary">Período</p>
               <p className="font-medium">{asiento.periodo?.nombre ?? "—"}</p>
             </div>
           </div>
 
           <div>
-            <p className="text-sm text-muted-foreground">Descripción</p>
+            <p className="text-sm text-t-secondary">Descripción</p>
             <p className="font-medium">{asiento.descripcion}</p>
           </div>
 
           {asiento.origenTipo && (
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-sm text-muted-foreground">Origen</p>
+                <p className="text-sm text-t-secondary">Origen</p>
                 <p className="font-medium font-mono text-sm">{asiento.origenTipo} / {asiento.origenId}</p>
               </div>
             </div>
@@ -91,19 +91,19 @@ export default async function AsientoDetallePage({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Cuenta</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Nombre</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Descripción</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">DEBE</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">HABER</th>
+                  <th className="text-left py-3 px-2 font-medium text-t-secondary">Cuenta</th>
+                  <th className="text-left py-3 px-2 font-medium text-t-secondary">Nombre</th>
+                  <th className="text-left py-3 px-2 font-medium text-t-secondary">Descripción</th>
+                  <th className="text-right py-3 px-2 font-medium text-t-secondary">DEBE</th>
+                  <th className="text-right py-3 px-2 font-medium text-t-secondary">HABER</th>
                 </tr>
               </thead>
               <tbody>
                 {asiento.lineas.map((linea) => (
                   <tr key={linea.id} className="border-b">
-                    <td className="py-3 px-2 font-mono text-muted-foreground">{linea.cuenta.codigo}</td>
+                    <td className="py-3 px-2 font-mono text-t-tertiary">{linea.cuenta.codigo}</td>
                     <td className="py-3 px-2">{linea.cuenta.nombre}</td>
-                    <td className="py-3 px-2 text-muted-foreground">{linea.descripcion ?? "—"}</td>
+                    <td className="py-3 px-2 text-t-secondary">{linea.descripcion ?? "—"}</td>
                     <td className="py-3 px-2 text-right font-mono">
                       {Number(linea.debe) > 0 ? formatMoney(Number(linea.debe)) : ""}
                     </td>
@@ -122,11 +122,11 @@ export default async function AsientoDetallePage({
                 <tr>
                   <td colSpan={5} className="py-2 px-2 text-right">
                     {balancea ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-500">
+                      <span className="inline-flex items-center gap-1 text-positive">
                         <CheckCircle2 className="h-4 w-4" /> Asiento balanceado
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-red-500">
+                      <span className="inline-flex items-center gap-1 text-negative">
                         <XCircle className="h-4 w-4" /> Asiento NO balancea
                       </span>
                     )}

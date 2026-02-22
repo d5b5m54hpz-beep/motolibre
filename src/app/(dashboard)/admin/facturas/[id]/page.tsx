@@ -63,22 +63,22 @@ export default async function FacturaDetailPage({
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h2 className="text-xl font-bold">{factura.emisorRazonSocial}</h2>
-                <p className="text-sm text-muted-foreground">CUIT: {factura.emisorCuit}</p>
-                <p className="text-sm text-muted-foreground">{factura.emisorCondicionIva}</p>
-                <p className="text-sm text-muted-foreground">{factura.emisorDomicilio}</p>
+                <p className="text-sm text-t-secondary">CUIT: {factura.emisorCuit}</p>
+                <p className="text-sm text-t-secondary">{factura.emisorCondicionIva}</p>
+                <p className="text-sm text-t-secondary">{factura.emisorDomicilio}</p>
               </div>
               <div className="text-right">
                 <div
                   className={`inline-flex items-center justify-center w-16 h-16 border-2 rounded text-4xl font-black ${
                     factura.tipo === "A"
-                      ? "border-blue-500 text-blue-500"
-                      : "border-green-500 text-green-500"
+                      ? "border-ds-info text-ds-info"
+                      : "border-positive text-positive"
                   }`}
                 >
                   {factura.tipo}
                 </div>
                 <p className="text-sm mt-2 font-mono font-medium">{factura.numeroCompleto}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-t-secondary">
                   {new Date(factura.fechaEmision).toLocaleDateString("es-AR")}
                 </p>
                 <div className="mt-2">
@@ -88,28 +88,28 @@ export default async function FacturaDetailPage({
             </div>
 
             {/* Receptor */}
-            <div className="border rounded p-4 mb-6">
-              <h3 className="text-sm font-semibold mb-2 text-muted-foreground uppercase tracking-wide">
+            <div className="border border-border rounded-2xl p-4 mb-6">
+              <h3 className="text-sm font-semibold mb-2 text-t-secondary uppercase tracking-wide">
                 Receptor
               </h3>
               <p className="font-medium">{factura.receptorNombre}</p>
               {factura.receptorCuit && (
-                <p className="text-sm text-muted-foreground">CUIT/DNI: {factura.receptorCuit}</p>
+                <p className="text-sm text-t-secondary">CUIT/DNI: {factura.receptorCuit}</p>
               )}
-              <p className="text-sm text-muted-foreground">{factura.receptorCondicionIva}</p>
+              <p className="text-sm text-t-secondary">{factura.receptorCondicionIva}</p>
               {factura.receptorDomicilio && (
-                <p className="text-sm text-muted-foreground">{factura.receptorDomicilio}</p>
+                <p className="text-sm text-t-secondary">{factura.receptorDomicilio}</p>
               )}
             </div>
 
             {/* Tabla de ítems */}
             <table className="w-full mb-6">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2 text-sm font-semibold text-muted-foreground">Descripción</th>
-                  <th className="text-right py-2 text-sm font-semibold text-muted-foreground">Cant.</th>
-                  <th className="text-right py-2 text-sm font-semibold text-muted-foreground">P. Unit.</th>
-                  <th className="text-right py-2 text-sm font-semibold text-muted-foreground">Subtotal</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 text-sm font-semibold text-t-secondary">Descripción</th>
+                  <th className="text-right py-2 text-sm font-semibold text-t-secondary">Cant.</th>
+                  <th className="text-right py-2 text-sm font-semibold text-t-secondary">P. Unit.</th>
+                  <th className="text-right py-2 text-sm font-semibold text-t-secondary">Subtotal</th>
                 </tr>
               </thead>
               <tbody>
@@ -128,14 +128,14 @@ export default async function FacturaDetailPage({
                 {factura.tipo === "A" && (
                   <>
                     <div className="flex justify-between py-1 text-sm">
-                      <span className="text-muted-foreground">Subtotal neto:</span>
+                      <span className="text-t-secondary">Subtotal neto:</span>
                       <span className="font-mono">{formatMoney(montoNeto)}</span>
                     </div>
                     <div className="flex justify-between py-1 text-sm">
-                      <span className="text-muted-foreground">IVA 21%:</span>
+                      <span className="text-t-secondary">IVA 21%:</span>
                       <span className="font-mono">{formatMoney(montoIva)}</span>
                     </div>
-                    <div className="border-t mt-1 pt-1" />
+                    <div className="border-t border-border mt-1 pt-1" />
                   </>
                 )}
                 <div className="flex justify-between py-1">
@@ -149,8 +149,8 @@ export default async function FacturaDetailPage({
 
             {/* CAE */}
             {factura.cae && (
-              <div className="border-t mt-6 pt-4">
-                <p className="text-xs text-muted-foreground">
+              <div className="border-t border-border mt-6 pt-4">
+                <p className="text-xs text-t-secondary">
                   CAE: <span className="font-mono">{factura.cae}</span>
                   {factura.caeVencimiento && (
                     <span className="ml-4">
@@ -158,7 +158,7 @@ export default async function FacturaDetailPage({
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-t-secondary mt-1">
                   Comprobante emitido conforme a las normas de la RG 1415/2003 y sus modificaciones — AFIP
                 </p>
               </div>
@@ -174,26 +174,26 @@ export default async function FacturaDetailPage({
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">ID MP:</span>
+                <span className="text-t-secondary">ID MP:</span>
                 <span className="font-mono">{pago.mpPaymentId ?? "—"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Monto:</span>
+                <span className="text-t-secondary">Monto:</span>
                 <span className="font-mono">{formatMoney(Number(pago.monto))}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Estado:</span>
+                <span className="text-t-secondary">Estado:</span>
                 <StatusBadge status={pago.estado} />
               </div>
               {pago.mpPaymentMethodId && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Método:</span>
+                  <span className="text-t-secondary">Método:</span>
                   <span>{pago.mpPaymentMethodId}</span>
                 </div>
               )}
               {pago.fechaPago && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Fecha pago:</span>
+                  <span className="text-t-secondary">Fecha pago:</span>
                   <span>{new Date(pago.fechaPago).toLocaleDateString("es-AR")}</span>
                 </div>
               )}

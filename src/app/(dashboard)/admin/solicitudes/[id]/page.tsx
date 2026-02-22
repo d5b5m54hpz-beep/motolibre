@@ -58,7 +58,7 @@ export default async function SolicitudDetailPage({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Cliente */}
-        <div className="rounded-lg border p-4 space-y-3">
+        <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm p-4 space-y-3">
           <h2 className="font-semibold text-sm">Cliente</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -90,7 +90,7 @@ export default async function SolicitudDetailPage({
         </div>
 
         {/* Solicitud */}
-        <div className="rounded-lg border p-4 space-y-3">
+        <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm p-4 space-y-3">
           <h2 className="font-semibold text-sm">Solicitud</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -119,7 +119,7 @@ export default async function SolicitudDetailPage({
             )}
             <div className="flex justify-between border-t pt-1">
               <span className="text-muted-foreground">1er mes pagado</span>
-              <span className="font-bold text-green-500">
+              <span className="font-bold text-positive">
                 {formatMoney(Number(solicitud.montoPrimerMes))}
               </span>
             </div>
@@ -127,7 +127,7 @@ export default async function SolicitudDetailPage({
         </div>
 
         {/* Pago */}
-        <div className="rounded-lg border p-4 space-y-3">
+        <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm p-4 space-y-3">
           <h2 className="font-semibold text-sm">Pago Adelantado</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -145,7 +145,7 @@ export default async function SolicitudDetailPage({
 
         {/* Lista de espera / Asignación */}
         {(solicitud.prioridadEspera !== null || solicitud.moto) && (
-          <div className="rounded-lg border p-4 space-y-3">
+          <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm p-4 space-y-3">
             <h2 className="font-semibold text-sm">Lista de Espera / Asignación</h2>
             <div className="space-y-2 text-sm">
               {solicitud.prioridadEspera !== null && (
@@ -184,11 +184,11 @@ export default async function SolicitudDetailPage({
 
       {/* Rechazo */}
       {solicitud.motivoRechazo && (
-        <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/20 p-4">
-          <h2 className="font-semibold text-sm text-red-600 mb-1">Motivo de rechazo</h2>
-          <p className="text-sm text-red-600">{solicitud.motivoRechazo}</p>
+        <div className="rounded-2xl border border-negative/30 bg-negative-bg p-4">
+          <h2 className="font-semibold text-sm text-negative mb-1">Motivo de rechazo</h2>
+          <p className="text-sm text-negative">{solicitud.motivoRechazo}</p>
           {solicitud.fechaEvaluacion && (
-            <p className="text-xs text-red-400 mt-1">
+            <p className="text-xs text-negative/70 mt-1">
               Evaluado: {formatDate(solicitud.fechaEvaluacion)}
             </p>
           )}
@@ -196,8 +196,8 @@ export default async function SolicitudDetailPage({
       )}
 
       {/* Documentos del cliente */}
-      <div className="rounded-lg border">
-        <div className="p-4 border-b">
+      <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm">
+        <div className="p-4 border-b border-border">
           <h2 className="font-semibold">
             Documentos del Cliente ({solicitud.cliente.documentos.length})
           </h2>
@@ -216,13 +216,13 @@ export default async function SolicitudDetailPage({
                 </div>
                 <div className="flex items-center gap-2">
                   {doc.verificado && (
-                    <span className="text-xs text-green-500 font-medium">✓ Verificado</span>
+                    <span className="text-xs text-positive font-medium">✓ Verificado</span>
                   )}
                   <a
                     href={doc.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline text-xs"
+                    className="text-accent-DEFAULT hover:underline text-xs"
                   >
                     Ver
                   </a>
@@ -235,12 +235,12 @@ export default async function SolicitudDetailPage({
 
       {/* Contrato generado */}
       {solicitud.contrato && (
-        <div className="rounded-lg border p-4">
+        <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm p-4">
           <h2 className="font-semibold text-sm mb-2">Contrato Generado</h2>
           <div className="flex items-center gap-3 text-sm">
             <Link
               href={`/admin/contratos/${solicitud.contrato.id}`}
-              className="text-blue-500 hover:underline font-mono"
+              className="text-accent-DEFAULT hover:underline font-mono"
             >
               {solicitud.contrato.id}
             </Link>

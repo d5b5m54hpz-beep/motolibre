@@ -9,13 +9,13 @@ import Link from "next/link";
 
 function tipoAsientoBadge(tipo: string) {
   const colors: Record<string, string> = {
-    MANUAL: "bg-gray-500/10 text-gray-400 border-gray-500/20",
-    VENTA: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-    COMPRA: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-    DEPRECIACION: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-    GASTO: "bg-red-500/10 text-red-500 border-red-500/20",
-    AJUSTE: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-    CIERRE: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+    MANUAL: "bg-t-tertiary/10 text-t-tertiary border-t-tertiary/20",
+    VENTA: "bg-positive/10 text-positive border-positive/20",
+    COMPRA: "bg-ds-info/10 text-ds-info border-ds-info/20",
+    DEPRECIACION: "bg-warning/10 text-warning border-warning/20",
+    GASTO: "bg-negative/10 text-negative border-negative/20",
+    AJUSTE: "bg-accent-DEFAULT/10 text-accent-DEFAULT border-accent-DEFAULT/20",
+    CIERRE: "bg-warning/10 text-warning border-warning/20",
   };
   return colors[tipo] ?? "";
 }
@@ -37,8 +37,8 @@ export default async function AsientosPage() {
   ]);
 
   const stats = [
-    { title: "Total Asientos", value: totalAsientos, icon: Calculator, color: "text-[#23e0ff]" },
-    { title: "Movimiento Total", value: formatMoney(Number(totalDebe._sum.totalDebe ?? 0)), icon: TrendingUp, color: "text-emerald-500" },
+    { title: "Total Asientos", value: totalAsientos, icon: Calculator, color: "text-accent-DEFAULT" },
+    { title: "Movimiento Total", value: formatMoney(Number(totalDebe._sum.totalDebe ?? 0)), icon: TrendingUp, color: "text-positive" },
   ];
 
   return (
@@ -60,7 +60,7 @@ export default async function AsientosPage() {
         {stats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-t-secondary">
                 {stat.title}
               </CardTitle>
               <stat.icon className={`h-4 w-4 ${stat.color}`} />
@@ -78,7 +78,7 @@ export default async function AsientosPage() {
         </CardHeader>
         <CardContent>
           {asientos.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-12 text-t-secondary">
               <FileText className="mx-auto h-12 w-12 mb-4 opacity-50" />
               <p>No hay asientos contables registrados</p>
               <p className="text-sm mt-1">Los asientos se generan automáticamente con las operaciones del negocio</p>
@@ -88,20 +88,20 @@ export default async function AsientosPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">#</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Fecha</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Tipo</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Descripción</th>
-                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Debe</th>
-                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Haber</th>
-                    <th className="text-center py-3 px-2 font-medium text-muted-foreground">Estado</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">#</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Fecha</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Tipo</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Descripción</th>
+                    <th className="text-right py-3 px-2 font-medium text-t-secondary">Debe</th>
+                    <th className="text-right py-3 px-2 font-medium text-t-secondary">Haber</th>
+                    <th className="text-center py-3 px-2 font-medium text-t-secondary">Estado</th>
                   </tr>
                 </thead>
                 <tbody>
                   {asientos.map((a) => (
-                    <tr key={a.id} className="border-b hover:bg-muted/50 transition-colors">
+                    <tr key={a.id} className="border-b border-border hover:bg-bg-card-hover transition-colors">
                       <td className="py-3 px-2">
-                        <Link href={`/admin/asientos/${a.id}`} className="text-motolibre-cyan hover:underline font-mono">
+                        <Link href={`/admin/asientos/${a.id}`} className="text-accent-DEFAULT hover:underline font-mono">
                           {a.numero}
                         </Link>
                       </td>
@@ -116,9 +116,9 @@ export default async function AsientosPage() {
                       <td className="py-3 px-2 text-right font-mono">{formatMoney(Number(a.totalHaber))}</td>
                       <td className="py-3 px-2 text-center">
                         {a.cerrado ? (
-                          <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-500">Cerrado</Badge>
+                          <Badge variant="outline" className="text-xs bg-positive/10 text-positive">Cerrado</Badge>
                         ) : (
-                          <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-500">Abierto</Badge>
+                          <Badge variant="outline" className="text-xs bg-ds-info/10 text-ds-info">Abierto</Badge>
                         )}
                       </td>
                     </tr>

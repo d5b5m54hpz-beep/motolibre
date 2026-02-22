@@ -68,7 +68,7 @@ export default async function ContratoDetailPage({
             <h1 className="text-2xl font-bold">Contrato</h1>
             <StatusBadge status={contrato.estado} />
             {contrato.esLeaseToOwn && (
-              <span className="rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-xs font-semibold px-2.5 py-1">
+              <span className="rounded-full bg-accent-DEFAULT/15 text-accent-DEFAULT text-xs font-semibold px-2.5 py-1">
                 LEASE-TO-OWN (24 meses)
               </span>
             )}
@@ -85,11 +85,11 @@ export default async function ContratoDetailPage({
 
       {/* Alerta lease-to-own completado */}
       {contrato.esLeaseToOwn && todasPagadas && contrato.estado === "ACTIVO" && (
-        <div className="rounded-lg border border-purple-200 bg-purple-50 dark:bg-purple-950/20 p-4">
-          <p className="font-semibold text-purple-700 dark:text-purple-300">
+        <div className="rounded-2xl border border-accent-DEFAULT/30 bg-accent-DEFAULT/10 p-4">
+          <p className="font-semibold text-accent-DEFAULT">
             ¡Plan 24 meses completado! Moto lista para transferencia automática.
           </p>
-          <p className="text-sm text-purple-600 dark:text-purple-400 mt-1">
+          <p className="text-sm text-accent-DEFAULT/80 mt-1">
             Ejecuta el proceso lease-to-own para transferir la moto al rider.
           </p>
         </div>
@@ -98,7 +98,7 @@ export default async function ContratoDetailPage({
       {/* Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Partes */}
-        <div className="rounded-lg border p-4 space-y-3">
+        <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm p-4 space-y-3">
           <h2 className="font-semibold text-sm">Partes del contrato</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -131,7 +131,7 @@ export default async function ContratoDetailPage({
         </div>
 
         {/* Condiciones */}
-        <div className="rounded-lg border p-4 space-y-3">
+        <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm p-4 space-y-3">
           <h2 className="font-semibold text-sm">Condiciones</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -164,7 +164,7 @@ export default async function ContratoDetailPage({
         </div>
 
         {/* Fechas */}
-        <div className="rounded-lg border p-4 space-y-3">
+        <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm p-4 space-y-3">
           <h2 className="font-semibold text-sm">Fechas</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -192,7 +192,7 @@ export default async function ContratoDetailPage({
             {contrato.motivoCancelacion && (
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground shrink-0">Motivo cancelación</span>
-                <span className="text-right text-red-500">{contrato.motivoCancelacion}</span>
+                <span className="text-right text-negative">{contrato.motivoCancelacion}</span>
               </div>
             )}
           </div>
@@ -200,7 +200,7 @@ export default async function ContratoDetailPage({
 
         {/* Resumen cuotas con progreso */}
         {cuotasResumen.total > 0 && (
-          <div className="rounded-lg border p-4 space-y-3">
+          <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm p-4 space-y-3">
             <h2 className="font-semibold text-sm">Resumen cuotas</h2>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -210,7 +210,7 @@ export default async function ContratoDetailPage({
               {/* Barra de progreso */}
               <div className="w-full bg-muted rounded-full h-2">
                 <div
-                  className="bg-green-500 h-2 rounded-full transition-all"
+                  className="bg-positive h-2 rounded-full transition-all"
                   style={{ width: `${progresoPercent}%` }}
                 />
               </div>
@@ -218,12 +218,12 @@ export default async function ContratoDetailPage({
               {cuotasResumen.vencidas > 0 && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Vencidas</span>
-                  <span className="text-red-500 font-medium">{cuotasResumen.vencidas}</span>
+                  <span className="text-negative font-medium">{cuotasResumen.vencidas}</span>
                 </div>
               )}
               <div className="flex justify-between border-t pt-1">
                 <span className="text-muted-foreground">Monto pagado</span>
-                <span className="font-medium text-green-500">
+                <span className="font-medium text-positive">
                   {formatMoney(cuotasResumen.montoPagado)}
                 </span>
               </div>
@@ -238,8 +238,8 @@ export default async function ContratoDetailPage({
 
       {/* Tabla de cuotas */}
       {contrato.cuotas.length > 0 && (
-        <div className="rounded-lg border">
-          <div className="p-4 border-b">
+        <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm">
+          <div className="p-4 border-b border-border">
             <h2 className="font-semibold">Cuotas de pago</h2>
           </div>
           <div className="overflow-x-auto">
@@ -262,11 +262,11 @@ export default async function ContratoDetailPage({
                   return (
                     <tr
                       key={cuota.id}
-                      className={`border-b last:border-0 ${isVencida ? "bg-red-50 dark:bg-red-950/20" : ""}`}
+                      className={`border-b border-border last:border-0 ${isVencida ? "bg-negative-bg" : ""}`}
                     >
                       <td className="p-3 font-mono">{cuota.numero}</td>
                       <td className="p-3">
-                        <span className={isVencida ? "text-red-500" : ""}>
+                        <span className={isVencida ? "text-negative" : ""}>
                           {formatDate(cuota.fechaVencimiento)}
                         </span>
                       </td>
@@ -292,21 +292,21 @@ export default async function ContratoDetailPage({
       )}
 
       {contrato.cuotas.length === 0 && contrato.estado === "BORRADOR" && (
-        <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
           <p>Las cuotas se generarán automáticamente al activar el contrato.</p>
         </div>
       )}
 
       {/* Mantenimientos programados */}
       {contrato.mantenimientos.length > 0 && (
-        <div className="rounded-lg border">
-          <div className="p-4 border-b flex items-center justify-between">
+        <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm">
+          <div className="p-4 border-b border-border flex items-center justify-between">
             <h2 className="font-semibold">
               Mantenimientos Programados ({contrato.mantenimientos.length})
             </h2>
             <Link
               href={`/admin/mantenimientos?contratoId=${contrato.id}`}
-              className="text-sm text-blue-500 hover:underline"
+              className="text-sm text-accent-DEFAULT hover:underline"
             >
               Ver todos
             </Link>
@@ -329,11 +329,11 @@ export default async function ContratoDetailPage({
                   return (
                     <tr
                       key={mant.id}
-                      className={`border-b last:border-0 ${isVencido ? "bg-orange-50 dark:bg-orange-950/20" : ""}`}
+                      className={`border-b border-border last:border-0 ${isVencido ? "bg-warning-bg" : ""}`}
                     >
                       <td className="p-3 font-mono">#{mant.numero}</td>
                       <td className="p-3">
-                        <span className={isVencido ? "text-orange-500 font-medium" : ""}>
+                        <span className={isVencido ? "text-warning font-medium" : ""}>
                           {formatDate(mant.fechaProgramada)}
                         </span>
                       </td>
@@ -356,7 +356,7 @@ export default async function ContratoDetailPage({
       )}
 
       {contrato.notas && (
-        <div className="rounded-lg border p-4">
+        <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm p-4">
           <h2 className="font-semibold text-sm mb-2">Notas</h2>
           <p className="text-sm text-muted-foreground">{contrato.notas}</p>
         </div>

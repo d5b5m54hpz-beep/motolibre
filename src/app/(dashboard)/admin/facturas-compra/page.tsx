@@ -156,10 +156,10 @@ export default function FacturasCompraPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Facturas</p>
-                <p className="text-2xl font-bold">{total}</p>
+                <p className="text-sm text-t-secondary">Total Facturas</p>
+                <p className="text-2xl font-bold text-t-primary">{total}</p>
               </div>
-              <FileInput className="h-8 w-8 text-muted-foreground" />
+              <FileInput className="h-8 w-8 text-t-secondary" />
             </div>
           </CardContent>
         </Card>
@@ -167,10 +167,10 @@ export default function FacturasCompraPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Pendientes Pago</p>
-                <p className="text-2xl font-bold text-amber-500">{pendientesPago.length}</p>
+                <p className="text-sm text-t-secondary">Pendientes Pago</p>
+                <p className="text-2xl font-bold text-warning">{pendientesPago.length}</p>
               </div>
-              <Clock className="h-8 w-8 text-amber-500" />
+              <Clock className="h-8 w-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -178,10 +178,10 @@ export default function FacturasCompraPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Adeudado</p>
-                <p className="text-2xl font-bold text-red-500">{formatMoney(totalAdeudado)}</p>
+                <p className="text-sm text-t-secondary">Total Adeudado</p>
+                <p className="text-2xl font-bold text-negative">{formatMoney(totalAdeudado)}</p>
               </div>
-              <AlertTriangle className="h-8 w-8 text-red-500" />
+              <AlertTriangle className="h-8 w-8 text-negative" />
             </div>
           </CardContent>
         </Card>
@@ -247,11 +247,11 @@ export default function FacturasCompraPage() {
                       </div>
                       <div>
                         <Label>IVA</Label>
-                        <Input type="number" step="0.01" value={form.montoIva} readOnly className="bg-muted" />
+                        <Input type="number" step="0.01" value={form.montoIva} readOnly className="bg-bg-input" />
                       </div>
                       <div>
                         <Label>Total</Label>
-                        <Input type="number" step="0.01" value={form.montoTotal} readOnly className="bg-muted" />
+                        <Input type="number" step="0.01" value={form.montoTotal} readOnly className="bg-bg-input" />
                       </div>
                     </div>
                     <div>
@@ -283,27 +283,27 @@ export default function FacturasCompraPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Cargando...</div>
+            <div className="text-center py-8 text-t-secondary">Cargando...</div>
           ) : facturas.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No hay facturas de compra</div>
+            <div className="text-center py-8 text-t-secondary">No hay facturas de compra</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Número</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Proveedor</th>
-                    <th className="text-center py-3 px-2 font-medium text-muted-foreground">Tipo</th>
-                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Total</th>
-                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Pagado</th>
-                    <th className="text-center py-3 px-2 font-medium text-muted-foreground">Estado</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Fecha</th>
-                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Acciones</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Número</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Proveedor</th>
+                    <th className="text-center py-3 px-2 font-medium text-t-secondary">Tipo</th>
+                    <th className="text-right py-3 px-2 font-medium text-t-secondary">Total</th>
+                    <th className="text-right py-3 px-2 font-medium text-t-secondary">Pagado</th>
+                    <th className="text-center py-3 px-2 font-medium text-t-secondary">Estado</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Fecha</th>
+                    <th className="text-right py-3 px-2 font-medium text-t-secondary">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {facturas.map((f) => (
-                    <tr key={f.id} className="border-b hover:bg-muted/50 transition-colors">
+                    <tr key={f.id} className="border-b border-border hover:bg-bg-card-hover transition-colors">
                       <td className="py-3 px-2 font-mono text-xs">{f.numeroCompleto}</td>
                       <td className="py-3 px-2">{f.proveedorNombre}</td>
                       <td className="py-3 px-2 text-center"><Badge variant="outline">{f.tipo}</Badge></td>
@@ -311,10 +311,10 @@ export default function FacturasCompraPage() {
                       <td className="py-3 px-2 text-right font-mono">{formatMoney(f.montoPagado)}</td>
                       <td className="py-3 px-2 text-center">
                         <Badge variant="outline" className={
-                          f.estado === "PENDIENTE" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
-                          f.estado === "PARCIAL" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
-                          f.estado === "PAGADA" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
-                          "bg-red-500/10 text-red-500 border-red-500/20"
+                          f.estado === "PENDIENTE" ? "bg-warning-bg text-warning border-warning/20" :
+                          f.estado === "PARCIAL" ? "bg-info-bg text-ds-info border-ds-info/20" :
+                          f.estado === "PAGADA" ? "bg-positive-bg text-positive border-positive/20" :
+                          "bg-negative-bg text-negative border-negative/20"
                         }>
                           {f.estado}
                         </Badge>
@@ -351,7 +351,7 @@ export default function FacturasCompraPage() {
           <DialogHeader><DialogTitle>Registrar Pago</DialogTitle></DialogHeader>
           {pagoFC && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-t-secondary">
                 {pagoFC.proveedorNombre} — {pagoFC.numeroCompleto}
               </p>
               <p className="text-sm">

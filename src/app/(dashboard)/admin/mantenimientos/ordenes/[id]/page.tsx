@@ -107,14 +107,14 @@ interface OTDetalle {
 }
 
 const ESTADO_COLORS: Record<string, string> = {
-  SOLICITADA: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  APROBADA: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
-  PROGRAMADA: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-  EN_ESPERA_REPUESTOS: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-  EN_EJECUCION: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
-  EN_REVISION: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-  COMPLETADA: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-  CANCELADA: "bg-red-500/10 text-red-500 border-red-500/20",
+  SOLICITADA: "bg-t-secondary/10 text-t-secondary border-border",
+  APROBADA: "bg-info-bg text-ds-info border-ds-info/20",
+  PROGRAMADA: "bg-accent-DEFAULT/10 text-accent-DEFAULT border-accent-DEFAULT/20",
+  EN_ESPERA_REPUESTOS: "bg-warning-bg text-warning border-warning/20",
+  EN_EJECUCION: "bg-accent-DEFAULT/10 text-accent-DEFAULT border-accent-DEFAULT/20",
+  EN_REVISION: "bg-info-bg text-ds-info border-ds-info/20",
+  COMPLETADA: "bg-positive-bg text-positive border-positive/20",
+  CANCELADA: "bg-negative-bg text-negative border-negative/20",
 };
 
 const RESULTADO_ICONS: Record<string, string> = {
@@ -335,7 +335,7 @@ export default function OTDetallePage() {
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-red-500 ml-auto"
+                className="text-negative ml-auto"
                 onClick={() => setActionDialog("CANCELADA")}
               >
                 Cancelar OT
@@ -486,7 +486,7 @@ export default function OTDetallePage() {
                 <p className="text-muted-foreground">Taller</p>
                 <p className="font-medium">
                   {ot.tallerId ? (
-                    <Link href={`/admin/talleres`} className="text-blue-500 hover:underline">
+                    <Link href={`/admin/talleres`} className="text-ds-info hover:underline">
                       {ot.tallerNombre ?? "Ver taller"}
                     </Link>
                   ) : (
@@ -498,7 +498,7 @@ export default function OTDetallePage() {
                 <p className="text-muted-foreground">Mecánico</p>
                 <p className="font-medium">
                   {ot.mecanicoId ? (
-                    <span className="text-blue-500">{ot.mecanicoNombre ?? "Asignado"}</span>
+                    <span className="text-ds-info">{ot.mecanicoNombre ?? "Asignado"}</span>
                   ) : (
                     ot.mecanicoNombre ?? "-"
                   )}
@@ -514,20 +514,20 @@ export default function OTDetallePage() {
               </div>
             </div>
             {ot.diagnostico && (
-              <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Diagnóstico</p>
+              <div className="mt-4 p-3 bg-bg-input rounded-2xl">
+                <p className="text-xs text-t-secondary mb-1">Diagnóstico</p>
                 <p className="text-sm">{ot.diagnostico}</p>
               </div>
             )}
             {ot.observaciones && (
-              <div className="mt-2 p-3 bg-muted/50 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Observaciones</p>
+              <div className="mt-2 p-3 bg-bg-input rounded-2xl">
+                <p className="text-xs text-t-secondary mb-1">Observaciones</p>
                 <p className="text-sm">{ot.observaciones}</p>
               </div>
             )}
             {ot.motivoCancelacion && (
-              <div className="mt-2 p-3 bg-red-500/10 rounded-lg">
-                <p className="text-xs text-red-500 mb-1">Motivo de Cancelación</p>
+              <div className="mt-2 p-3 bg-negative-bg rounded-2xl">
+                <p className="text-xs text-negative mb-1">Motivo de Cancelación</p>
                 <p className="text-sm">{ot.motivoCancelacion}</p>
               </div>
             )}
@@ -720,7 +720,7 @@ export default function OTDetallePage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-red-500 h-7"
+                            className="text-negative h-7"
                             onClick={() => eliminarRepuesto(r.id)}
                           >
                             ✕
@@ -787,7 +787,7 @@ export default function OTDetallePage() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {ot.fotos.map((f) => (
-                <div key={f.id} className="border rounded-lg overflow-hidden">
+                <div key={f.id} className="border border-border rounded-2xl overflow-hidden">
                   <img src={f.url} alt={f.descripcion || f.tipo} className="w-full h-32 object-cover" />
                   <div className="p-2">
                     <Badge variant="outline" className="text-xs">{f.tipo}</Badge>

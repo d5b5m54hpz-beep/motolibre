@@ -69,7 +69,7 @@ export function ContratoActions({
         <Button
           onClick={() => callAction("activar")}
           disabled={loading === "activar"}
-          className="bg-green-600 hover:bg-green-700"
+          className="bg-positive hover:bg-positive/90"
         >
           {loading === "activar" ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -200,7 +200,7 @@ export function ContratoActions({
         </Dialog>
       )}
 
-      {error && <p className="w-full text-sm text-red-500 mt-1">{error}</p>}
+      {error && <p className="w-full text-sm text-negative mt-1">{error}</p>}
     </div>
   );
 }

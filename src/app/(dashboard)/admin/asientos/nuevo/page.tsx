@@ -172,10 +172,10 @@ export default function NuevoAsientoPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-2 px-2 font-medium text-muted-foreground w-80">Cuenta</th>
-                  <th className="text-right py-2 px-2 font-medium text-muted-foreground w-36">DEBE</th>
-                  <th className="text-right py-2 px-2 font-medium text-muted-foreground w-36">HABER</th>
-                  <th className="text-left py-2 px-2 font-medium text-muted-foreground">Descripción</th>
+                  <th className="text-left py-2 px-2 font-medium text-t-secondary w-80">Cuenta</th>
+                  <th className="text-right py-2 px-2 font-medium text-t-secondary w-36">DEBE</th>
+                  <th className="text-right py-2 px-2 font-medium text-t-secondary w-36">HABER</th>
+                  <th className="text-left py-2 px-2 font-medium text-t-secondary">Descripción</th>
                   <th className="w-10"></th>
                 </tr>
               </thead>
@@ -184,7 +184,7 @@ export default function NuevoAsientoPage() {
                   <tr key={i} className="border-b">
                     <td className="py-2 px-2">
                       <select
-                        className="w-full bg-background border rounded px-2 py-1.5 text-sm"
+                        className="w-full bg-bg-input border border-border rounded-2xl px-2 py-1.5 text-sm"
                         value={linea.cuentaId}
                         onFocus={loadCuentas}
                         onChange={(e) => updateLinea(i, "cuentaId", e.target.value)}
@@ -231,7 +231,7 @@ export default function NuevoAsientoPage() {
                         onClick={() => removeLinea(i)}
                         disabled={lineas.length <= 2}
                       >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        <Trash2 className="h-4 w-4 text-negative" />
                       </Button>
                     </td>
                   </tr>
@@ -244,15 +244,15 @@ export default function NuevoAsientoPage() {
                   <td className="py-3 px-2 text-right font-mono">{formatMoney(totalHaber)}</td>
                   <td colSpan={2} className="py-3 px-2">
                     {balancea ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-500">
+                      <span className="inline-flex items-center gap-1 text-positive">
                         <CheckCircle2 className="h-4 w-4" /> Balancea
                       </span>
                     ) : totalDebe > 0 || totalHaber > 0 ? (
-                      <span className="inline-flex items-center gap-1 text-red-500">
+                      <span className="inline-flex items-center gap-1 text-negative">
                         <XCircle className="h-4 w-4" /> No balancea (dif: {formatMoney(Math.abs(totalDebe - totalHaber))})
                       </span>
                     ) : (
-                      <span className="text-muted-foreground">Ingrese montos</span>
+                      <span className="text-t-secondary">Ingrese montos</span>
                     )}
                   </td>
                 </tr>

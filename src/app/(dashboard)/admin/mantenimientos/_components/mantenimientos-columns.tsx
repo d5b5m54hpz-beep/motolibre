@@ -51,7 +51,7 @@ function AccionesCell({ row }: { row: { original: MantenimientoRow } }) {
         variant="outline"
         onClick={() => accion("completar")}
         disabled={!!loading}
-        className="text-green-600 border-green-200 hover:bg-green-50"
+        className="text-positive border-positive/20 hover:bg-positive-bg"
         title="Completado"
       >
         {loading === "completar" ? (
@@ -65,7 +65,7 @@ function AccionesCell({ row }: { row: { original: MantenimientoRow } }) {
         variant="outline"
         onClick={() => accion("no-asistio")}
         disabled={!!loading}
-        className="text-red-600 border-red-200 hover:bg-red-50"
+        className="text-negative border-negative/20 hover:bg-negative-bg"
         title="No asistió"
       >
         {loading === "no-asistio" ? (
@@ -88,7 +88,7 @@ export const mantenimientosColumns: ColumnDef<MantenimientoRow>[] = [
       hoy.setHours(0, 0, 0, 0);
       const isVencido = fecha < hoy && row.original.estado === "PROGRAMADO";
       return (
-        <span className={isVencido ? "text-red-500 font-medium" : ""}>
+        <span className={isVencido ? "text-negative font-medium" : ""}>
           {formatDate(row.original.fechaProgramada)}
         </span>
       );

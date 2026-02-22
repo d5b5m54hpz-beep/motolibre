@@ -28,7 +28,7 @@ export const motosColumns: ColumnDef<MotoRow>[] = [
     cell: ({ row }) => (
       <div>
         <p className="font-medium">{row.original.marca} {row.original.modelo}</p>
-        <p className="text-xs text-muted-foreground">{row.original.anio} · {row.original.tipo}</p>
+        <p className="text-xs text-t-secondary">{row.original.anio} · {row.original.tipo}</p>
       </div>
     ),
   },
@@ -51,11 +51,11 @@ export const motosColumns: ColumnDef<MotoRow>[] = [
     cell: ({ row }) => {
       const precio = row.original.precioAlquilerMensual;
       return precio ? (
-        <span className="tabular-nums text-green-500">
+        <span className="tabular-nums text-positive">
           {formatMoney(Number(precio))}
         </span>
       ) : (
-        <span className="text-muted-foreground">—</span>
+        <span className="text-t-tertiary">—</span>
       );
     },
   },
@@ -63,7 +63,7 @@ export const motosColumns: ColumnDef<MotoRow>[] = [
     accessorKey: "ubicacion",
     header: "Ubicación",
     cell: ({ row }) => (
-      <span className="text-muted-foreground text-sm">
+      <span className="text-t-secondary text-sm">
         {row.original.ubicacion ?? "—"}
       </span>
     ),

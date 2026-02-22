@@ -97,9 +97,9 @@ export default function PeriodosPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Cargando...</div>
+            <div className="text-center py-8 text-t-secondary">Cargando...</div>
           ) : periodos.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-t-secondary">
               No hay períodos contables. Se crean automáticamente al generar asientos.
             </div>
           ) : (
@@ -107,28 +107,28 @@ export default function PeriodosPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Año</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Mes</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Nombre</th>
-                    <th className="text-center py-3 px-2 font-medium text-muted-foreground">Estado</th>
-                    <th className="text-center py-3 px-2 font-medium text-muted-foreground">Asientos</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Fecha Cierre</th>
-                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Acciones</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Año</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Mes</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Nombre</th>
+                    <th className="text-center py-3 px-2 font-medium text-t-secondary">Estado</th>
+                    <th className="text-center py-3 px-2 font-medium text-t-secondary">Asientos</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Fecha Cierre</th>
+                    <th className="text-right py-3 px-2 font-medium text-t-secondary">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {periodos.map((p) => (
-                    <tr key={p.id} className="border-b hover:bg-muted/50 transition-colors">
+                    <tr key={p.id} className="border-b border-border hover:bg-bg-card-hover transition-colors">
                       <td className="py-3 px-2 font-mono">{p.anio}</td>
                       <td className="py-3 px-2 font-mono">{String(p.mes).padStart(2, "0")}</td>
                       <td className="py-3 px-2 font-medium">{p.nombre}</td>
                       <td className="py-3 px-2 text-center">
                         {p.cerrado ? (
-                          <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">
+                          <Badge variant="outline" className="bg-negative/10 text-negative border-negative/20">
                             <Lock className="mr-1 h-3 w-3" /> Cerrado
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                          <Badge variant="outline" className="bg-positive/10 text-positive border-positive/20">
                             <Unlock className="mr-1 h-3 w-3" /> Abierto
                           </Badge>
                         )}

@@ -139,7 +139,7 @@ export default function SugerenciaCompraPage() {
       ) : sugerencias.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <ShoppingBag className="h-12 w-12 mx-auto text-emerald-500 mb-3" />
+            <ShoppingBag className="h-12 w-12 mx-auto text-positive mb-3" />
             <p className="text-lg font-medium">Sin reposiciones pendientes</p>
             <p className="text-sm text-muted-foreground">Todos los repuestos están por encima del stock mínimo</p>
           </CardContent>
@@ -183,7 +183,7 @@ export default function SugerenciaCompraPage() {
                   </thead>
                   <tbody>
                     {sugerencias.map((s) => (
-                      <tr key={s.repuestoId} className="border-b hover:bg-muted/50 transition-colors">
+                      <tr key={s.repuestoId} className="border-b hover:bg-bg-card-hover transition-colors">
                         <td className="py-3 px-2">
                           <Checkbox
                             checked={selected.has(s.repuestoId)}
@@ -195,9 +195,9 @@ export default function SugerenciaCompraPage() {
                         <td className="py-3 px-2 text-center">
                           <Badge variant="outline" className="text-xs">{s.categoria}</Badge>
                         </td>
-                        <td className="py-3 px-2 text-center font-mono text-red-500 font-bold">{s.stockActual}</td>
+                        <td className="py-3 px-2 text-center font-mono text-negative font-bold">{s.stockActual}</td>
                         <td className="py-3 px-2 text-center font-mono text-muted-foreground">{s.stockMinimo}</td>
-                        <td className="py-3 px-2 text-center font-mono font-bold text-emerald-500">{s.cantidadSugerida}</td>
+                        <td className="py-3 px-2 text-center font-mono font-bold text-positive">{s.cantidadSugerida}</td>
                       </tr>
                     ))}
                   </tbody>

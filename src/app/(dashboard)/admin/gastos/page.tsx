@@ -140,10 +140,10 @@ export default function GastosPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Gastos</p>
-                <p className="text-2xl font-bold">{total}</p>
+                <p className="text-sm text-t-secondary">Total Gastos</p>
+                <p className="text-2xl font-bold text-t-primary">{total}</p>
               </div>
-              <PiggyBank className="h-8 w-8 text-muted-foreground" />
+              <PiggyBank className="h-8 w-8 text-t-secondary" />
             </div>
           </CardContent>
         </Card>
@@ -151,10 +151,10 @@ export default function GastosPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Pendientes Aprobación</p>
-                <p className="text-2xl font-bold text-amber-500">{pendientes}</p>
+                <p className="text-sm text-t-secondary">Pendientes Aprobación</p>
+                <p className="text-2xl font-bold text-warning">{pendientes}</p>
               </div>
-              <Clock className="h-8 w-8 text-amber-500" />
+              <Clock className="h-8 w-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -162,10 +162,10 @@ export default function GastosPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Aprobados</p>
-                <p className="text-2xl font-bold text-emerald-500">{formatMoney(totalMes)}</p>
+                <p className="text-sm text-t-secondary">Total Aprobados</p>
+                <p className="text-2xl font-bold text-positive">{formatMoney(totalMes)}</p>
               </div>
-              <Check className="h-8 w-8 text-emerald-500" />
+              <Check className="h-8 w-8 text-positive" />
             </div>
           </CardContent>
         </Card>
@@ -246,26 +246,26 @@ export default function GastosPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Cargando...</div>
+            <div className="text-center py-8 text-t-secondary">Cargando...</div>
           ) : gastos.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No hay gastos registrados</div>
+            <div className="text-center py-8 text-t-secondary">No hay gastos registrados</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Fecha</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Categoría</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Descripción</th>
-                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Monto</th>
-                    <th className="text-center py-3 px-2 font-medium text-muted-foreground">Medio</th>
-                    <th className="text-center py-3 px-2 font-medium text-muted-foreground">Estado</th>
-                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Acciones</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Fecha</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Categoría</th>
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Descripción</th>
+                    <th className="text-right py-3 px-2 font-medium text-t-secondary">Monto</th>
+                    <th className="text-center py-3 px-2 font-medium text-t-secondary">Medio</th>
+                    <th className="text-center py-3 px-2 font-medium text-t-secondary">Estado</th>
+                    <th className="text-right py-3 px-2 font-medium text-t-secondary">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {gastos.map((g) => (
-                    <tr key={g.id} className="border-b hover:bg-muted/50 transition-colors">
+                    <tr key={g.id} className="border-b border-border hover:bg-bg-card-hover transition-colors">
                       <td className="py-3 px-2 font-mono text-xs">{new Date(g.fecha).toLocaleDateString("es-AR")}</td>
                       <td className="py-3 px-2">
                         <Badge variant="outline">{CATEGORIA_LABELS[g.categoria] || g.categoria}</Badge>
@@ -275,22 +275,22 @@ export default function GastosPage() {
                       <td className="py-3 px-2 text-center text-xs">{g.medioPago}</td>
                       <td className="py-3 px-2 text-center">
                         {g.estado === "PENDIENTE" && (
-                          <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20">
+                          <Badge variant="outline" className="bg-warning-bg text-warning border-warning/20">
                             <Clock className="mr-1 h-3 w-3" /> Pendiente
                           </Badge>
                         )}
                         {g.estado === "APROBADO" && (
-                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                          <Badge variant="outline" className="bg-positive-bg text-positive border-positive/20">
                             <Check className="mr-1 h-3 w-3" /> Aprobado
                           </Badge>
                         )}
                         {g.estado === "RECHAZADO" && (
-                          <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">
+                          <Badge variant="outline" className="bg-negative-bg text-negative border-negative/20">
                             <X className="mr-1 h-3 w-3" /> Rechazado
                           </Badge>
                         )}
                         {g.estado === "ANULADO" && (
-                          <Badge variant="outline" className="bg-gray-500/10 text-gray-500 border-gray-500/20">
+                          <Badge variant="outline" className="bg-bg-input text-t-tertiary border-border">
                             <AlertTriangle className="mr-1 h-3 w-3" /> Anulado
                           </Badge>
                         )}
@@ -301,7 +301,7 @@ export default function GastosPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-emerald-500"
+                              className="text-positive"
                               onClick={() => aprobarRechazar(g.id, true)}
                               disabled={actionLoading === g.id}
                             >
@@ -310,7 +310,7 @@ export default function GastosPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-red-500"
+                              className="text-negative"
                               onClick={() => aprobarRechazar(g.id, false)}
                               disabled={actionLoading === g.id}
                             >

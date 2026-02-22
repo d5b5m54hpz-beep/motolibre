@@ -171,7 +171,7 @@ export default function TalleresPage() {
                 <p className="text-sm text-muted-foreground">Talleres Activos</p>
                 <p className="text-2xl font-bold">{talleresActivos}</p>
               </div>
-              <Building2 className="h-8 w-8 text-blue-500" />
+              <Building2 className="h-8 w-8 text-ds-info" />
             </div>
           </CardContent>
         </Card>
@@ -182,7 +182,7 @@ export default function TalleresPage() {
                 <p className="text-sm text-muted-foreground">Mecánicos Activos</p>
                 <p className="text-2xl font-bold">{mecanicosActivos}</p>
               </div>
-              <User className="h-8 w-8 text-emerald-500" />
+              <User className="h-8 w-8 text-positive" />
             </div>
           </CardContent>
         </Card>
@@ -195,7 +195,7 @@ export default function TalleresPage() {
                   {talleres.filter((t) => t.tipo === "EXTERNO" && t.activo).length}
                 </p>
               </div>
-              <Building2 className="h-8 w-8 text-amber-500" />
+              <Building2 className="h-8 w-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -391,8 +391,8 @@ export default function TalleresPage() {
                       variant="outline"
                       className={
                         taller.tipo === "INTERNO"
-                          ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
-                          : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                          ? "bg-info-bg text-ds-info border-ds-info/20"
+                          : "bg-warning-bg text-warning border-warning/20"
                       }
                     >
                       {taller.tipo}
@@ -410,7 +410,7 @@ export default function TalleresPage() {
                       {taller._count.mecanicos} mec.
                     </Badge>
                     {!taller.activo && (
-                      <Badge variant="outline" className="text-xs bg-red-500/10 text-red-500">
+                      <Badge variant="outline" className="text-xs bg-negative-bg text-negative">
                         Inactivo
                       </Badge>
                     )}
@@ -418,7 +418,7 @@ export default function TalleresPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="text-red-500 h-7 text-xs"
+                        className="text-negative h-7 text-xs"
                         onClick={(e) => {
                           e.stopPropagation();
                           desactivarTaller(taller.id);
@@ -460,7 +460,7 @@ export default function TalleresPage() {
                       {taller.mecanicos.map((m) => (
                         <div
                           key={m.id}
-                          className={`flex items-center justify-between p-2 rounded-lg bg-muted/50 ${!m.activo ? "opacity-50" : ""}`}
+                          className={`flex items-center justify-between p-2 rounded-2xl bg-bg-input ${!m.activo ? "opacity-50" : ""}`}
                         >
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-muted-foreground" />
@@ -475,7 +475,7 @@ export default function TalleresPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="text-red-500 h-6 text-xs"
+                                className="text-negative h-6 text-xs"
                                 onClick={() => desactivarMecanico(m.id)}
                               >
                                 Desactivar
@@ -487,7 +487,7 @@ export default function TalleresPage() {
                     </div>
                   )}
                   {taller.notas && (
-                    <div className="mt-3 p-2 bg-muted/50 rounded text-xs text-muted-foreground">
+                    <div className="mt-3 p-2 bg-bg-input rounded-2xl text-xs text-t-secondary">
                       {taller.notas}
                     </div>
                   )}

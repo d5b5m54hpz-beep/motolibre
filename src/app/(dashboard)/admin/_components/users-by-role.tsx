@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BarChart,
   Bar,
@@ -21,27 +20,26 @@ export function UsersByRole({ data }: UsersByRoleProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm font-medium">Usuarios por Rol</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-            <XAxis dataKey="role" stroke="#666" fontSize={12} />
-            <YAxis stroke="#666" fontSize={12} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1B2D45",
-                border: "1px solid #333",
-                borderRadius: "8px",
-              }}
-            />
-            <Bar dataKey="count" fill="#23e0ff" radius={[4, 4, 0, 0]} name="Usuarios" />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    <div className="bg-bg-card/80 backdrop-blur-sm rounded-2xl border border-border p-6">
+      <h3 className="text-xs font-medium text-t-secondary uppercase tracking-wider mb-4">
+        Usuarios por Rol
+      </h3>
+      <ResponsiveContainer width="100%" height={200}>
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#1E1E2A" opacity={0.5} />
+          <XAxis dataKey="role" tick={{ fill: "#44445A", fontSize: 12 }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: "#44445A", fontSize: 12 }} axisLine={false} tickLine={false} />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "#13131A",
+              border: "1px solid #1E1E2A",
+              borderRadius: "12px",
+              color: "#FFFFFF",
+            }}
+          />
+          <Bar dataKey="count" fill="#7B61FF" radius={[4, 4, 0, 0]} name="Usuarios" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

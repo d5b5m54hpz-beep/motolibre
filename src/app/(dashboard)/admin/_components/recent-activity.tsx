@@ -1,9 +1,8 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { formatDateTime } from "@/lib/format";
 import { Activity } from "lucide-react";
+import { DSBadge } from "@/components/ui/ds-badge";
 
 interface Event {
   id: string;
@@ -21,60 +20,47 @@ interface RecentActivityProps {
 export function RecentActivity({ events }: RecentActivityProps) {
   if (events.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Actividad Reciente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex h-[200px] items-center justify-center text-muted-foreground">
-            <div className="text-center">
-              <Activity className="mx-auto h-8 w-8 mb-2 opacity-50" />
-              <p>Sin actividad todavía</p>
-              <p className="text-xs mt-1">Los eventos se registran automáticamente</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-bg-card/80 backdrop-blur-sm rounded-2xl border border-border p-6">
+        <h3 className="text-xs font-medium text-t-secondary uppercase tracking-wider mb-4">
+          Actividad Reciente
+        </h3>
+        <div className="text-center py-16">
+          <Activity className="h-12 w-12 text-t-tertiary mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-t-primary mb-1">Sin actividad</h3>
+          <p className="text-sm text-t-secondary">Los eventos se registran automaticamente</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm font-medium">Actividad Reciente</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {events.map((event) => (
-            <div
-              key={event.id}
-              className="flex items-start justify-between gap-2 rounded-lg border p-3 text-sm"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{event.operationId}</p>
-                <p className="text-xs text-muted-foreground">
-                  {event.entityType} · {event.entityId.slice(0, 8)}...
-                </p>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <Badge
-                  variant="outline"
-                  className={
-                    event.status === "COMPLETED"
-                      ? "border-green-500/20 text-green-500"
-                      : "border-red-500/20 text-red-500"
-                  }
-                >
-                  {event.status}
-                </Badge>
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {formatDateTime(event.createdAt)}
-                </span>
-              </div>
+    <div className="bg-bg-card/80 backdrop-blur-sm rounded-2xl border border-border p-6">
+      <h3 className="text-xs font-medium text-t-secondary uppercase tracking-wider mb-4">
+        Actividad Reciente
+      </h3>
+      <div className="space-y-3">
+        {events.map((event) => (
+          <div
+            key={event.id}
+            className="flex items-start justify-between gap-2 rounded-xl border border-border p-3 text-sm hover:bg-bg-card-hover transition-colors"
+          >
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-t-primary truncate">{event.operationId}</p>
+              <p className="text-xs text-t-secondary">
+                {event.entityType} · {event.entityId.slice(0, 8)}...
+              </p>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            <div className="flex flex-col items-end gap-1">
+              <DSBadge variant={event.status === "COMPLETED" ? "positive" : "negative"}>
+                {event.status}
+              </DSBadge>
+              <span className="text-xs text-t-tertiary whitespace-nowrap">
+                {formatDateTime(event.createdAt)}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

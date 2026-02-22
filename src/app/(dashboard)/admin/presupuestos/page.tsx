@@ -86,9 +86,9 @@ export default function PresupuestosPage() {
   }
 
   function getBarColor(pct: number): string {
-    if (pct >= 100) return "bg-red-500";
-    if (pct >= 80) return "bg-amber-500";
-    return "bg-emerald-500";
+    if (pct >= 100) return "bg-negative";
+    if (pct >= 80) return "bg-warning";
+    return "bg-positive";
   }
 
   function openBulkDialog() {
@@ -215,63 +215,63 @@ export default function PresupuestosPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Cargando...</div>
+            <div className="text-center py-8 text-t-secondary">Cargando...</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Categoría</th>
-                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Presupuestado</th>
-                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Ejecutado</th>
-                    <th className="text-center py-3 px-2 font-medium text-muted-foreground w-48">% Ejecución</th>
-                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Restante</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-2 font-medium text-t-secondary">Categoría</th>
+                    <th className="text-right py-3 px-2 font-medium text-t-secondary">Presupuestado</th>
+                    <th className="text-right py-3 px-2 font-medium text-t-secondary">Ejecutado</th>
+                    <th className="text-center py-3 px-2 font-medium text-t-secondary w-48">% Ejecución</th>
+                    <th className="text-right py-3 px-2 font-medium text-t-secondary">Restante</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.filter((r) => r.presupuestado > 0 || r.ejecutado > 0).map((r) => (
-                    <tr key={r.cat} className="border-b hover:bg-muted/50 transition-colors">
+                    <tr key={r.cat} className="border-b border-border hover:bg-bg-card-hover transition-colors">
                       <td className="py-3 px-2 font-medium">{CATEGORIA_LABELS[r.cat]}</td>
                       <td className="py-3 px-2 text-right font-mono">{formatMoney(r.presupuestado)}</td>
                       <td className="py-3 px-2 text-right font-mono">{formatMoney(r.ejecutado)}</td>
                       <td className="py-3 px-2">
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                          <div className="w-full bg-bg-input rounded-full h-2.5 overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all ${getBarColor(r.pct)}`}
                               style={{ width: `${Math.min(r.pct, 100)}%` }}
                             />
                           </div>
-                          <span className={`text-xs font-mono w-10 text-right ${r.pct >= 100 ? "text-red-500" : r.pct >= 80 ? "text-amber-500" : "text-emerald-500"}`}>
+                          <span className={`text-xs font-mono w-10 text-right ${r.pct >= 100 ? "text-negative" : r.pct >= 80 ? "text-warning" : "text-positive"}`}>
                             {r.pct}%
                           </span>
                         </div>
                       </td>
-                      <td className={`py-3 px-2 text-right font-mono ${r.restante < 0 ? "text-red-500" : ""}`}>
+                      <td className={`py-3 px-2 text-right font-mono ${r.restante < 0 ? "text-negative" : ""}`}>
                         {formatMoney(r.restante)}
                       </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 font-bold">
+                  <tr className="border-t-2 border-border font-bold">
                     <td className="py-3 px-2">TOTAL</td>
                     <td className="py-3 px-2 text-right font-mono">{formatMoney(totalPresupuestado)}</td>
                     <td className="py-3 px-2 text-right font-mono">{formatMoney(totalEjecutado)}</td>
                     <td className="py-3 px-2">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="w-full bg-bg-input rounded-full h-2.5 overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${getBarColor(totalPct)}`}
                             style={{ width: `${Math.min(totalPct, 100)}%` }}
                           />
                         </div>
-                        <span className={`text-xs font-mono w-10 text-right ${totalPct >= 100 ? "text-red-500" : totalPct >= 80 ? "text-amber-500" : "text-emerald-500"}`}>
+                        <span className={`text-xs font-mono w-10 text-right ${totalPct >= 100 ? "text-negative" : totalPct >= 80 ? "text-warning" : "text-positive"}`}>
                           {totalPct}%
                         </span>
                       </div>
                     </td>
-                    <td className={`py-3 px-2 text-right font-mono ${(totalPresupuestado - totalEjecutado) < 0 ? "text-red-500" : ""}`}>
+                    <td className={`py-3 px-2 text-right font-mono ${(totalPresupuestado - totalEjecutado) < 0 ? "text-negative" : ""}`}>
                       {formatMoney(totalPresupuestado - totalEjecutado)}
                     </td>
                   </tr>

@@ -42,7 +42,7 @@ export default async function ContratosPage() {
       {stats.total > 0 && (
         <div className="flex flex-wrap gap-2 text-sm">
           {Object.entries(stats.byEstado).map(([estado, count]) => (
-            <div key={estado} className="rounded-md border px-3 py-1.5">
+            <div key={estado} className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm px-3 py-1.5">
               <span className="text-muted-foreground">{estado.replace(/_/g, " ")}:</span>{" "}
               <span className="font-medium">{count as number}</span>
             </div>

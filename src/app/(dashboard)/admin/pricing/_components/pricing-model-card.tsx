@@ -84,7 +84,7 @@ export function PricingModelCard({
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">
             {marca} {modelo}{" "}
-            <span className={`text-xs font-normal px-1.5 py-0.5 rounded ${condicion === "NUEVA" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+            <span className={`text-xs font-normal px-1.5 py-0.5 rounded ${condicion === "NUEVA" ? "bg-positive-bg text-positive" : "bg-bg-input text-t-secondary"}`}>
               {condicion}
             </span>
           </CardTitle>
@@ -144,7 +144,7 @@ export function PricingModelCard({
             </tbody>
           </table>
         </div>
-        {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+        {error && <p className="text-sm text-negative mt-2">{error}</p>}
       </CardContent>
     </Card>
   );

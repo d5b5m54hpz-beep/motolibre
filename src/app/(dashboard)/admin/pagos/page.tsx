@@ -49,25 +49,25 @@ export default async function PagosPage() {
       title: "Total Recaudado",
       value: formatMoney(stats.totalRecaudado),
       icon: DollarSign,
-      color: "text-emerald-500",
+      color: "text-positive",
     },
     {
       title: "Confirmados Hoy",
       value: stats.aprobadosHoy,
       icon: CheckCircle,
-      color: "text-green-500",
+      color: "text-positive",
     },
     {
       title: "Pendientes",
       value: stats.pendientes,
       icon: Clock,
-      color: "text-yellow-500",
+      color: "text-warning",
     },
     {
       title: "Rechazados",
       value: stats.rechazados,
       icon: XCircle,
-      color: "text-red-500",
+      color: "text-negative",
     },
   ];
 

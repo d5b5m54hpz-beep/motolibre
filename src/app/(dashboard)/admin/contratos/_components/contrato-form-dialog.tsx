@@ -189,7 +189,7 @@ export function ContratoFormDialog() {
               )}
             />
             {errors.clienteId && (
-              <p className="text-sm text-red-500">{errors.clienteId.message}</p>
+              <p className="text-sm text-negative">{errors.clienteId.message}</p>
             )}
           </div>
 
@@ -223,7 +223,7 @@ export function ContratoFormDialog() {
               )}
             />
             {errors.motoId && (
-              <p className="text-sm text-red-500">{errors.motoId.message}</p>
+              <p className="text-sm text-negative">{errors.motoId.message}</p>
             )}
             {selectedMoto && (
               <p className="text-xs text-muted-foreground">
@@ -264,7 +264,7 @@ export function ContratoFormDialog() {
                 {...register("duracionMeses", { valueAsNumber: true })}
               />
               {errors.duracionMeses && (
-                <p className="text-sm text-red-500">{errors.duracionMeses.message}</p>
+                <p className="text-sm text-negative">{errors.duracionMeses.message}</p>
               )}
             </div>
 
@@ -313,7 +313,7 @@ export function ContratoFormDialog() {
 
           {/* Preview */}
           {(preview || loadingPreview) && (
-            <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+            <div className="rounded-2xl border border-border bg-muted/30 p-4 space-y-2">
               <p className="text-sm font-semibold">Preview del contrato</p>
               {loadingPreview ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -351,7 +351,7 @@ export function ContratoFormDialog() {
             <Input {...register("notas")} placeholder="Observaciones del contrato..." />
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-negative">{error}</p>}
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

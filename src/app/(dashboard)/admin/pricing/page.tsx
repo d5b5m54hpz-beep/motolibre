@@ -38,7 +38,7 @@ export default async function PricingPage() {
       />
 
       {gruposArr.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
+        <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">
           <p className="text-lg mb-2">No hay tarifas configuradas</p>
           <p className="text-sm">Usa el seed o la API para agregar tarifas de alquiler.</p>
         </div>

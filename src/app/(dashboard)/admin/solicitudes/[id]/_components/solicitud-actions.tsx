@@ -32,7 +32,7 @@ export function SolicitudActions({ solicitudId, estado }: SolicitudActionsProps)
       <div className="flex gap-2 flex-wrap">
         <Dialog open={entregaOpen} onOpenChange={setEntregaOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-green-600 hover:bg-green-700">
+            <Button className="bg-positive hover:bg-positive/90">
               <Truck className="mr-2 h-4 w-4" />
               Registrar Entrega
             </Button>
@@ -45,13 +45,13 @@ export function SolicitudActions({ solicitudId, estado }: SolicitudActionsProps)
               <p className="text-sm text-muted-foreground">
                 Al confirmar, se creará el contrato automáticamente con cuotas y se programará la agenda de mantenimientos. Esta acción no puede deshacerse.
               </p>
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && <p className="text-sm text-negative">{error}</p>}
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setEntregaOpen(false)}>
                   Cancelar
                 </Button>
                 <Button
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-positive hover:bg-positive/90"
                   disabled={loading === "entregar"}
                   onClick={async () => {
                     setLoading("entregar");
@@ -131,7 +131,7 @@ export function SolicitudActions({ solicitudId, estado }: SolicitudActionsProps)
       <Button
         onClick={aprobar}
         disabled={loading === "aprobar"}
-        className="bg-green-600 hover:bg-green-700"
+        className="bg-positive hover:bg-positive/90"
       >
         {loading === "aprobar" ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -181,7 +181,7 @@ export function SolicitudActions({ solicitudId, estado }: SolicitudActionsProps)
         </DialogContent>
       </Dialog>
 
-      {error && <p className="w-full text-sm text-red-500">{error}</p>}
+      {error && <p className="w-full text-sm text-negative">{error}</p>}
     </div>
   );
 }

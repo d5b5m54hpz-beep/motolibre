@@ -16,7 +16,7 @@ export const facturasColumns: ColumnDef<Factura>[] = [
     cell: ({ row }) => (
       <Link
         href={`/admin/facturas/${row.original.id}`}
-        className="text-[#23e0ff] hover:underline font-mono text-sm font-medium"
+        className="text-accent-DEFAULT hover:underline font-mono text-sm font-medium"
       >
         {row.original.numeroCompleto}
       </Link>
@@ -29,8 +29,8 @@ export const facturasColumns: ColumnDef<Factura>[] = [
       <span
         className={`inline-flex items-center justify-center w-6 h-6 rounded text-xs font-bold ${
           row.original.tipo === "A"
-            ? "bg-blue-500/20 text-blue-400"
-            : "bg-green-500/20 text-green-400"
+            ? "bg-info-bg text-ds-info"
+            : "bg-positive-bg text-positive"
         }`}
       >
         {row.original.tipo}
@@ -44,7 +44,7 @@ export const facturasColumns: ColumnDef<Factura>[] = [
       <div>
         <p className="text-sm font-medium">{row.original.receptorNombre}</p>
         {row.original.receptorCuit && (
-          <p className="text-xs text-muted-foreground">{row.original.receptorCuit}</p>
+          <p className="text-xs text-t-secondary">{row.original.receptorCuit}</p>
         )}
       </div>
     ),

@@ -56,18 +56,18 @@ const CATEGORIAS = [
 ];
 
 const CATEGORIA_COLORS: Record<string, string> = {
-  MOTOR: "bg-red-500/10 text-red-500",
-  FRENOS: "bg-orange-500/10 text-orange-500",
-  SUSPENSION: "bg-yellow-500/10 text-yellow-500",
-  ELECTRICA: "bg-blue-500/10 text-blue-500",
-  TRANSMISION: "bg-purple-500/10 text-purple-500",
-  CARROCERIA: "bg-pink-500/10 text-pink-500",
-  NEUMATICOS: "bg-gray-500/10 text-gray-500",
-  LUBRICANTES: "bg-amber-500/10 text-amber-500",
-  FILTROS: "bg-emerald-500/10 text-emerald-500",
-  TORNILLERIA: "bg-slate-500/10 text-slate-500",
-  ACCESORIOS: "bg-cyan-500/10 text-cyan-500",
-  OTRO: "bg-neutral-500/10 text-neutral-500",
+  MOTOR: "bg-negative-bg text-negative",
+  FRENOS: "bg-warning-bg text-warning",
+  SUSPENSION: "bg-warning-bg text-warning",
+  ELECTRICA: "bg-info-bg text-ds-info",
+  TRANSMISION: "bg-accent-DEFAULT/10 text-accent-DEFAULT",
+  CARROCERIA: "bg-accent-DEFAULT/10 text-accent-DEFAULT",
+  NEUMATICOS: "bg-t-tertiary/10 text-t-tertiary",
+  LUBRICANTES: "bg-warning-bg text-warning",
+  FILTROS: "bg-positive-bg text-positive",
+  TORNILLERIA: "bg-t-tertiary/10 text-t-tertiary",
+  ACCESORIOS: "bg-info-bg text-ds-info",
+  OTRO: "bg-t-secondary/10 text-t-secondary",
 };
 
 export default function RepuestosPage() {
@@ -171,7 +171,7 @@ function RepuestosContent() {
                 <p className="text-sm text-muted-foreground">Repuestos Activos</p>
                 <p className="text-2xl font-bold">{dashboard?.totalRepuestos ?? 0}</p>
               </div>
-              <Package className="h-8 w-8 text-blue-500" />
+              <Package className="h-8 w-8 text-ds-info" />
             </div>
           </CardContent>
         </Card>
@@ -182,7 +182,7 @@ function RepuestosContent() {
                 <p className="text-sm text-muted-foreground">Valor Inventario</p>
                 <p className="text-2xl font-bold">{formatMoney(dashboard?.valorInventario ?? 0)}</p>
               </div>
-              <BarChart3 className="h-8 w-8 text-emerald-500" />
+              <BarChart3 className="h-8 w-8 text-positive" />
             </div>
           </CardContent>
         </Card>
@@ -191,11 +191,11 @@ function RepuestosContent() {
             <div className="flex justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Stock Bajo</p>
-                <p className={`text-2xl font-bold ${(dashboard?.repuestosStockBajo ?? 0) > 0 ? "text-red-500" : ""}`}>
+                <p className={`text-2xl font-bold ${(dashboard?.repuestosStockBajo ?? 0) > 0 ? "text-negative" : ""}`}>
                   {dashboard?.repuestosStockBajo ?? 0}
                 </p>
               </div>
-              <AlertTriangle className={`h-8 w-8 ${(dashboard?.repuestosStockBajo ?? 0) > 0 ? "text-red-500" : "text-muted-foreground"}`} />
+              <AlertTriangle className={`h-8 w-8 ${(dashboard?.repuestosStockBajo ?? 0) > 0 ? "text-negative" : "text-muted-foreground"}`} />
             </div>
           </CardContent>
         </Card>
@@ -206,7 +206,7 @@ function RepuestosContent() {
                 <p className="text-sm text-muted-foreground">Movimientos Hoy</p>
                 <p className="text-2xl font-bold">{dashboard?.movimientosHoy ?? 0}</p>
               </div>
-              <ArrowUpDown className="h-8 w-8 text-purple-500" />
+              <ArrowUpDown className="h-8 w-8 text-accent-DEFAULT" />
             </div>
           </CardContent>
         </Card>
@@ -334,7 +334,7 @@ function RepuestosContent() {
                   {repuestos.map((r) => (
                     <tr
                       key={r.id}
-                      className="border-b hover:bg-muted/50 transition-colors cursor-pointer"
+                      className="border-b hover:bg-bg-card-hover transition-colors cursor-pointer"
                       onClick={() => router.push(`/admin/repuestos/${r.id}`)}
                     >
                       <td className="py-3 px-2 font-mono font-medium text-xs">{r.codigo}</td>
@@ -350,7 +350,7 @@ function RepuestosContent() {
                         </Badge>
                       </td>
                       <td className="py-3 px-2 text-center">
-                        <span className={`font-mono font-bold ${r.stock <= r.stockMinimo ? "text-red-500" : ""}`}>
+                        <span className={`font-mono font-bold ${r.stock <= r.stockMinimo ? "text-negative" : ""}`}>
                           {r.stock}
                         </span>
                         <span className="text-xs text-muted-foreground ml-1">{r.unidad}</span>

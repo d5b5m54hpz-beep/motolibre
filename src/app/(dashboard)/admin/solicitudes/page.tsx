@@ -87,12 +87,12 @@ export default async function SolicitudesPage({
               >
                 {tab.label}
                 {tab.estado === "PAGADA" && stats.pendientes > 0 && (
-                  <span className="ml-2 rounded-full bg-yellow-500 text-white text-xs px-1.5 py-0.5">
+                  <span className="ml-2 rounded-full bg-warning text-white text-xs px-1.5 py-0.5">
                     {stats.pendientes}
                   </span>
                 )}
                 {tab.estado === "EN_ESPERA" && stats.enEspera > 0 && (
-                  <span className="ml-2 rounded-full bg-blue-500 text-white text-xs px-1.5 py-0.5">
+                  <span className="ml-2 rounded-full bg-accent-DEFAULT text-white text-xs px-1.5 py-0.5">
                     {stats.enEspera}
                   </span>
                 )}

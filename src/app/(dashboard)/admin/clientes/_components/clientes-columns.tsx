@@ -22,7 +22,7 @@ export const clientesColumns: ColumnDef<ClienteRow>[] = [
         <p className="font-medium">
           {row.original.apellido}, {row.original.nombre}
         </p>
-        <p className="text-xs text-muted-foreground">{row.original.email}</p>
+        <p className="text-xs text-t-secondary">{row.original.email}</p>
       </div>
     ),
   },
@@ -48,9 +48,9 @@ export const clientesColumns: ColumnDef<ClienteRow>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Score" />,
     cell: ({ getValue }) => {
       const score = getValue() as number | null;
-      if (score === null || score === 0) return <span className="text-muted-foreground">—</span>;
+      if (score === null || score === 0) return <span className="text-t-tertiary">—</span>;
       const color =
-        score >= 70 ? "text-green-500" : score >= 40 ? "text-yellow-500" : "text-red-500";
+        score >= 70 ? "text-positive" : score >= 40 ? "text-warning" : "text-negative";
       return <span className={`font-medium tabular-nums ${color}`}>{score}/100</span>;
     },
   },
@@ -58,14 +58,14 @@ export const clientesColumns: ColumnDef<ClienteRow>[] = [
     accessorKey: "plataformas",
     header: "Plataformas",
     cell: ({ getValue }) => (
-      <span className="text-sm text-muted-foreground">{(getValue() as string | null) ?? "—"}</span>
+      <span className="text-sm text-t-secondary">{(getValue() as string | null) ?? "—"}</span>
     ),
   },
   {
     id: "docs",
     header: "Docs",
     cell: ({ row }) => (
-      <span className="text-sm text-muted-foreground">
+      <span className="text-sm text-t-secondary">
         {row.original._count.documentos}
       </span>
     ),

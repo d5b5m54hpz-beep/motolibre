@@ -62,12 +62,12 @@ interface RepuestoDetalle {
 }
 
 const TIPO_MOV_COLORS: Record<string, string> = {
-  INGRESO: "bg-emerald-500/10 text-emerald-500",
-  EGRESO: "bg-red-500/10 text-red-500",
-  AJUSTE_POSITIVO: "bg-blue-500/10 text-blue-500",
-  AJUSTE_NEGATIVO: "bg-orange-500/10 text-orange-500",
-  TRANSFERENCIA: "bg-purple-500/10 text-purple-500",
-  DEVOLUCION: "bg-cyan-500/10 text-cyan-500",
+  INGRESO: "bg-positive-bg text-positive",
+  EGRESO: "bg-negative-bg text-negative",
+  AJUSTE_POSITIVO: "bg-info-bg text-ds-info",
+  AJUSTE_NEGATIVO: "bg-warning-bg text-warning",
+  TRANSFERENCIA: "bg-accent-DEFAULT/10 text-accent-DEFAULT",
+  DEVOLUCION: "bg-info-bg text-ds-info",
 };
 
 export default function RepuestoDetallePage({ params }: { params: Promise<{ id: string }> }) {
@@ -118,8 +118,8 @@ export default function RepuestoDetallePage({ params }: { params: Promise<{ id: 
       : 50;
 
   const stockColor = repuesto.stock <= repuesto.stockMinimo
-    ? "bg-red-500" : repuesto.stock <= repuesto.stockMinimo * 2
-      ? "bg-amber-500" : "bg-emerald-500";
+    ? "bg-negative" : repuesto.stock <= repuesto.stockMinimo * 2
+      ? "bg-warning" : "bg-positive";
 
   return (
     <div className="space-y-6">
@@ -145,7 +145,7 @@ export default function RepuestoDetallePage({ params }: { params: Promise<{ id: 
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center">
-              <p className={`text-4xl font-bold ${repuesto.stock <= repuesto.stockMinimo ? "text-red-500" : ""}`}>
+              <p className={`text-4xl font-bold ${repuesto.stock <= repuesto.stockMinimo ? "text-negative" : ""}`}>
                 {repuesto.stock}
               </p>
               <p className="text-sm text-muted-foreground">{repuesto.unidad}(s)</p>
@@ -161,7 +161,7 @@ export default function RepuestoDetallePage({ params }: { params: Promise<{ id: 
               </div>
             </div>
             {repuesto.stock <= repuesto.stockMinimo && (
-              <div className="flex items-center gap-2 text-red-500 text-sm">
+              <div className="flex items-center gap-2 text-negative text-sm">
                 <AlertTriangle className="h-4 w-4" /> Stock bajo — requiere reposición
               </div>
             )}
@@ -281,7 +281,7 @@ export default function RepuestoDetallePage({ params }: { params: Promise<{ id: 
                       <td className="py-2 px-2 text-center">
                         <Badge className={`text-xs ${TIPO_MOV_COLORS[m.tipo] ?? ""}`}>{m.tipo}</Badge>
                       </td>
-                      <td className={`py-2 px-2 text-center font-mono font-bold ${m.cantidad >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                      <td className={`py-2 px-2 text-center font-mono font-bold ${m.cantidad >= 0 ? "text-positive" : "text-negative"}`}>
                         {m.cantidad > 0 ? "+" : ""}{m.cantidad}
                       </td>
                       <td className="py-2 px-2 text-center font-mono text-xs">

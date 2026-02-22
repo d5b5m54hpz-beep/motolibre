@@ -34,25 +34,25 @@ export default async function FacturasPage() {
       title: "Facturado este Mes",
       value: formatMoney(Number(totalMes._sum.montoTotal ?? 0)),
       icon: TrendingUp,
-      color: "text-emerald-500",
+      color: "text-positive",
     },
     {
       title: "Emitidas Hoy",
       value: emitidas,
       icon: Receipt,
-      color: "text-[#23e0ff]",
+      color: "text-accent-DEFAULT",
     },
     {
       title: "Pendientes de Envío",
       value: pendientesEnvio,
       icon: Clock,
-      color: "text-yellow-500",
+      color: "text-warning",
     },
     {
       title: "Total de Facturas",
       value: facturas.length,
       icon: Ban,
-      color: "text-blue-500",
+      color: "text-ds-info",
     },
   ];
 
@@ -64,7 +64,7 @@ export default async function FacturasPage() {
         {stats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-t-secondary">
                 {stat.title}
               </CardTitle>
               <stat.icon className={`h-4 w-4 ${stat.color}`} />
