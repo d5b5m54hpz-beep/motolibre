@@ -2052,3 +2052,99 @@ model PortalProveedorToken {
   @@index([embarqueId])
   @@map("portal_proveedor_tokens")
 }
+
+// ═══════════════════════════════════════════════════════════════
+// PRICING DE ALQUILER (F4.1)
+// ═══════════════════════════════════════════════════════════════
+
+model PlanAlquiler {
+  id                  String                 @id @default(cuid())
+  nombre              String
+  codigo              String                 @unique
+  descripcion         String?
+
+  frecuencia          String                 // "SEMANAL", "MENSUAL"
+  duracionMeses       Int?
+  cuotasTotal         Int?
+  descuentoPorcentaje Decimal?               @db.Decimal(5, 2)
+  incluyeTransferencia Boolean              @default(false)
+
+  activo              Boolean                @default(true)
+  orden               Int                    @default(0)
+
+  precios             PrecioModeloAlquiler[]
+
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  @@index([activo])
+  @@map("planes_alquiler")
+}
+
+model PrecioModeloAlquiler {
+  id              String       @id @default(cuid())
+
+  planId          String
+  plan            PlanAlquiler @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  modeloMoto      String
+  condicion       String       @default("USADA")
+
+  precioBase      Decimal      @db.Decimal(12, 2)
+  precioFinal     Decimal      @db.Decimal(12, 2)
+  moneda          String       @default("ARS")
+
+  vigenciaDesde   DateTime     @default(now())
+  vigenciaHasta   DateTime?
+  activo          Boolean      @default(true)
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([planId, modeloMoto, condicion, activo])
+  @@index([modeloMoto])
+  @@index([activo])
+  @@map("precios_modelo_alquiler")
+}
+
+model CostoOperativoConfig {
+  id            String   @id @default(cuid())
+  concepto      String   @unique
+  montoMensual  Decimal  @db.Decimal(12, 2)
+  descripcion   String?
+  activo        Boolean  @default(true)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("costos_operativos_config")
+}
+
+model HistorialPrecioAlquiler {
+  id              String   @id @default(cuid())
+  precioModeloId  String?
+  planId          String?
+  modeloMoto      String
+  precioAnterior  Decimal  @db.Decimal(12, 2)
+  precioNuevo     Decimal  @db.Decimal(12, 2)
+  motivo          String?
+  userId          String?
+
+  createdAt       DateTime @default(now())
+
+  @@index([modeloMoto])
+  @@map("historial_precio_alquiler")
+}
+
+model TipoCambioCache {
+  id        String   @id @default(cuid())
+  moneda    String   @unique
+  compra    Decimal  @db.Decimal(12, 4)
+  venta     Decimal  @db.Decimal(12, 4)
+  fecha     DateTime
+  fuente    String   @default("dolarapi.com")
+
+  updatedAt DateTime @updatedAt
+
+  @@map("tipo_cambio_cache")
+}

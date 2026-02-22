@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppHeader } from "@/components/layout/app-header";
@@ -9,7 +10,14 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": "260px",
+          "--sidebar-width-icon": "68px",
+        } as CSSProperties
+      }
+    >
       <AppSidebar />
       <SidebarInset>
         <AppHeader />

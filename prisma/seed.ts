@@ -853,6 +853,55 @@ async function main() {
 
   console.log("  ✅ Repuestos (8 — 4 con stock bajo)");
 
+  // ── F4.1: Pricing de Alquiler ────────────────────────────────────────────
+  const planesData = [
+    { nombre: "Plan Semanal", codigo: "SEMANAL", frecuencia: "SEMANAL", duracionMeses: null, cuotasTotal: null, descuentoPorcentaje: 0, incluyeTransferencia: false, orden: 1 },
+    { nombre: "Plan Mensual", codigo: "MENSUAL", frecuencia: "MENSUAL", duracionMeses: null, cuotasTotal: null, descuentoPorcentaje: 5, incluyeTransferencia: false, orden: 2 },
+    { nombre: "Lease-to-Own 24M", codigo: "LTO_24", frecuencia: "MENSUAL", duracionMeses: 24, cuotasTotal: 24, descuentoPorcentaje: 10, incluyeTransferencia: true, orden: 3 },
+  ];
+
+  for (const p of planesData) {
+    await prisma.planAlquiler.upsert({
+      where: { codigo: p.codigo },
+      update: {},
+      create: p,
+    });
+  }
+
+  const modelosMoto = ["Honda CB 125F", "Yamaha YBR 125", "Honda Wave 110", "Motomel DLX 110"];
+  for (const pd of planesData) {
+    const planDb = await prisma.planAlquiler.findUnique({ where: { codigo: pd.codigo } });
+    if (!planDb) continue;
+    for (const modelo of modelosMoto) {
+      const base = pd.frecuencia === "SEMANAL" ? 25000 : 85000;
+      const desc = Number(pd.descuentoPorcentaje ?? 0);
+      const final = Math.round(base * (1 - desc / 100));
+      try {
+        await prisma.precioModeloAlquiler.upsert({
+          where: { planId_modeloMoto_condicion_activo: { planId: planDb.id, modeloMoto: modelo, condicion: "USADA", activo: true } },
+          update: { precioBase: base, precioFinal: final },
+          create: { planId: planDb.id, modeloMoto: modelo, condicion: "USADA", precioBase: base, precioFinal: final },
+        });
+      } catch { /* duplicado, ignorar */ }
+    }
+  }
+
+  const costosData = [
+    { concepto: "SEGURO",                   montoMensual: 8000,  descripcion: "Seguro obligatorio + robo" },
+    { concepto: "PATENTE",                  montoMensual: 3500,  descripcion: "Patente municipal" },
+    { concepto: "MANTENIMIENTO_PREVENTIVO", montoMensual: 12000, descripcion: "Service cada 30 días promedio" },
+    { concepto: "DEPRECIACION",             montoMensual: 15000, descripcion: "Amortización mensual lineal" },
+    { concepto: "ADMINISTRATIVO",           montoMensual: 5000,  descripcion: "Gestión, cobranza, admin" },
+  ];
+  for (const c of costosData) {
+    await prisma.costoOperativoConfig.upsert({
+      where: { concepto: c.concepto },
+      update: {},
+      create: c,
+    });
+  }
+
+  console.log("  ✅ Pricing: 3 planes, 12 precios por modelo, 5 costos operativos");
   console.log("✅ Seed completado");
 }
 

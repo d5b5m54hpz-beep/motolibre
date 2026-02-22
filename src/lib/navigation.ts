@@ -52,7 +52,7 @@ export const navigation: NavGroup[] = [
   {
     title: "Pricing",
     items: [
-      { title: "Tarifas de Alquiler", href: "/admin/pricing", icon: DollarSign },
+      { title: "Pricing Alquiler", href: "/admin/pricing", icon: Calculator },
     ],
   },
   {

@@ -1,8 +1,6 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -36,9 +34,6 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-[var(--border-base)] bg-[var(--bg-primary)]/80 backdrop-blur-sm px-4">
-      <SidebarTrigger className="-ml-1 text-t-secondary hover:text-t-primary" />
-      <Separator orientation="vertical" className="mr-2 h-4 bg-[var(--border-base)]" />
-
       {/* Greeting */}
       <div className="hidden md:block">
         <span className="text-sm text-t-secondary">
