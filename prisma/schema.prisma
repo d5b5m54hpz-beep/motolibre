@@ -2148,3 +2148,108 @@ model TipoCambioCache {
 
   @@map("tipo_cambio_cache")
 }
+
+// ═══════════════════════════════════════════════════════════════
+// PRICING DE REPUESTOS (F4.2)
+// ═══════════════════════════════════════════════════════════════
+
+enum TipoListaPrecio {
+  RETAIL
+  MAYORISTA
+  TALLER
+  PROMO
+}
+
+model ListaPrecio {
+  id            String          @id @default(cuid())
+  nombre        String
+  tipo          TipoListaPrecio
+  descripcion   String?
+  activa        Boolean         @default(true)
+  vigenciaDesde DateTime        @default(now())
+  vigenciaHasta DateTime?
+  prioridad     Int             @default(0)
+
+  items         ItemListaPrecio[]
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([tipo])
+  @@index([activa])
+  @@map("listas_precio")
+}
+
+model ItemListaPrecio {
+  id             String      @id @default(cuid())
+  listaId        String
+  lista          ListaPrecio @relation(fields: [listaId], references: [id], onDelete: Cascade)
+  repuestoId     String
+  precioUnitario Decimal     @db.Decimal(12, 2)
+
+  createdAt      DateTime    @default(now())
+
+  @@unique([listaId, repuestoId])
+  @@index([repuestoId])
+  @@map("items_lista_precio")
+}
+
+model ReglaMarkup {
+  id          String            @id @default(cuid())
+  categoria   CategoriaRepuesto @unique
+  porcentaje  Decimal           @db.Decimal(5, 2)
+  descripcion String?
+  activa      Boolean           @default(true)
+
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@map("reglas_markup")
+}
+
+model GrupoCliente {
+  id          String                @id @default(cuid())
+  nombre      String
+  descripcion String?
+  descuento   Decimal               @db.Decimal(5, 2)
+  activo      Boolean               @default(true)
+
+  miembros    MiembroGrupoCliente[]
+
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  @@map("grupos_cliente")
+}
+
+model MiembroGrupoCliente {
+  id        String       @id @default(cuid())
+  grupoId   String
+  grupo     GrupoCliente @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+  clienteId String
+
+  createdAt DateTime     @default(now())
+
+  @@unique([grupoId, clienteId])
+  @@index([clienteId])
+  @@map("miembros_grupo_cliente")
+}
+
+model LoteCambioPrecio {
+  id                 String   @id @default(cuid())
+  nombre             String
+  tipo               String   // "PORCENTAJE", "MONTO_FIJO"
+  valor              Decimal  @db.Decimal(12, 2)
+  categorias         String[]
+  proveedorId        String?
+  estado             String   @default("PENDIENTE")
+  fechaAplicacion    DateTime?
+  fechaReversion     DateTime?
+  repuestosAfectados Int      @default(0)
+  userId             String?
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("lotes_cambio_precio")
+}

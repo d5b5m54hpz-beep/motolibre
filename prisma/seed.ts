@@ -901,7 +901,69 @@ async function main() {
     });
   }
 
-  console.log("  ✅ Pricing: 3 planes, 12 precios por modelo, 5 costos operativos");
+  console.log("  ✅ Pricing Alquiler: 3 planes, 12 precios por modelo, 5 costos operativos");
+
+  // ── F4.2: Pricing Repuestos ──────────────────────────────────────────────────
+
+  // 12 reglas de markup por categoría
+  const markupData: Array<{ categoria: string; porcentaje: number; descripcion: string }> = [
+    { categoria: "MOTOR",        porcentaje: 40, descripcion: "Piezas de motor y bloque" },
+    { categoria: "FRENOS",       porcentaje: 35, descripcion: "Pastillas, discos, cables" },
+    { categoria: "SUSPENSION",   porcentaje: 38, descripcion: "Amortiguadores, resortes, horquillas" },
+    { categoria: "ELECTRICA",    porcentaje: 45, descripcion: "Bobinas, reguladores, luces" },
+    { categoria: "TRANSMISION",  porcentaje: 40, descripcion: "Cadenas, piñones, embrague" },
+    { categoria: "CARROCERIA",   porcentaje: 50, descripcion: "Plásticos, carenados, espejos" },
+    { categoria: "NEUMATICOS",   porcentaje: 25, descripcion: "Cubiertas y cámaras" },
+    { categoria: "LUBRICANTES",  porcentaje: 30, descripcion: "Aceites y lubricantes" },
+    { categoria: "FILTROS",      porcentaje: 35, descripcion: "Filtros de aire, aceite, combustible" },
+    { categoria: "TORNILLERIA",  porcentaje: 60, descripcion: "Tornillos, tuercas, arandelas" },
+    { categoria: "ACCESORIOS",   porcentaje: 55, descripcion: "Accesorios opcionales" },
+    { categoria: "OTRO",         porcentaje: 30, descripcion: "Misceláneos" },
+  ];
+  for (const m of markupData) {
+    await prisma.reglaMarkup.upsert({
+      where: { categoria: m.categoria as Parameters<typeof prisma.reglaMarkup.upsert>[0]["where"]["categoria"] },
+      update: { porcentaje: m.porcentaje },
+      create: { categoria: m.categoria as Parameters<typeof prisma.reglaMarkup.create>[0]["data"]["categoria"], porcentaje: m.porcentaje, descripcion: m.descripcion, activa: true },
+    });
+  }
+
+  // Lista de precios RETAIL general
+  const listaRetail = await prisma.listaPrecio.upsert({
+    where: { id: "seed-lista-retail" },
+    update: {},
+    create: {
+      id: "seed-lista-retail",
+      nombre: "Lista RETAIL General",
+      tipo: "RETAIL",
+      descripcion: "Precios de venta al público en general",
+      activa: true,
+      vigenciaDesde: new Date(),
+      prioridad: 1,
+    },
+  });
+  void listaRetail;
+
+  // Grupos de clientes
+  const gruposData = [
+    { nombre: "Talleres Asociados", descripcion: "Talleres mecánicos con convenio", descuento: 15 },
+    { nombre: "Mayoristas", descripcion: "Distribuidores y mayoristas", descuento: 20 },
+  ];
+  for (const g of gruposData) {
+    await prisma.grupoCliente.upsert({
+      where: { id: `seed-grupo-${g.nombre.toLowerCase().replace(/\s+/g, "-")}` },
+      update: {},
+      create: {
+        id: `seed-grupo-${g.nombre.toLowerCase().replace(/\s+/g, "-")}`,
+        nombre: g.nombre,
+        descripcion: g.descripcion,
+        descuento: g.descuento,
+        activo: true,
+      },
+    });
+  }
+
+  console.log("  ✅ Pricing Repuestos: 12 reglas markup, 1 lista retail, 2 grupos clientes");
   console.log("✅ Seed completado");
 }
 

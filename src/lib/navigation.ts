@@ -4,7 +4,7 @@ import {
   TrendingUp, PiggyBank, Calculator, BookOpen, FileSpreadsheet,
   BarChart3, UserCog, Shield, Bell, AlertTriangle, Settings,
   Bot, Mail, Languages, ClipboardList, Gauge, Calendar,
-  ArrowUpDown, Target, MapPin, ShoppingBag,
+  ArrowUpDown, Target, MapPin, ShoppingBag, Tags,
   type LucideIcon,
 } from "lucide-react";
 
@@ -53,6 +53,7 @@ export const navigation: NavGroup[] = [
     title: "Pricing",
     items: [
       { title: "Pricing Alquiler", href: "/admin/pricing", icon: Calculator },
+      { title: "Pricing Repuestos", href: "/admin/pricing-repuestos", icon: Tags },
     ],
   },
   {
@@ -64,7 +65,6 @@ export const navigation: NavGroup[] = [
       { title: "Ubicaciones", href: "/admin/repuestos/ubicaciones", icon: MapPin },
       { title: "Sugerencia Compra", href: "/admin/repuestos/sugerencia-compra", icon: ShoppingBag },
       { title: "Importaciones", href: "/admin/importaciones", icon: Ship },
-      { title: "Precios Repuestos", href: "/admin/pricing-repuestos", icon: DollarSign },
     ],
   },
   {
