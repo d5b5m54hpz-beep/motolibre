@@ -775,6 +775,10 @@ model Solicitud {
   condicionDeseada  CondicionMoto
   plan              PlanDuracion
 
+  // ── Plan público (F4.1) ──
+  planAlquilerId    String?
+  planAlquiler      PlanAlquiler?    @relation(fields: [planAlquilerId], references: [id])
+
   // ── Precios ──
   precioSemanal     Decimal          @db.Decimal(12, 2)
   precioMensual     Decimal?         @db.Decimal(12, 2)
@@ -2086,6 +2090,7 @@ model PlanAlquiler {
   orden               Int                    @default(0)
 
   precios             PrecioModeloAlquiler[]
+  solicitudes         Solicitud[]
 
   createdAt           DateTime               @default(now())
   updatedAt           DateTime               @updatedAt

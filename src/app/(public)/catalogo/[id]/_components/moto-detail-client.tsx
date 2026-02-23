@@ -139,7 +139,7 @@ export function MotoDetailClient({ id }: { id: string }) {
           </div>
 
           {/* Plan selector */}
-          {moto.planes.length > 0 && <PlanSelector planes={moto.planes} />}
+          {moto.planes.length > 0 && <PlanSelector planes={moto.planes} motoId={moto.id} />}
         </div>
       </div>
 

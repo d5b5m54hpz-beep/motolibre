@@ -242,6 +242,46 @@ async function procesarPagoCuotaAprobado(cuotaId: string, monto: number) {
   } catch (factError) {
     console.error("[Webhook] Error generando factura cuota:", factError);
   }
+
+  // Wizard flow: first cuota paid → moto RESERVADA → ALQUILADA
+  if (cuota.numero === 1) {
+    try {
+      const contrato = await prisma.contrato.findUnique({
+        where: { id: cuota.contratoId },
+        include: { moto: true },
+      });
+      if (contrato?.moto?.estado === "RESERVADA") {
+        await prisma.moto.update({
+          where: { id: contrato.motoId },
+          data: { estado: "ALQUILADA", estadoAnterior: "RESERVADA" },
+        });
+        await prisma.historialEstadoMoto.create({
+          data: {
+            motoId: contrato.motoId,
+            estadoAnterior: "RESERVADA",
+            estadoNuevo: "ALQUILADA",
+            motivo: `Primer pago confirmado via wizard — cuota ${cuotaId}`,
+            userId: "system",
+          },
+        });
+
+        // Update solicitud → ENTREGADA
+        const solicitud = await prisma.solicitud.findFirst({
+          where: { contratoId: contrato.id },
+        });
+        if (solicitud && solicitud.estado === "APROBADA") {
+          await prisma.solicitud.update({
+            where: { id: solicitud.id },
+            data: { estado: "ENTREGADA", fechaEntrega: new Date() },
+          });
+        }
+
+        console.log(`[MP Webhook] Moto ${contrato.motoId} → ALQUILADA (wizard first payment)`);
+      }
+    } catch (motoError) {
+      console.error("[Webhook] Error transitioning moto:", motoError);
+    }
+  }
 }
 
 /**

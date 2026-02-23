@@ -21,7 +21,7 @@ interface Plan {
   moneda: string;
 }
 
-export function PlanSelector({ planes }: { planes: Plan[] }) {
+export function PlanSelector({ planes, motoId }: { planes: Plan[]; motoId: string }) {
   const [selectedIdx, setSelectedIdx] = useState(0);
 
   return (
@@ -85,7 +85,7 @@ export function PlanSelector({ planes }: { planes: Plan[] }) {
 
       {/* CTA */}
       <Button className="w-full" size="lg" asChild>
-        <Link href="/registro">
+        <Link href={`/alquiler/${motoId}?plan=${planes[selectedIdx]?.codigo ?? ""}`}>
           Solicitar esta moto
           <ArrowRight className="h-4 w-4 ml-2" />
         </Link>

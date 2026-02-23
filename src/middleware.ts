@@ -12,6 +12,7 @@ export default auth((req) => {
     "/login-admin",
     "/registro",
     "/catalogo",
+    "/alquiler",
     "/api/auth",
     "/api/public",
     "/api/webhooks",

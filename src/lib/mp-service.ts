@@ -110,7 +110,20 @@ export async function crearPreferenciaCuota(params: {
   clienteEmail: string;
   motoModelo: string;
   monto: number;
+  backUrls?: { success: string; failure: string; pending: string };
 }) {
+  const urls = params.backUrls
+    ? {
+        success: `${APP_URL}${params.backUrls.success}`,
+        failure: `${APP_URL}${params.backUrls.failure}`,
+        pending: `${APP_URL}${params.backUrls.pending}`,
+      }
+    : {
+        success: `${APP_URL}/pago-exitoso`,
+        failure: `${APP_URL}/pago-fallido`,
+        pending: `${APP_URL}/pago-pendiente`,
+      };
+
   const preference = await mpPreference.create({
     body: {
       items: [
@@ -127,11 +140,7 @@ export async function crearPreferenciaCuota(params: {
       },
       external_reference: `cuota:${params.cuotaId}:contrato:${params.contratoId}`,
       notification_url: `${APP_URL}/api/webhooks/mercadopago`,
-      back_urls: {
-        success: `${APP_URL}/pago-exitoso`,
-        failure: `${APP_URL}/pago-fallido`,
-        pending: `${APP_URL}/pago-pendiente`,
-      },
+      back_urls: urls,
       auto_return: "approved",
       statement_descriptor: "MOTOLIBRE",
     },
