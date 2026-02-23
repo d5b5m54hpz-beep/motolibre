@@ -2357,3 +2357,246 @@ model AnalisisFinanciero {
   @@index([tipo])
   @@map("analisis_financieros")
 }
+
+// ═══════════════════════════════════════════════════════════════
+// RRHH
+// ═══════════════════════════════════════════════════════════════
+
+enum Departamento {
+  ADMINISTRACION
+  OPERACIONES
+  TALLER
+  COMERCIAL
+  GERENCIA
+}
+
+enum EstadoEmpleado {
+  ACTIVO
+  LICENCIA
+  SUSPENDIDO
+  DESVINCULADO
+}
+
+enum SexoEmpleado {
+  MASCULINO
+  FEMENINO
+  OTRO
+}
+
+enum EstadoCivil {
+  SOLTERO
+  CASADO
+  DIVORCIADO
+  VIUDO
+  UNION_CONVIVENCIAL
+}
+
+enum JornadaLaboral {
+  COMPLETA
+  MEDIA
+  REDUCIDA
+}
+
+enum TipoAusencia {
+  VACACIONES
+  ENFERMEDAD
+  INJUSTIFICADA
+  LICENCIA_ESPECIAL
+  MATERNIDAD
+  PATERNIDAD
+  ESTUDIO
+  FALLECIMIENTO_FAMILIAR
+}
+
+enum EstadoAusencia {
+  SOLICITADA
+  APROBADA
+  RECHAZADA
+  CANCELADA
+}
+
+enum TipoRecibo {
+  MENSUAL
+  AGUINALDO
+  VACACIONES
+  LIQUIDACION_FINAL
+}
+
+enum EstadoRecibo {
+  BORRADOR
+  LIQUIDADO
+  PAGADO
+  ANULADO
+}
+
+enum TipoDocumentoEmpleado {
+  DNI
+  CUIL
+  CONTRATO_LABORAL
+  ALTA_AFIP
+  ART
+  OBRA_SOCIAL
+  CERTIFICADO_SALUD
+  OTRO
+}
+
+model Empleado {
+  id                 String          @id @default(cuid())
+
+  // — Datos Personales —
+  nombre             String
+  apellido           String
+  dni                String          @unique
+  cuil               String?
+  sexo               SexoEmpleado?
+  estadoCivil        EstadoCivil?
+  fechaNacimiento    DateTime?
+  nacionalidad       String?         @default("Argentina")
+  direccion          String?
+  telefono           String?
+  email              String?
+  contactoEmergencia String?
+
+  // — Datos Laborales —
+  legajo             String          @unique
+  departamento       Departamento
+  cargo              String
+  estado             EstadoEmpleado  @default(ACTIVO)
+  fechaIngreso       DateTime
+  fechaEgreso        DateTime?
+  jornada            JornadaLaboral  @default(COMPLETA)
+
+  // — Remuneración —
+  sueldoBasico       Decimal         @db.Decimal(12, 2)
+  categoriaCCT       String?
+
+  // — Datos Bancarios —
+  cbu                String?
+  banco              String?
+  tipoCuenta         String?
+
+  // — ART + Obra Social —
+  artNombre          String?
+  artNumero          String?
+  obraSocialNombre   String?
+  obraSocialNumero   String?
+
+  // — Vínculo con usuario del sistema —
+  userId             String?         @unique
+
+  // — Relaciones —
+  ausencias          Ausencia[]
+  recibos            ReciboSueldo[]
+  documentos         DocumentoEmpleado[]
+
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@index([departamento])
+  @@index([estado])
+  @@map("empleados")
+}
+
+model Ausencia {
+  id              String         @id @default(cuid())
+
+  empleadoId      String
+  empleado        Empleado       @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+
+  tipo            TipoAusencia
+  estado          EstadoAusencia @default(SOLICITADA)
+
+  fechaDesde      DateTime
+  fechaHasta      DateTime
+  diasHabiles     Int
+
+  motivo          String?
+  observaciones   String?
+
+  aprobadoPor     String?
+  fechaAprobacion DateTime?
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([empleadoId])
+  @@index([estado])
+  @@index([tipo])
+  @@map("ausencias")
+}
+
+model ReciboSueldo {
+  id                    String       @id @default(cuid())
+  numero                String       @unique
+
+  empleadoId            String
+  empleado              Empleado     @relation(fields: [empleadoId], references: [id])
+
+  tipo                  TipoRecibo
+  estado                EstadoRecibo @default(BORRADOR)
+  periodo               String
+
+  // — Haberes —
+  sueldoBasico          Decimal      @db.Decimal(12, 2)
+  presentismo           Decimal      @db.Decimal(12, 2) @default(0)
+  antiguedad            Decimal      @db.Decimal(12, 2) @default(0)
+  horasExtra            Decimal      @db.Decimal(12, 2) @default(0)
+  otrosHaberes          Decimal      @db.Decimal(12, 2) @default(0)
+  totalHaberes          Decimal      @db.Decimal(12, 2)
+
+  // — Deducciones —
+  jubilacion            Decimal      @db.Decimal(12, 2)
+  obraSocial            Decimal      @db.Decimal(12, 2)
+  ley19032              Decimal      @db.Decimal(12, 2)
+  sindicato             Decimal      @db.Decimal(12, 2) @default(0)
+  impuestoGanancias     Decimal      @db.Decimal(12, 2) @default(0)
+  otrasDeduccion        Decimal      @db.Decimal(12, 2) @default(0)
+  totalDeducciones      Decimal      @db.Decimal(12, 2)
+
+  // — Neto —
+  netoAPagar            Decimal      @db.Decimal(12, 2)
+
+  // — Cargas Sociales Empleador —
+  contribJubilacion     Decimal      @db.Decimal(12, 2)
+  contribObraSocial     Decimal      @db.Decimal(12, 2)
+  contribLey19032       Decimal      @db.Decimal(12, 2)
+  contribART            Decimal      @db.Decimal(12, 2)
+  totalContribuciones   Decimal      @db.Decimal(12, 2)
+  costoTotalEmpleador   Decimal      @db.Decimal(12, 2)
+
+  // — Fechas —
+  fechaLiquidacion      DateTime?
+  fechaPago             DateTime?
+
+  // — Días —
+  diasTrabajados        Int          @default(30)
+  diasAusencia          Int          @default(0)
+
+  userId                String?
+
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  @@unique([empleadoId, tipo, periodo])
+  @@index([periodo])
+  @@index([estado])
+  @@map("recibos_sueldo")
+}
+
+model DocumentoEmpleado {
+  id               String                @id @default(cuid())
+
+  empleadoId       String
+  empleado         Empleado              @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+
+  tipo             TipoDocumentoEmpleado
+  nombre           String
+  archivoUrl       String?
+  fechaVencimiento DateTime?
+  notas            String?
+
+  createdAt        DateTime              @default(now())
+
+  @@index([empleadoId])
+  @@map("documentos_empleado")
+}

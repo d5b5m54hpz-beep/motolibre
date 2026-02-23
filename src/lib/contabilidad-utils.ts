@@ -192,6 +192,11 @@ export const CUENTAS = {
   COSTO_DEPRECIACION: "5.1.01.001",    // Amortización motos
   GASTOS_MANTENIMIENTO: "5.1.02.001",  // Service/reparaciones
   GASTOS_SEGUROS: "5.1.03.001",
+  GASTOS_SUELDOS: "5.1.04.001",              // Sueldos y Jornales
+  GASTOS_CARGAS_SOCIALES: "5.1.04.002",      // Cargas Sociales Empleador
+  SUELDOS_A_PAGAR: "2.1.05.001",             // Sueldos a Pagar (neto)
+  RETENCIONES_A_DEPOSITAR: "2.1.05.002",     // Retenciones Empleado
+  CONTRIBUCIONES_A_DEPOSITAR: "2.1.05.003",  // Contribuciones Empleador
   GASTOS_ADMINISTRATIVOS: "5.2.01.001",
   GASTOS_BANCARIOS: "5.2.02.001",      // Comisiones MP, bancarias
   GASTOS_IMPUESTOS: "5.2.03.001",

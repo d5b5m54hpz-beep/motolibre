@@ -566,6 +566,9 @@ async function main() {
     { codigo: "5.1.01", nombre: "Depreciación", tipo: "EGRESO", nivel: 3, padreCode: "5.1", aceptaMovimientos: false },
     { codigo: "5.1.02", nombre: "Mantenimiento", tipo: "EGRESO", nivel: 3, padreCode: "5.1", aceptaMovimientos: false },
     { codigo: "5.1.03", nombre: "Seguros", tipo: "EGRESO", nivel: 3, padreCode: "5.1", aceptaMovimientos: false },
+    { codigo: "5.1.04", nombre: "Gastos de Personal", tipo: "EGRESO", nivel: 3, padreCode: "5.1", aceptaMovimientos: false },
+    // Deudas Sociales
+    { codigo: "2.1.05", nombre: "Deudas Sociales", tipo: "PASIVO", nivel: 3, padreCode: "2.1", aceptaMovimientos: false },
     // Gastos Administración
     { codigo: "5.2.01", nombre: "Gastos Administrativos", tipo: "EGRESO", nivel: 3, padreCode: "5.2", aceptaMovimientos: false },
     { codigo: "5.2.02", nombre: "Gastos Bancarios", tipo: "EGRESO", nivel: 3, padreCode: "5.2", aceptaMovimientos: false },
@@ -612,6 +615,13 @@ async function main() {
     { codigo: "5.1.01.001", nombre: "Amortización de Motos", tipo: "EGRESO", nivel: 4, padreCode: "5.1.01", aceptaMovimientos: true },
     { codigo: "5.1.02.001", nombre: "Gastos de Mantenimiento", tipo: "EGRESO", nivel: 4, padreCode: "5.1.02", aceptaMovimientos: true },
     { codigo: "5.1.03.001", nombre: "Gastos de Seguros", tipo: "EGRESO", nivel: 4, padreCode: "5.1.03", aceptaMovimientos: true },
+    // RRHH
+    { codigo: "5.1.04.001", nombre: "Sueldos y Jornales", tipo: "EGRESO", nivel: 4, padreCode: "5.1.04", aceptaMovimientos: true },
+    { codigo: "5.1.04.002", nombre: "Cargas Sociales Empleador", tipo: "EGRESO", nivel: 4, padreCode: "5.1.04", aceptaMovimientos: true },
+    { codigo: "2.1.05.001", nombre: "Sueldos a Pagar", tipo: "PASIVO", nivel: 4, padreCode: "2.1.05", aceptaMovimientos: true },
+    { codigo: "2.1.05.002", nombre: "Retenciones a Depositar", tipo: "PASIVO", nivel: 4, padreCode: "2.1.05", aceptaMovimientos: true, descripcion: "Jubilación, Obra Social, PAMI, Sindicato" },
+    { codigo: "2.1.05.003", nombre: "Contribuciones a Depositar", tipo: "PASIVO", nivel: 4, padreCode: "2.1.05", aceptaMovimientos: true, descripcion: "Contribuciones patronales AFIP" },
+    // fin RRHH
     { codigo: "5.2.01.001", nombre: "Gastos Administrativos Generales", tipo: "EGRESO", nivel: 4, padreCode: "5.2.01", aceptaMovimientos: true },
     { codigo: "5.2.02.001", nombre: "Comisiones MercadoPago", tipo: "EGRESO", nivel: 4, padreCode: "5.2.02", aceptaMovimientos: true },
     { codigo: "5.2.03.001", nombre: "Impuestos y Tasas", tipo: "EGRESO", nivel: 4, padreCode: "5.2.03", aceptaMovimientos: true },
@@ -980,6 +990,26 @@ async function main() {
   }
 
   console.log("  ✅ Pricing Repuestos: 12 reglas markup, 1 lista retail, 2 grupos clientes");
+
+  // ═══════════════════════════════════════════════════════════════
+  // RRHH — Empleados demo
+  // ═══════════════════════════════════════════════════════════════
+  const empleadosSeed = [
+    { nombre: "Carlos", apellido: "Rodríguez", dni: "30567890", departamento: "TALLER" as const, cargo: "Mecánico Senior", sueldoBasico: 450000, jornada: "COMPLETA" as const, fechaIngreso: new Date("2022-03-15"), legajo: "EMP-001" },
+    { nombre: "Laura", apellido: "Gómez", dni: "35678901", departamento: "ADMINISTRACION" as const, cargo: "Administrativa", sueldoBasico: 380000, jornada: "COMPLETA" as const, fechaIngreso: new Date("2023-06-01"), legajo: "EMP-002" },
+    { nombre: "Diego", apellido: "Martínez", dni: "32789012", departamento: "OPERACIONES" as const, cargo: "Operador de Flota", sueldoBasico: 400000, jornada: "COMPLETA" as const, fechaIngreso: new Date("2024-01-10"), legajo: "EMP-003" },
+    { nombre: "Ana", apellido: "López", dni: "38901234", departamento: "COMERCIAL" as const, cargo: "Ejecutiva Comercial", sueldoBasico: 420000, jornada: "COMPLETA" as const, fechaIngreso: new Date("2024-08-01"), legajo: "EMP-004" },
+  ];
+
+  for (const emp of empleadosSeed) {
+    await prisma.empleado.upsert({
+      where: { dni: emp.dni },
+      update: {},
+      create: emp,
+    });
+  }
+
+  console.log("  ✅ RRHH: 4 empleados demo");
   console.log("✅ Seed completado");
 }
 

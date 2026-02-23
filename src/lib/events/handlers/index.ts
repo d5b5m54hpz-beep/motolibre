@@ -18,6 +18,7 @@ import {
   handleReconciliation,
   handlePurchaseInvoiceCreate,
   handlePurchaseInvoicePay,
+  handlePayrollLiquidate,
 } from "./accounting";
 import {
   handleAnomalyPaymentApprove,
@@ -176,6 +177,14 @@ export function initializeEventHandlers(): void {
     handler: handlePurchaseInvoicePay,
   });
 
+  // 19. Liquidación nómina
+  eventBus.register({
+    name: "accounting:payroll.liquidate",
+    priority: P_ACCOUNTING,
+    pattern: OPERATIONS.hr.payroll.liquidate,
+    handler: handlePayrollLiquidate,
+  });
+
   // ── HANDLERS ANOMALÍAS (P500) ──
 
   const P_ANOMALY = 500;
@@ -220,6 +229,6 @@ export function initializeEventHandlers(): void {
 
   eventBus.markInitialized();
   console.log(
-    `[EventBus] Initialized with ${eventBus.getHandlers().length} handler(s) (18 contables + 3 anomalías + 1 metrics)`
+    `[EventBus] Initialized with ${eventBus.getHandlers().length} handler(s) (19 contables + 3 anomalías + 1 metrics)`
   );
 }

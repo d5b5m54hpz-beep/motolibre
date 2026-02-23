@@ -628,3 +628,54 @@ export async function handlePurchaseInvoicePay(event: BusinessEventData) {
     console.error("[Contabilidad] Error handler purchase_invoice.pay:", error);
   }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// HANDLER 19 — LIQUIDACIÓN NÓMINA (hr.payroll.liquidate)
+// Al liquidar sueldo → asiento de gasto de personal
+// DEBE: Sueldos y Jornales (totalHaberes) + Cargas Sociales (totalContribuciones)
+// HABER: Sueldos a Pagar (netoAPagar) + Retenciones (totalDeducciones) + Contribuciones (totalContribuciones)
+// ═══════════════════════════════════════════════════════════════
+export async function handlePayrollLiquidate(event: BusinessEventData) {
+  try {
+    const recibo = await prisma.reciboSueldo.findUnique({
+      where: { id: event.entityId },
+      include: { empleado: { select: { nombre: true, apellido: true, legajo: true } } },
+    });
+    if (!recibo) return;
+
+    const totalHaberes = Number(recibo.totalHaberes);
+    const totalDeducciones = Number(recibo.totalDeducciones);
+    const netoAPagar = Number(recibo.netoAPagar);
+    const totalContribuciones = Number(recibo.totalContribuciones);
+
+    if (totalHaberes <= 0) return;
+
+    const ctaSueldos = await getCuentaPorCodigo(CUENTAS.GASTOS_SUELDOS);
+    const ctaCargasSociales = await getCuentaPorCodigo(CUENTAS.GASTOS_CARGAS_SOCIALES);
+    const ctaSueldosAPagar = await getCuentaPorCodigo(CUENTAS.SUELDOS_A_PAGAR);
+    const ctaRetenciones = await getCuentaPorCodigo(CUENTAS.RETENCIONES_A_DEPOSITAR);
+    const ctaContribuciones = await getCuentaPorCodigo(CUENTAS.CONTRIBUCIONES_A_DEPOSITAR);
+
+    const desc = `Liquidación ${recibo.periodo} — ${recibo.empleado.legajo} ${recibo.empleado.apellido}`;
+
+    await crearAsiento({
+      fecha: recibo.fechaLiquidacion || new Date(),
+      tipo: "GASTO",
+      descripcion: desc,
+      lineas: [
+        { cuentaId: ctaSueldos.id, debe: totalHaberes, haber: 0, descripcion: "Sueldos y Jornales" },
+        { cuentaId: ctaCargasSociales.id, debe: totalContribuciones, haber: 0, descripcion: "Cargas Sociales Empleador" },
+        { cuentaId: ctaSueldosAPagar.id, debe: 0, haber: netoAPagar, descripcion: "Neto a pagar al empleado" },
+        { cuentaId: ctaRetenciones.id, debe: 0, haber: totalDeducciones, descripcion: "Retenciones empleado (Jub+OS+PAMI)" },
+        { cuentaId: ctaContribuciones.id, debe: 0, haber: totalContribuciones, descripcion: "Contribuciones patronales" },
+      ],
+      origenTipo: "ReciboSueldo",
+      origenId: recibo.id,
+      userId: "system",
+    });
+
+    console.log(`[Contabilidad] Asiento NÓMINA creado — ${desc} — Neto $${netoAPagar}`);
+  } catch (error) {
+    console.error("[Contabilidad] Error handler payroll.liquidate:", error);
+  }
+}

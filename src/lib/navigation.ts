@@ -99,6 +99,7 @@ export const navigation: NavGroup[] = [
   {
     title: "RRHH",
     items: [
+      { title: "Dashboard", href: "/admin/rrhh", icon: LayoutDashboard },
       { title: "Empleados", href: "/admin/rrhh/empleados", icon: UserCog },
       { title: "Ausencias", href: "/admin/rrhh/ausencias", icon: ClipboardList },
       { title: "Liquidación", href: "/admin/rrhh/liquidacion", icon: Receipt },

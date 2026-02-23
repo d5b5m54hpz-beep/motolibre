@@ -6,8 +6,8 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Fase Actual** | F5 — Público y Comunicación |
-| **Punto Actual** | 5.4 — COMPLETO, siguiente: 5.5 |
+| **Fase Actual** | F6 — Complementarios |
+| **Punto Actual** | 6.1 — COMPLETO, siguiente: 6.2 |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-23 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -46,6 +46,7 @@
 | 5.2 | Catálogo Público de Motos | 2026-02-23 | 8 campos nuevos Moto (fotos, destacada, potencia, tipoMotor, arranque, frenos, capacidadTanque, peso), 2 API routes públicas (/api/public/motos + /api/public/motos/[id]), layout público (navbar glassmorphism + footer), /catalogo con filtros (marca, tipo, precio, orden), grid MotoCards con next/image, paginación, /catalogo/[id] con gallery thumbnails, plan selector radio cards (3 planes), spec grid 2x4, motos relacionadas, SEO dinámico generateMetadata(), catalog-utils (TIPO_MOTO_LABELS, getCondicion), seed actualizado con specs + Yamaha FZ 25 pricing |
 | 5.3 | Flow de Alquiler (Wizard) | 2026-02-23 | planAlquilerId FK en Solicitud (bridge old/new pricing), middleware /alquiler whitelisted, 4 Zod schemas, 4 API routes nuevas (register, iniciar, solicitud, confirmar), MP backUrls param, webhook moto RESERVADA→ALQUILADA en 1ra cuota, catalog CTA → wizard link, wizard 5 pasos (moto summary, plan selection, auth+datos, contract preview, MP redirect), sessionStorage para Google OAuth recovery, 3 result pages (exito/error/pendiente), race condition protection via $transaction |
 | 5.4 | Portal Cliente (Mi Cuenta) | 2026-02-23 | 7 API routes mi-cuenta (dashboard, pagos, pagar, perfil, contratos, scan, qr), /mi-cuenta bajo (public) group con layout+tabs (Dashboard/Pagos/Perfil), dashboard moto card + contrato + LTO progress + últimos pagos, pagos con tabla cuotas + stats + Pagar→MP, resultado post-pago 3 estados, perfil editable (contacto+dirección), /scan/[id] público con info moto + branding, QR generator en admin moto detail, navbar auth-conditional (Avatar+DropdownMenu si logueado), /login con Google+credentials, /registro con Google+email, qrcode npm para SVG server-side |
+| 6.1 | RRHH (Recursos Humanos) | 2026-02-23 | 4 modelos (Empleado 37+ campos, Ausencia, ReciboSueldo, DocumentoEmpleado), 10 enums (Departamento, EstadoEmpleado, SexoEmpleado, EstadoCivil, JornadaLaboral, TipoAusencia, EstadoAusencia, TipoRecibo, EstadoRecibo, TipoDocumentoEmpleado), rrhh-utils con cálculo liquidación argentina (jubilación 11%, OS 3%, PAMI 3%, presentismo 8.33%, antigüedad 1%/año, contribuciones patronales), 10 API routes (empleados CRUD, ausencias CRUD+aprobar, liquidación preview+liquidar+masiva, recibos CRUD, stats), 5 páginas admin (dashboard RRHH, empleados listado+detalle con tabs, ausencias con aprobar/rechazar, liquidación con preview+masiva), handler contable #19 payroll.liquidate (asiento 5 líneas partida doble), 7 cuentas contables nuevas (5.1.04.x gastos personal, 2.1.05.x deudas sociales), seed 4 empleados demo, sidebar Dashboard RRHH, StatusBadge RRHH colors |
 
 ## Decisiones Tomadas
 
@@ -65,7 +66,7 @@
 
 ## Próxima Acción
 
-Pedir: **Prompt del punto 5.5**
+Pedir: **Prompt del punto 6.2** (nota: 5.5 pendiente)
 
 ## Problemas Conocidos
 
@@ -77,22 +78,23 @@ Pedir: **Prompt del punto 5.5**
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 30 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
+| Puntos completados | 31 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
 | **Fase F2** | ✅ COMPLETA (4 puntos: 2.1-2.4) |
 | **Fase F3** | ✅ COMPLETA (5 puntos: 3.1-3.5) |
 | **Fase F4** | ✅ COMPLETA (5 puntos: 4.1-4.4 + UI refactors) |
-| **Fase F5** | En progreso (5.2, 5.3, 5.4 completos) |
-| Modelos Prisma | 69 |
-| Enums | 49 |
-| API routes | 156 |
-| Páginas admin | 45 |
+| **Fase F5** | En progreso (5.2, 5.3, 5.4 completos, falta 5.5) |
+| **Fase F6** | En progreso (6.1 completo) |
+| Modelos Prisma | 73 |
+| Enums | 59 |
+| API routes | 166 |
+| Páginas admin | 50 |
 | Páginas públicas | 13 (/catalogo, /catalogo/[id], /alquiler/[motoId], /alquiler/exito, /alquiler/error, /alquiler/pendiente, /mi-cuenta, /mi-cuenta/pagos, /mi-cuenta/pagos/resultado, /mi-cuenta/perfil, /scan/[id], /login, /registro) |
-| Event handlers contables | 18 (13 completos + 5 stubs) |
+| Event handlers contables | 19 (14 completos + 5 stubs) |
 | Event handlers anomalías | 3 (P500: payment.approve, expense.create, adjustStock) |
 | AI Tools | 21 (flota 7, comercial 2, finanzas 6, contabilidad 3, rrhh 2, sistema 1) |
-| Cuentas contables seeded | 71 |
+| Cuentas contables seeded | 78 |
 | Tests | 0 |
 | PermissionProfiles seeded | 8 |
 | Deploy | Railway — motolibre-production.up.railway.app (auto-deploy from main) |
@@ -145,4 +147,20 @@ Webhook MP: 1ra cuota pagada → Moto RESERVADA → ALQUILADA, Solicitud → ENT
   ↓
 /scan/[id] → Página pública QR: info moto, branding MotoLibre, CTA catálogo si disponible
 Admin → Moto detail → QR button → Dialog SVG → Download/Print
+```
+
+### RRHH (6.1)
+```
+/admin/rrhh → Dashboard: stats (activos, ausentes, masa salarial, pendientes), ausencias pendientes
+  ↓
+/admin/rrhh/empleados → Listado con filtros (depto, estado, búsqueda) + crear empleado (auto-legajo EMP-XXX)
+/admin/rrhh/empleados/[id] → Detalle con tabs: Info (datos personales/laborales/banco/ART), Ausencias, Recibos, Docs
+  ↓
+/admin/rrhh/ausencias → Listado + crear ausencia (auto cálculo días hábiles) + aprobar/rechazar
+  ↓
+/admin/rrhh/liquidacion → Seleccionar período + tipo recibo → Preview cálculo argentino:
+  - Haberes: sueldo básico + presentismo 8.33% + antigüedad 1%/año
+  - Deducciones empleado: jubilación 11% + obra social 3% + PAMI 3%
+  - Contribuciones empleador: jubilación 10.17% + OS 6% + PAMI 1.5% + ART 2%
+  → Liquidar individual o masiva → ReciboSueldo + eventBus → asiento contable 5 líneas partida doble
 ```
