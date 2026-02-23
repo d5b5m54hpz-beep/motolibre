@@ -295,6 +295,18 @@ model Moto {
 
   // ── Imagen ──
   imagenUrl        String?
+  fotos            String[]
+
+  // ── Catálogo Público ──
+  destacada        Boolean    @default(false)
+
+  // ── Especificaciones Técnicas ──
+  potencia         String?
+  tipoMotor        String?
+  arranque         String?
+  frenos           String?
+  capacidadTanque  Decimal?   @db.Decimal(5, 2)
+  peso             Decimal?   @db.Decimal(6, 2)
 
   // ── Notas ──
   notas            String?
@@ -318,6 +330,7 @@ model Moto {
   @@index([marca, modelo])
   @@index([patente])
   @@index([tipo])
+  @@index([destacada])
   @@map("motos")
 }
 

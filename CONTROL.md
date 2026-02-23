@@ -6,8 +6,8 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Fase Actual** | F4 — Pricing e Inteligencia — COMPLETA |
-| **Punto Actual** | 5.1 — siguiente punto |
+| **Fase Actual** | F5 — Público y Comunicación |
+| **Punto Actual** | 5.2 — COMPLETO, siguiente: 5.3 |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-23 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -43,6 +43,7 @@
 | 4.2 | Pricing de Repuestos | 2026-02-22 | 6 modelos (ListaPrecio, ItemListaPrecio, ReglaMarkup, GrupoCliente, MiembroGrupoCliente, LoteCambioPrecio), markup por categoría, listas de precio múltiples, grupos de clientes con descuentos, cambios batch de precios, API routes pricing-repuestos, páginas admin pricing-repuestos |
 | 4.3 | Detección de Anomalías | 2026-02-23 | 2 modelos (Anomalia, AnalisisFinanciero), 3 enums (TipoAnomalia 9 vals, SeveridadAnomalia 4 vals, EstadoAnomalia 4 vals), 9 algoritmos (gasto inusual, pago duplicado, factura sin pago, margen bajo, stock crítico, desvío presupuesto, flujo caja negativo, vencimientos, patrón sospechoso), detección batch ejecutarDeteccionCompleta(), 3 handlers real-time P500, anti-duplicados, 7 API routes (listado, detalle, resolver, descartar, revisar, ejecutar, resumen), 2 páginas admin (listado con severidad visual, detalle con acciones), badge topbar anomalías ALTA+CRITICA, sidebar grupo Inteligencia |
 | 4.4 | Asistente IA Eve | 2026-02-23 | ToolRegistry singleton con 21 tools en 6 módulos (flota 7, comercial 2, finanzas 6, contabilidad 3, rrhh 2, sistema 1), system prompt dinámico por rol (español argentino, personalidad Eve), Vercel AI SDK v6 + Claude Sonnet streaming, role-based access filtering, rate limit 30 msg/min in-memory, stopWhen stepCountIs(5), chat UI full-height con markdown rendering (react-markdown + remark-gfm), sugerencias iniciales clickeables, DefaultChatTransport, stock_bajo con raw SQL, sidebar Inteligencia "Asistente Eve" — **FASE 4 COMPLETA** |
+| 5.2 | Catálogo Público de Motos | 2026-02-23 | 8 campos nuevos Moto (fotos, destacada, potencia, tipoMotor, arranque, frenos, capacidadTanque, peso), 2 API routes públicas (/api/public/motos + /api/public/motos/[id]), layout público (navbar glassmorphism + footer), /catalogo con filtros (marca, tipo, precio, orden), grid MotoCards con next/image, paginación, /catalogo/[id] con gallery thumbnails, plan selector radio cards (3 planes), spec grid 2x4, motos relacionadas, SEO dinámico generateMetadata(), catalog-utils (TIPO_MOTO_LABELS, getCondicion), seed actualizado con specs + Yamaha FZ 25 pricing |
 
 ## Decisiones Tomadas
 
@@ -62,7 +63,7 @@
 
 ## Próxima Acción
 
-Pedir: **Prompt del punto 5.1** (inicio Fase 5 — RRHH y Comunicación)
+Pedir: **Prompt del punto 5.3**
 
 ## Problemas Conocidos
 
@@ -74,16 +75,18 @@ Pedir: **Prompt del punto 5.1** (inicio Fase 5 — RRHH y Comunicación)
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 27 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
+| Puntos completados | 28 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
 | **Fase F2** | ✅ COMPLETA (4 puntos: 2.1-2.4) |
 | **Fase F3** | ✅ COMPLETA (5 puntos: 3.1-3.5) |
 | **Fase F4** | ✅ COMPLETA (5 puntos: 4.1-4.4 + UI refactors) |
+| **Fase F5** | En progreso (5.2 completo) |
 | Modelos Prisma | 69 |
 | Enums | 49 |
-| API routes | 143 |
+| API routes | 145 |
 | Páginas admin | 45 |
+| Páginas públicas | 2 (/catalogo, /catalogo/[id]) |
 | Event handlers contables | 18 (13 completos + 5 stubs) |
 | Event handlers anomalías | 3 (P500: payment.approve, expense.create, adjustStock) |
 | AI Tools | 21 (flota 7, comercial 2, finanzas 6, contabilidad 3, rrhh 2, sistema 1) |

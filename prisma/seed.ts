@@ -295,6 +295,14 @@ async function main() {
       valorResidual: 0,
       fechaAltaContable: new Date("2024-06-15"),
       creadoPor: admin.id,
+      destacada: true,
+      fotos: [],
+      potencia: "11 HP @ 7500 RPM",
+      tipoMotor: "4T monocilíndrico OHC",
+      arranque: "Eléctrico",
+      frenos: "Disco / Tambor",
+      capacidadTanque: 12.2,
+      peso: 128,
     },
     {
       marca: "Yamaha",
@@ -379,6 +387,14 @@ async function main() {
       valorResidual: 0,
       fechaAltaContable: new Date("2023-08-05"),
       creadoPor: admin.id,
+      destacada: true,
+      fotos: [],
+      potencia: "20.8 HP @ 8000 RPM",
+      tipoMotor: "4T monocilíndrico SOHC",
+      arranque: "Eléctrico",
+      frenos: "Disco / Disco",
+      capacidadTanque: 14,
+      peso: 148,
     },
   ];
 
@@ -868,7 +884,7 @@ async function main() {
     });
   }
 
-  const modelosMoto = ["Honda CB 125F", "Yamaha YBR 125", "Honda Wave 110", "Motomel DLX 110"];
+  const modelosMoto = ["Honda CB 125F", "Yamaha YBR 125", "Honda Wave 110", "Motomel DLX 110", "Yamaha FZ 25"];
   for (const pd of planesData) {
     const planDb = await prisma.planAlquiler.findUnique({ where: { codigo: pd.codigo } });
     if (!planDb) continue;

@@ -23,6 +23,14 @@ export const motoCreateSchema = z.object({
   fechaAltaContable: z.string().optional().nullable(),
   ubicacion: z.string().max(100).optional().nullable(),
   imagenUrl: z.string().url().optional().nullable(),
+  fotos: z.array(z.string().url()).optional(),
+  destacada: z.boolean().optional(),
+  potencia: z.string().max(100).optional().nullable(),
+  tipoMotor: z.string().max(100).optional().nullable(),
+  arranque: z.string().max(50).optional().nullable(),
+  frenos: z.string().max(100).optional().nullable(),
+  capacidadTanque: z.number().positive().optional().nullable(),
+  peso: z.number().positive().optional().nullable(),
   notas: z.string().optional().nullable(),
 });
 
