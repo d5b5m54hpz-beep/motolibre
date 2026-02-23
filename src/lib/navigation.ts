@@ -5,7 +5,7 @@ import {
   BarChart3, UserCog, Shield, Bell, AlertTriangle, Settings,
   Mail, Languages, ClipboardList, Gauge, Calendar,
   ArrowUpDown, Target, MapPin, ShoppingBag, Tags, Sparkles, Scale,
-  Activity, Radio, Stethoscope, Clock, Upload,
+  Activity, Radio, Stethoscope, Clock, Upload, MessageCircle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -49,6 +49,7 @@ export const navigation: NavGroup[] = [
       { title: "Facturas", href: "/admin/facturas", icon: Receipt },
       { title: "Notas de Crédito", href: "/admin/notas-credito", icon: FileSpreadsheet },
       { title: "Ventas Repuestos", href: "/admin/ventas-repuestos", icon: ShoppingBag },
+      { title: "Conversaciones", href: "/admin/chat", icon: MessageCircle },
     ],
   },
   {

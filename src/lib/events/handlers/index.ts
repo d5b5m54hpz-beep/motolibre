@@ -30,6 +30,7 @@ import {
   handleNotifyPaymentApprove,
   handleNotifyContractCreate,
   handleNotifyAnomalyDetect,
+  handleChatWelcomeMessage,
 } from "./notifications";
 
 /**
@@ -225,6 +226,14 @@ export function initializeEventHandlers(): void {
     priority: P_NOTIFICATION,
     pattern: OPERATIONS.anomaly.detect,
     handler: handleNotifyAnomalyDetect,
+  });
+
+  // Contrato creado → mensaje de bienvenida en chat
+  eventBus.register({
+    name: "chat:contract.create.welcome",
+    priority: P_NOTIFICATION,
+    pattern: OPERATIONS.commercial.contract.create,
+    handler: handleChatWelcomeMessage,
   });
 
   // ── HANDLERS ANOMALÍAS (P500) ──

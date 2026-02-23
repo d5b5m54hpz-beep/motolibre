@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, CreditCard, UserCircle } from "lucide-react";
+import { LayoutDashboard, CreditCard, UserCircle, MessageCircle } from "lucide-react";
 
 const tabs = [
   { href: "/mi-cuenta", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/mi-cuenta/pagos", label: "Pagos", icon: CreditCard, exact: false },
+  { href: "/mi-cuenta/chat", label: "Chat", icon: MessageCircle, exact: true },
   { href: "/mi-cuenta/perfil", label: "Perfil", icon: UserCircle, exact: true },
 ];
 

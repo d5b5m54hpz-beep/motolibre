@@ -2866,6 +2866,7 @@ enum TipoAlerta {
   CONCILIACION_PENDIENTE
   SOLICITUD_NUEVA
   DOCUMENTO_POR_VENCER
+  MENSAJE_NUEVO
   SISTEMA
 }
 
@@ -2989,4 +2990,36 @@ model ItemVentaRepuesto {
   @@index([ordenId])
   @@index([repuestoId])
   @@map("items_venta_repuestos")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHAT
+// ═══════════════════════════════════════════════════════════════
+
+model MensajeChat {
+  id              String      @id @default(cuid())
+
+  // ── Canal ──
+  contratoId      String
+
+  // ── Autor ──
+  userId          String
+  userName        String
+  userRole        String      // "ADMIN", "OPERADOR", "CLIENTE", "SISTEMA"
+
+  // ── Contenido ──
+  texto           String
+
+  // ── Estado ──
+  leido           Boolean     @default(false)
+  fechaLeido      DateTime?
+
+  // ── Metadata ──
+  tipo            String      @default("texto") // "texto", "sistema"
+
+  createdAt       DateTime    @default(now())
+
+  @@index([contratoId, createdAt])
+  @@index([contratoId, leido])
+  @@map("mensajes_chat")
 }

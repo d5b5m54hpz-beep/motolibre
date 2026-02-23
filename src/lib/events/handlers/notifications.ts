@@ -122,3 +122,34 @@ export async function handleNotifyAnomalyDetect(
     accionLabel: "Revisar anomalía",
   });
 }
+
+/**
+ * contract.create → Mensaje de bienvenida en chat del contrato.
+ */
+export async function handleChatWelcomeMessage(
+  event: BusinessEventData
+): Promise<void> {
+  const contrato = await prisma.contrato.findUnique({
+    where: { id: event.entityId },
+    select: {
+      id: true,
+      cliente: { select: { nombre: true } },
+    },
+  });
+
+  if (!contrato) return;
+
+  const clienteNombre = contrato.cliente?.nombre ?? "Cliente";
+
+  await prisma.mensajeChat.create({
+    data: {
+      contratoId: contrato.id,
+      userId: "SISTEMA",
+      userName: "MotoLibre",
+      userRole: "SISTEMA",
+      texto: `¡Bienvenido/a ${clienteNombre}! Este es tu canal de comunicación directa con nuestro equipo. Escribinos cualquier consulta sobre tu moto o contrato.`,
+      tipo: "sistema",
+      leido: false,
+    },
+  });
+}
