@@ -93,7 +93,7 @@ export default function DiagnosticoPage() {
       toast.error("Error de conexión");
     }
     setLoadingHistorial(false);
-  }, []);
+  }, [ultimoResultado]);
 
   useEffect(() => {
     void fetchHistorial();
