@@ -60,6 +60,12 @@ const CRON_JOBS: CronJob[] = [
     description:
       "Limpia eventos >90d, alertas leidas >60d, sesiones expiradas, reservas abandonadas",
   },
+  {
+    id: "reintentar-cae",
+    name: "Reintentar CAE AFIP",
+    frequency: "Diario 11:00",
+    description: "Reintenta obtener CAE de AFIP para facturas y NC pendientes (max 5 intentos)",
+  },
 ];
 
 // ── Page ───────────────────────────────────────────────────────────

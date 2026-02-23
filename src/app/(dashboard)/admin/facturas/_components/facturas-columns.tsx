@@ -7,7 +7,47 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { formatMoney } from "@/lib/format";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { FileText, Send } from "lucide-react";
+import { FileText, Send, CheckCircle, Clock, XCircle, AlertTriangle } from "lucide-react";
+
+function CAEBadge({ resultado }: { resultado: string | null }) {
+  switch (resultado) {
+    case "A":
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-positive">
+          <CheckCircle className="h-3.5 w-3.5" />
+          CAE
+        </span>
+      );
+    case "STUB":
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-t-secondary">
+          <AlertTriangle className="h-3.5 w-3.5" />
+          Stub
+        </span>
+      );
+    case "PENDIENTE":
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-warning">
+          <Clock className="h-3.5 w-3.5" />
+          Pendiente
+        </span>
+      );
+    case "R":
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
+          <XCircle className="h-3.5 w-3.5" />
+          Rechazada
+        </span>
+      );
+    default:
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-t-secondary">
+          <Clock className="h-3.5 w-3.5" />
+          —
+        </span>
+      );
+  }
+}
 
 export const facturasColumns: ColumnDef<Factura>[] = [
   {
@@ -57,6 +97,11 @@ export const facturasColumns: ColumnDef<Factura>[] = [
         {formatMoney(Number(row.original.montoTotal))}
       </span>
     ),
+  },
+  {
+    id: "afip",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="AFIP" />,
+    cell: ({ row }) => <CAEBadge resultado={row.original.afipResultado} />,
   },
   {
     accessorKey: "estado",

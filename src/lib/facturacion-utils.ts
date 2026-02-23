@@ -1,5 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import type { TipoFactura, CondicionIva } from "@prisma/client";
+import {
+  solicitarCAE,
+  tipoComprobanteAFIP,
+  tipoDocumentoReceptor,
+  formatFechaAFIP,
+  parseFechaAFIP,
+  type DatosFacturaAFIP,
+} from "@/lib/services/afip-service";
 
 const IVA_RATE = 0.21;
 
@@ -56,8 +64,7 @@ export async function proximoNumeroFactura(
 }
 
 /**
- * Genera un CAE stub (ficticio).
- * En producción (punto 7.2) se reemplaza por llamada a AFIP WSFE.
+ * Genera un CAE stub (ficticio) — solo para fallback sin certificado AFIP.
  */
 export function generarCAEStub(): { cae: string; caeVencimiento: Date } {
   const timestamp = Date.now().toString().slice(-14).padStart(14, "0");
@@ -69,6 +76,115 @@ export function generarCAEStub(): { cae: string; caeVencimiento: Date } {
     caeVencimiento: vencimiento,
   };
 }
+
+/**
+ * Solicita CAE a AFIP (real o stub según configuración).
+ * Reemplaza generarCAEStub para el flujo principal de facturación.
+ */
+export async function obtenerCAEFactura(params: {
+  tipo: TipoFactura;
+  puntoVenta: string;
+  importeNeto: number;
+  importeIVA: number;
+  importeTotal: number;
+  condicionIVAReceptor: string;
+  documentoReceptor: string;
+  periodoDesde?: Date | null;
+  periodoHasta?: Date | null;
+  fechaVencimientoPago?: Date | null;
+}): Promise<{
+  cae: string;
+  caeVencimiento: Date | null;
+  afipResultado: string;
+  afipObservaciones: string | null;
+  nroComprobante: number;
+}> {
+  const tipoComp = tipoComprobanteAFIP("FACTURA", params.tipo as "A" | "B" | "C");
+
+  const datosAfip: DatosFacturaAFIP = {
+    tipoComprobante: tipoComp,
+    puntoVenta: Number(params.puntoVenta),
+    tipoDocReceptor: tipoDocumentoReceptor(params.condicionIVAReceptor),
+    nroDocReceptor: parseInt(params.documentoReceptor.replace(/-/g, "") || "0"),
+    importeNeto: params.importeNeto,
+    importeIVA: params.importeIVA,
+    importeTotal: params.importeTotal,
+    concepto: 2, // Servicios (alquiler de motos)
+    fechaServicioDesde: formatFechaAFIP(params.periodoDesde),
+    fechaServicioHasta: formatFechaAFIP(params.periodoHasta),
+    fechaVencimientoPago: formatFechaAFIP(params.fechaVencimientoPago),
+  };
+
+  const resultado = await solicitarCAE(datosAfip);
+
+  return {
+    cae: resultado.cae,
+    caeVencimiento: parseFechaAFIP(resultado.caeFchVto),
+    afipResultado: resultado.resultado,
+    afipObservaciones: resultado.observaciones || null,
+    nroComprobante: resultado.nroComprobante,
+  };
+}
+
+/**
+ * Solicita CAE para nota de crédito, con referencia al comprobante original.
+ */
+export async function obtenerCAENotaCredito(params: {
+  letraFacturaOriginal: TipoFactura;
+  puntoVenta: string;
+  importeNeto: number;
+  importeIVA: number;
+  importeTotal: number;
+  condicionIVAReceptor: string;
+  documentoReceptor: string;
+  facturaOriginalNumero: number;
+  facturaOriginalPuntoVenta: string;
+  facturaOriginalFecha: Date;
+}): Promise<{
+  cae: string;
+  caeVencimiento: Date | null;
+  afipResultado: string;
+  afipObservaciones: string | null;
+  nroComprobante: number;
+}> {
+  const tipoComp = tipoComprobanteAFIP(
+    "NOTA_CREDITO",
+    params.letraFacturaOriginal as "A" | "B" | "C"
+  );
+  const tipoCompOriginal = tipoComprobanteAFIP(
+    "FACTURA",
+    params.letraFacturaOriginal as "A" | "B" | "C"
+  );
+
+  const datosAfip: DatosFacturaAFIP = {
+    tipoComprobante: tipoComp,
+    puntoVenta: Number(params.puntoVenta),
+    tipoDocReceptor: tipoDocumentoReceptor(params.condicionIVAReceptor),
+    nroDocReceptor: parseInt(params.documentoReceptor.replace(/-/g, "") || "0"),
+    importeNeto: params.importeNeto,
+    importeIVA: params.importeIVA,
+    importeTotal: params.importeTotal,
+    concepto: 2,
+    comprobanteAsociado: {
+      tipo: tipoCompOriginal,
+      puntoVenta: Number(params.facturaOriginalPuntoVenta),
+      numero: params.facturaOriginalNumero,
+      fecha: formatFechaAFIP(params.facturaOriginalFecha),
+    },
+  };
+
+  const resultado = await solicitarCAE(datosAfip);
+
+  return {
+    cae: resultado.cae,
+    caeVencimiento: parseFechaAFIP(resultado.caeFchVto),
+    afipResultado: resultado.resultado,
+    afipObservaciones: resultado.observaciones || null,
+    nroComprobante: resultado.nroComprobante,
+  };
+}
+
+export type { ResultadoCAE } from "@/lib/services/afip-service";
 
 /**
  * Datos del emisor desde env.

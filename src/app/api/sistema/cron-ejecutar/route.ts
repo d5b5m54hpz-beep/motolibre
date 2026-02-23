@@ -10,6 +10,7 @@ const VALID_JOBS = [
   "mantenimiento-programado",
   "documentos-por-vencer",
   "limpieza",
+  "reintentar-cae",
 ] as const;
 
 type CronJobName = (typeof VALID_JOBS)[number];

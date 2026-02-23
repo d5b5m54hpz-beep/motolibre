@@ -6,8 +6,9 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/format";
 import Link from "next/link";
-import { FileText, ArrowLeft, Send } from "lucide-react";
+import { FileText, ArrowLeft, Send, CheckCircle, XCircle, Clock, AlertTriangle } from "lucide-react";
 import { FacturaEnviarButton } from "./_components/factura-enviar-button";
+import { ReintentarCAEButton } from "./_components/reintentar-cae-button";
 
 export default async function FacturaDetailPage({
   params,
@@ -26,6 +27,8 @@ export default async function FacturaDetailPage({
   const montoNeto = Number(factura.montoNeto);
   const montoIva = Number(factura.montoIva);
   const montoTotal = Number(factura.montoTotal);
+
+  const showRetryButton = factura.afipResultado === "PENDIENTE" || factura.afipResultado === "R";
 
   return (
     <div className="space-y-6">
@@ -51,6 +54,7 @@ export default async function FacturaDetailPage({
               </a>
             </Button>
             <FacturaEnviarButton facturaId={id} />
+            {showRetryButton && <ReintentarCAEButton facturaId={id} />}
           </div>
         }
       />
@@ -166,6 +170,41 @@ export default async function FacturaDetailPage({
           </CardContent>
         </Card>
 
+        {/* Info AFIP */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Estado AFIP</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div className="flex justify-between items-center">
+              <span className="text-t-secondary">Resultado:</span>
+              <AFIPResultadoBadge resultado={factura.afipResultado} />
+            </div>
+            {factura.cae && (
+              <div className="flex justify-between">
+                <span className="text-t-secondary">CAE:</span>
+                <span className="font-mono text-xs">{factura.cae}</span>
+              </div>
+            )}
+            {factura.caeVencimiento && (
+              <div className="flex justify-between">
+                <span className="text-t-secondary">Vto. CAE:</span>
+                <span>{new Date(factura.caeVencimiento).toLocaleDateString("es-AR")}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-t-secondary">Reintentos:</span>
+              <span>{factura.afipReintentos}</span>
+            </div>
+            {factura.afipObservaciones && (
+              <div className="border-t border-border pt-2">
+                <p className="text-xs text-t-secondary mb-1">Observaciones AFIP:</p>
+                <p className="text-xs text-destructive">{factura.afipObservaciones}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Info pago asociado */}
         {pago && (
           <Card>
@@ -220,4 +259,39 @@ export default async function FacturaDetailPage({
       </div>
     </div>
   );
+}
+
+function AFIPResultadoBadge({ resultado }: { resultado: string | null }) {
+  switch (resultado) {
+    case "A":
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-positive">
+          <CheckCircle className="h-3.5 w-3.5" />
+          Aprobado
+        </span>
+      );
+    case "STUB":
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-t-secondary">
+          <AlertTriangle className="h-3.5 w-3.5" />
+          Stub (sin cert.)
+        </span>
+      );
+    case "PENDIENTE":
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-warning">
+          <Clock className="h-3.5 w-3.5" />
+          Pendiente
+        </span>
+      );
+    case "R":
+      return (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
+          <XCircle className="h-3.5 w-3.5" />
+          Rechazado
+        </span>
+      );
+    default:
+      return <span className="text-xs text-t-secondary">—</span>;
+  }
 }

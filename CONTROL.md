@@ -7,9 +7,9 @@
 | Campo | Valor |
 |-------|-------|
 | **Fase Actual** | F7 — Expansión |
-| **Punto Actual** | 7.1 — COMPLETO, siguiente: 7.2 |
+| **Punto Actual** | 7.2 — COMPLETO, siguiente: 7.3 |
 | **Estado** | ✅ LISTO |
-| **Última Actualización** | 2026-02-23 |
+| **Última Actualización** | 2026-02-24 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
 
 ## Puntos Completados
@@ -52,6 +52,7 @@
 | 6.4 | Alertas + Cron Jobs | 2026-02-23 | 1 modelo (Alerta), 2 enums (TipoAlerta 12 vals, PrioridadAlerta 4 vals), alertas-utils (crearAlerta anti-duplicado 24h, alertarCreador, contarNoLeidas), 3 notification handlers P200 (payment.approve→PAGO_RECIBIDO, contract.create→SOLICITUD_NUEVA, anomaly.detect→ANOMALIA_DETECTADA), 5 API routes alertas (listado paginado+filtros, count para badge, marcar leída, marcar todas leídas, eliminar), 6 cron jobs protegidos con CRON_SECRET (contratos-por-vencer, cuotas-vencidas, generar-cuotas, mantenimiento-programado, documentos-por-vencer, limpieza), cron-ejecutar wrapper admin, topbar bell badge alertas con polling 60s, 2 páginas admin (alertas feed con filtros tipo/módulo/leídas + cargar más, cron jobs con ejecutar ahora + log resultados), sidebar +Cron Jobs, StatusBadge +prioridades (BAJA/MEDIA/ALTA/URGENTE) |
 | 6.5 | Export/Import + Usuarios + Config Empresa | 2026-02-23 | export-utils (toCSV separador ;, BOM UTF-8, decimal argentino), import-utils (parseCSV auto-detect separador, validarFilas, parseNumeroAR, parseFechaAR), 7 export CSV routes (motos, clientes, contratos, pagos, repuestos, empleados, facturas) con filtros opcionales, 3 import routes (motos DISPONIBLE, clientes skip DNI existente, repuestos upsert por código), templates CSV descargables, User +activo field, ConfiguracionEmpresa +7 campos operativos, CRUD usuarios (crear con bcrypt, cambiar rol, activar/desactivar, reset password temporal), config empresa GET/PUT singleton, 3 páginas admin (usuarios con filtros/create/actions, empresa 3 secciones formulario, export-import con download+dragdrop+resultados), sidebar Empresa + Export/Import — **FASE 6 COMPLETA** |
 | 7.1 | E-Commerce de Repuestos | 2026-02-23 | 2 modelos (OrdenVentaRepuesto + ItemVentaRepuesto), 2 enums (EstadoOrdenVenta 7 vals, MetodoEntrega 2 vals), TipoPagoMP +PEDIDO_REPUESTOS, PagoMercadoPago +ordenVentaId, OPERATIONS.sale (create/confirm/cancel), handler contable #20 sale.confirm (asiento venta + CMV), CUENTAS +COSTO_VENTA_REPUESTOS, webhook MP +pedido: prefix handler (stock EGRESO + emit sale.confirm), carrito-context.tsx (React Context + localStorage), 2 API públicas catálogo (repuestos list filtros+paginación, detail +relacionados), 3 API cart/checkout (validar carrito, checkout con MP Checkout Pro preference, orden status), 5 páginas públicas /tienda (catálogo grid responsive, detalle con qty selector, carrito con controles, checkout form → MP redirect, resultado 3 estados), 2 API admin ventas-repuestos (list con stats, detail + state transitions), 1 página admin ventas-repuestos (stats cards, tabla con filtros, dialog detalle, actions dropdown), navbar pública +Repuestos, sidebar Comercial +Ventas Repuestos, StatusBadge +7 order states, public layout +CarritoProvider |
+| 7.2 | AFIP Facturación Electrónica Real | 2026-02-24 | afip-service.ts (integración WSFE v1 con @afipsdk/afip.js), solicitarCAE() obtiene CAE real o stub según config, mapeo completo FA/FB/NCA/NCB → códigos AFIP, tipo doc receptor CUIT/DNI/CF según condición IVA, NC con referencia comprobante original (CbtesAsoc), fallback: si AFIP caído → CAE pendiente + alerta + cola reintentos, modo stub sin certificado funciona como antes, cron reintentar-cae (máx 5 intentos facturas+NC pendientes), 4 API routes nuevas (afip/estado, afip/ultimo-comprobante, facturas/[id]/reintentar-cae, cron/reintentar-cae), 3 campos nuevos Factura+NC (afipResultado, afipObservaciones, afipReintentos), UI: badge CAE en tabla facturas (aprobado/stub/pendiente/rechazado), card Estado AFIP en detalle factura, botón Reintentar CAE, badge entorno AFIP en header, stat Pendientes CAE en listado, soporte homologación/producción via AFIP_PRODUCTION, env: AFIP_CUIT/CERT/KEY/PRODUCTION |
 
 ## Decisiones Tomadas
 
@@ -71,7 +72,7 @@
 
 ## Próxima Acción
 
-Pedir: **Prompt del punto 7.1** (nota: 5.5 pendiente)
+Pedir: **Prompt del punto 7.3** (nota: 5.5 pendiente)
 
 ## Problemas Conocidos
 
@@ -83,7 +84,7 @@ Pedir: **Prompt del punto 7.1** (nota: 5.5 pendiente)
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 34 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
+| Puntos completados | 35 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
 | **Fase F2** | ✅ COMPLETA (4 puntos: 2.1-2.4) |
@@ -93,7 +94,7 @@ Pedir: **Prompt del punto 7.1** (nota: 5.5 pendiente)
 | **Fase F6** | ✅ COMPLETA (5 puntos: 6.1-6.5) |
 | Modelos Prisma | 80 |
 | Enums | 67 |
-| API routes | 211 |
+| API routes | 215 |
 | Páginas admin | 60 |
 | Páginas públicas | 13 (/catalogo, /catalogo/[id], /alquiler/[motoId], /alquiler/exito, /alquiler/error, /alquiler/pendiente, /mi-cuenta, /mi-cuenta/pagos, /mi-cuenta/pagos/resultado, /mi-cuenta/perfil, /scan/[id], /login, /registro) |
 | Event handlers contables | 19 (15 completos + 4 stubs) |

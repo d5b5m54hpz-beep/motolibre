@@ -18,6 +18,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@afipsdk/afip.js": "^1.2.2",
     "@ai-sdk/anthropic": "^3.0.46",
     "@ai-sdk/react": "^3.0.99",
     "@auth/prisma-adapter": "^2.11.1",

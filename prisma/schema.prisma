@@ -1008,9 +1008,12 @@ model Factura {
   montoIva        Decimal        @db.Decimal(12, 2)
   montoTotal      Decimal        @db.Decimal(12, 2)
 
-  // ── CAE ──
-  cae             String?
-  caeVencimiento  DateTime?
+  // ── CAE / AFIP ──
+  cae               String?
+  caeVencimiento    DateTime?
+  afipResultado     String?          // "A" aprobado, "R" rechazado, "PENDIENTE", "STUB"
+  afipObservaciones String?
+  afipReintentos    Int              @default(0)
 
   // ── Concepto ──
   concepto        String
@@ -1293,8 +1296,11 @@ model NotaCredito {
   estado          EstadoNotaCredito @default(GENERADA)
   fechaEmision    DateTime          @default(now())
 
-  cae             String?
-  caeVencimiento  DateTime?
+  cae               String?
+  caeVencimiento    DateTime?
+  afipResultado     String?
+  afipObservaciones String?
+  afipReintentos    Int              @default(0)
 
   clienteId       String
   asientoId       String?

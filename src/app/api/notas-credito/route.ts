@@ -3,7 +3,7 @@ import { requirePermission } from "@/lib/permissions";
 import { eventBus, OPERATIONS } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
 import { notaCreditoCreateSchema } from "@/lib/validations/nota-credito";
-import { generarCAEStub } from "@/lib/facturacion-utils";
+import { obtenerCAENotaCredito } from "@/lib/facturacion-utils";
 import { apiSetup } from "@/lib/api-helpers";
 
 export async function GET(req: NextRequest) {
@@ -84,7 +84,23 @@ export async function POST(req: NextRequest) {
   const numero = (ultimaNC?.numero ?? 0) + 1;
   const numeroCompleto = `${tipoComprobante}-${puntoVenta}-${String(numero).padStart(8, "0")}`;
 
-  const { cae, caeVencimiento } = generarCAEStub();
+  // Solicitar CAE a AFIP (real o stub según config)
+  const afipResult = await obtenerCAENotaCredito({
+    letraFacturaOriginal: factura.tipo,
+    puntoVenta,
+    importeNeto: montoNeto,
+    importeIVA: montoIva,
+    importeTotal: montoTotal,
+    condicionIVAReceptor: factura.receptorCondicionIva,
+    documentoReceptor: factura.receptorCuit || "0",
+    facturaOriginalNumero: factura.numero,
+    facturaOriginalPuntoVenta: factura.puntoVenta,
+    facturaOriginalFecha: factura.fechaEmision,
+  });
+
+  if (afipResult.afipResultado === "R") {
+    console.error(`[NC] AFIP rechazó nota de crédito: ${afipResult.afipObservaciones}`);
+  }
 
   const nc = await prisma.notaCredito.create({
     data: {
@@ -103,8 +119,10 @@ export async function POST(req: NextRequest) {
       montoTotal,
       motivo: parsed.data.motivo,
       clienteId: factura.clienteId,
-      cae,
-      caeVencimiento,
+      cae: afipResult.cae || null,
+      caeVencimiento: afipResult.caeVencimiento,
+      afipResultado: afipResult.afipResultado,
+      afipObservaciones: afipResult.afipObservaciones,
     },
   });
 

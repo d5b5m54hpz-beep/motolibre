@@ -3,7 +3,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FacturasTable } from "./_components/facturas-table";
 import { formatMoney } from "@/lib/format";
-import { Receipt, TrendingUp, Clock, Ban } from "lucide-react";
+import { Receipt, TrendingUp, Clock, ShieldCheck, ShieldAlert } from "lucide-react";
+import { getAfipEntorno } from "@/lib/services/afip-service";
 
 export default async function FacturasPage() {
   const hoy = new Date();
@@ -12,7 +13,7 @@ export default async function FacturasPage() {
   manana.setDate(manana.getDate() + 1);
   const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
 
-  const [facturas, totalMes, emitidas, pendientesEnvio] = await Promise.all([
+  const [facturas, totalMes, emitidas, pendientesEnvio, pendientesCAE] = await Promise.all([
     prisma.factura.findMany({
       orderBy: { fechaEmision: "desc" },
       take: 100,
@@ -27,7 +28,12 @@ export default async function FacturasPage() {
     prisma.factura.count({
       where: { estado: "GENERADA" },
     }),
+    prisma.factura.count({
+      where: { afipResultado: { in: ["PENDIENTE", "R"] } },
+    }),
   ]);
+
+  const entorno = getAfipEntorno();
 
   const stats = [
     {
@@ -49,16 +55,30 @@ export default async function FacturasPage() {
       color: "text-warning",
     },
     {
-      title: "Total de Facturas",
-      value: facturas.length,
-      icon: Ban,
-      color: "text-ds-info",
+      title: "Pendientes CAE",
+      value: pendientesCAE,
+      icon: pendientesCAE > 0 ? ShieldAlert : ShieldCheck,
+      color: pendientesCAE > 0 ? "text-destructive" : "text-positive",
     },
   ];
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Facturas" description="Comprobantes emitidos automáticamente al confirmar pagos" />
+      <PageHeader
+        title="Facturas"
+        description="Comprobantes emitidos automáticamente al confirmar pagos"
+        actions={
+          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+            entorno === "produccion"
+              ? "bg-positive-bg text-positive"
+              : entorno === "homologacion"
+              ? "bg-info-bg text-ds-info"
+              : "bg-warning/10 text-warning"
+          }`}>
+            AFIP: {entorno === "produccion" ? "Producción" : entorno === "homologacion" ? "Homologación" : "Stub"}
+          </span>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (

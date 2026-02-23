@@ -3,7 +3,7 @@ import {
   determinarTipoFactura,
   calcularMontosFactura,
   proximoNumeroFactura,
-  generarCAEStub,
+  obtenerCAEFactura,
   datosEmisor,
   CONDICION_IVA_TEXTO,
 } from "@/lib/facturacion-utils";
@@ -35,7 +35,25 @@ export async function generarFacturaAutomatica(params: {
   const montos = calcularMontosFactura(params.monto, tipo);
   const emisor = datosEmisor();
   const { numero, numeroCompleto } = await proximoNumeroFactura(tipo, emisor.puntoVenta);
-  const { cae, caeVencimiento } = generarCAEStub();
+
+  // Solicitar CAE a AFIP (real o stub según config)
+  const documentoReceptor = cliente.cuit ?? cliente.dni ?? "0";
+  const afipResult = await obtenerCAEFactura({
+    tipo,
+    puntoVenta: emisor.puntoVenta,
+    importeNeto: montos.montoNeto,
+    importeIVA: montos.montoIva,
+    importeTotal: montos.montoTotal,
+    condicionIVAReceptor: cliente.condicionIva,
+    documentoReceptor,
+    periodoDesde: params.periodoDesde,
+    periodoHasta: params.periodoHasta,
+  });
+
+  // Si AFIP rechazó, logueamos pero no bloqueamos (queda PENDIENTE)
+  if (afipResult.afipResultado === "R") {
+    console.error(`[Facturación] AFIP rechazó factura: ${afipResult.afipObservaciones}`);
+  }
 
   // Construir domicilio del receptor desde campos separados
   const domicilioParts = [
@@ -65,8 +83,10 @@ export async function generarFacturaAutomatica(params: {
       montoNeto: montos.montoNeto,
       montoIva: montos.montoIva,
       montoTotal: montos.montoTotal,
-      cae,
-      caeVencimiento,
+      cae: afipResult.cae || null,
+      caeVencimiento: afipResult.caeVencimiento,
+      afipResultado: afipResult.afipResultado,
+      afipObservaciones: afipResult.afipObservaciones,
       concepto: params.concepto,
       periodoDesde: params.periodoDesde,
       periodoHasta: params.periodoHasta,
