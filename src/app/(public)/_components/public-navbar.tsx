@@ -19,6 +19,7 @@ import { useState } from "react";
 
 const links = [
   { href: "/catalogo", label: "Catálogo" },
+  { href: "/tienda", label: "Repuestos" },
 ];
 
 export function PublicNavbar() {

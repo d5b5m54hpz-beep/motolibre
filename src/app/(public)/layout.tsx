@@ -1,5 +1,6 @@
 import { PublicNavbar } from "./_components/public-navbar";
 import { PublicFooter } from "./_components/public-footer";
+import { CarritoProvider } from "@/lib/carrito-context";
 
 export default function PublicLayout({
   children,
@@ -7,10 +8,12 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex flex-col bg-bg-primary">
-      <PublicNavbar />
-      <main className="flex-1">{children}</main>
-      <PublicFooter />
-    </div>
+    <CarritoProvider>
+      <div className="min-h-screen flex flex-col bg-bg-primary">
+        <PublicNavbar />
+        <main className="flex-1">{children}</main>
+        <PublicFooter />
+      </div>
+    </CarritoProvider>
   );
 }

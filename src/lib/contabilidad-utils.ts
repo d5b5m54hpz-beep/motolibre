@@ -197,6 +197,7 @@ export const CUENTAS = {
   SUELDOS_A_PAGAR: "2.1.05.001",             // Sueldos a Pagar (neto)
   RETENCIONES_A_DEPOSITAR: "2.1.05.002",     // Retenciones Empleado
   CONTRIBUCIONES_A_DEPOSITAR: "2.1.05.003",  // Contribuciones Empleador
+  COSTO_VENTA_REPUESTOS: "5.1.05.001",  // CMV Repuestos
   GASTOS_ADMINISTRATIVOS: "5.2.01.001",
   GASTOS_BANCARIOS: "5.2.02.001",      // Comisiones MP, bancarias
   GASTOS_IMPUESTOS: "5.2.03.001",

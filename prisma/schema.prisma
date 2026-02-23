@@ -906,6 +906,7 @@ enum TipoPagoMP {
   CUOTA_RECURRENTE
   CUOTA_INDIVIDUAL
   REFUND
+  PEDIDO_REPUESTOS
 }
 
 model PagoMercadoPago {
@@ -916,6 +917,7 @@ model PagoMercadoPago {
   solicitudId       String?
   contratoId        String?
   cuotaId           String?
+  ordenVentaId      String?
 
   mpPaymentId       String?       @unique
   mpPreferenceId    String?
@@ -938,6 +940,7 @@ model PagoMercadoPago {
   @@index([solicitudId])
   @@index([contratoId])
   @@index([cuotaId])
+  @@index([ordenVentaId])
   @@index([mpPaymentId])
   @@index([estado])
   @@map("pagos_mercadopago")
@@ -1853,6 +1856,7 @@ model Repuesto {
   // ── Relaciones ──
   movimientos       MovimientoStock[]
   historialCostos   HistorialCostoRepuesto[]
+  itemsVenta        ItemVentaRepuesto[]
 
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
@@ -2897,4 +2901,86 @@ model Alerta {
   @@index([tipo])
   @@index([createdAt])
   @@map("alertas")
+}
+
+// ══════════════════════════════════════════════════════════════
+// E-Commerce Repuestos
+// ══════════════════════════════════════════════════════════════
+
+enum EstadoOrdenVenta {
+  PENDIENTE_PAGO
+  PAGADA
+  EN_PREPARACION
+  LISTA_RETIRO
+  ENVIADA
+  ENTREGADA
+  CANCELADA
+}
+
+enum MetodoEntrega {
+  RETIRO_LOCAL
+  ENVIO
+}
+
+model OrdenVentaRepuesto {
+  id                String            @id @default(cuid())
+  numero            Int               @unique @default(autoincrement())
+
+  // ── Cliente ──
+  nombreCliente     String
+  emailCliente      String
+  telefonoCliente   String?
+  direccionEnvio    String?
+
+  // ── Entrega ──
+  metodoEntrega     MetodoEntrega     @default(RETIRO_LOCAL)
+
+  // ── Totales ──
+  subtotal          Decimal           @db.Decimal(12, 2)
+  descuento         Decimal           @db.Decimal(12, 2) @default(0)
+  iva               Decimal           @db.Decimal(12, 2)
+  total             Decimal           @db.Decimal(12, 2)
+
+  // ── Estado ──
+  estado            EstadoOrdenVenta  @default(PENDIENTE_PAGO)
+
+  // ── MercadoPago ──
+  mpPreferenceId    String?
+  mpPaymentId       String?
+
+  // ── Notas ──
+  notas             String?
+
+  // ── Items ──
+  items             ItemVentaRepuesto[]
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([estado])
+  @@index([emailCliente])
+  @@index([createdAt])
+  @@map("ordenes_venta_repuestos")
+}
+
+model ItemVentaRepuesto {
+  id                String              @id @default(cuid())
+
+  ordenId           String
+  orden             OrdenVentaRepuesto  @relation(fields: [ordenId], references: [id], onDelete: Cascade)
+
+  repuestoId        String
+  repuesto          Repuesto            @relation(fields: [repuestoId], references: [id])
+
+  // ── Snapshot al momento de la compra ──
+  codigoSnapshot    String
+  nombreSnapshot    String
+  precioUnitario    Decimal             @db.Decimal(12, 2)
+
+  cantidad          Int
+  subtotal          Decimal             @db.Decimal(12, 2)
+
+  @@index([ordenId])
+  @@index([repuestoId])
+  @@map("items_venta_repuestos")
 }

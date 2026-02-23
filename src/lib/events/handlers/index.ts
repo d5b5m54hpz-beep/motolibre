@@ -19,6 +19,7 @@ import {
   handlePurchaseInvoiceCreate,
   handlePurchaseInvoicePay,
   handlePayrollLiquidate,
+  handleSaleConfirm,
 } from "./accounting";
 import {
   handleAnomalyPaymentApprove,
@@ -190,6 +191,14 @@ export function initializeEventHandlers(): void {
     handler: handlePayrollLiquidate,
   });
 
+  // 20. Venta de repuestos
+  eventBus.register({
+    name: "accounting:sale.confirm",
+    priority: P_ACCOUNTING,
+    pattern: OPERATIONS.sale.confirm,
+    handler: handleSaleConfirm,
+  });
+
   // ── HANDLERS NOTIFICACIONES (P200) ──
 
   const P_NOTIFICATION = 200;
@@ -262,6 +271,6 @@ export function initializeEventHandlers(): void {
 
   eventBus.markInitialized();
   console.log(
-    `[EventBus] Initialized with ${eventBus.getHandlers().length} handler(s) (19 contables + 3 notificaciones + 3 anomalías + 1 metrics)`
+    `[EventBus] Initialized with ${eventBus.getHandlers().length} handler(s) (20 contables + 3 notificaciones + 3 anomalías + 1 metrics)`
   );
 }

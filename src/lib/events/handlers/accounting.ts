@@ -731,3 +731,65 @@ export async function handlePayrollLiquidate(event: BusinessEventData) {
     console.error("[Contabilidad] Error handler payroll.liquidate:", error);
   }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// HANDLER 20 — VENTA REPUESTOS (sale.confirm)
+// Cuando se confirma pago de un pedido de repuestos
+// ═══════════════════════════════════════════════════════════════
+export async function handleSaleConfirm(event: BusinessEventData) {
+  try {
+    const orden = await prisma.ordenVentaRepuesto.findUnique({
+      where: { id: event.entityId },
+      include: {
+        items: {
+          include: { repuesto: { select: { precioCompra: true } } },
+        },
+      },
+    });
+    if (!orden || orden.estado === "CANCELADA") return;
+
+    const total = Number(orden.total);
+    const neto = Math.round((total / 1.21) * 100) / 100;
+    const iva = Math.round((total - neto) * 100) / 100;
+
+    // Costo de mercadería vendida
+    const costoTotal = orden.items.reduce(
+      (sum, item) => sum + Number(item.repuesto.precioCompra) * item.cantidad,
+      0
+    );
+
+    const ctaMP = await getCuentaPorCodigo(CUENTAS.BANCO_MP);
+    const ctaVentas = await getCuentaPorCodigo(CUENTAS.INGRESOS_REPUESTOS);
+    const ctaIvaDF = await getCuentaPorCodigo(CUENTAS.IVA_DF);
+    const ctaCMV = await getCuentaPorCodigo(CUENTAS.COSTO_VENTA_REPUESTOS);
+    const ctaInventario = await getCuentaPorCodigo(CUENTAS.INVENTARIO_REPUESTOS);
+
+    const lineas = [
+      { cuentaId: ctaMP.id, debe: total, haber: 0, descripcion: "Ingreso MercadoPago" },
+      { cuentaId: ctaVentas.id, debe: 0, haber: neto, descripcion: "Venta repuestos" },
+      { cuentaId: ctaIvaDF.id, debe: 0, haber: iva, descripcion: "IVA Débito Fiscal 21%" },
+    ];
+
+    if (costoTotal > 0) {
+      lineas.push(
+        { cuentaId: ctaCMV.id, debe: costoTotal, haber: 0, descripcion: "CMV Repuestos" },
+        { cuentaId: ctaInventario.id, debe: 0, haber: costoTotal, descripcion: "Baja inventario" },
+      );
+    }
+
+    await crearAsiento({
+      fecha: new Date(),
+      tipo: "VENTA",
+      descripcion: `Venta repuestos — Orden #${orden.numero}`,
+      lineas,
+      origenTipo: "OrdenVentaRepuesto",
+      origenId: orden.id,
+      eventoId: event.entityId,
+      userId: "system",
+    });
+
+    console.log(`[Contabilidad] Asiento VENTA REPUESTOS creado — Orden #${orden.numero} — $${total}`);
+  } catch (error) {
+    console.error("[Contabilidad] Error handler sale.confirm:", error);
+  }
+}

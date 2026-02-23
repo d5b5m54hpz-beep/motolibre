@@ -226,6 +226,13 @@ export const OPERATIONS = {
     },
   },
 
+  // ── Ventas ──
+  sale: {
+    create: "sale.create",
+    confirm: "sale.confirm",
+    cancel: "sale.cancel",
+  },
+
   // ── Anomalías ──
   anomaly: {
     detect: "anomaly.detect",

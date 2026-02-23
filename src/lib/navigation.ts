@@ -48,6 +48,7 @@ export const navigation: NavGroup[] = [
       { title: "Pagos", href: "/admin/pagos", icon: CreditCard },
       { title: "Facturas", href: "/admin/facturas", icon: Receipt },
       { title: "Notas de Crédito", href: "/admin/notas-credito", icon: FileSpreadsheet },
+      { title: "Ventas Repuestos", href: "/admin/ventas-repuestos", icon: ShoppingBag },
     ],
   },
   {

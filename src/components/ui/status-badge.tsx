@@ -77,6 +77,15 @@ const statusColors: Record<string, string> = {
   ALTA: "bg-orange-500/10 text-orange-500 border-orange-500/20",
   URGENTE: "bg-red-600/10 text-red-600 border-red-600/20",
 
+  // Órdenes venta repuestos
+  PENDIENTE_PAGO: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+  PAGADA: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  EN_PREPARACION: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  LISTA_RETIRO: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
+  ENVIADA: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
+  ENTREGADA: "bg-green-500/10 text-green-500 border-green-500/20",
+  CANCELADA: "bg-red-500/10 text-red-500 border-red-500/20",
+
   // Genéricos
   BORRADOR: "bg-gray-500/10 text-gray-500 border-gray-500/20",
   ENVIADO: "bg-blue-500/10 text-blue-500 border-blue-500/20",

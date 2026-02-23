@@ -4,6 +4,7 @@ import { mpPreApproval } from "@/lib/mercadopago";
 import { consultarPago } from "@/lib/mp-service";
 import { eventBus, OPERATIONS } from "@/lib/events";
 import { ensureInitialized } from "@/lib/init";
+import { registrarMovimiento } from "@/lib/stock-utils";
 import { generarFacturaAutomatica } from "@/lib/facturacion-service";
 import type { EstadoPagoMP, TipoPagoMP } from "@prisma/client";
 
@@ -122,6 +123,9 @@ async function procesarNotificacionPago(mpPaymentId: string) {
       ...(externalRef.startsWith("contrato:")
         ? { contratoId: externalRef.replace("contrato:", "") }
         : {}),
+      ...(externalRef.startsWith("pedido:")
+        ? { ordenVentaId: externalRef.replace("pedido:", "") }
+        : {}),
     },
   });
 
@@ -137,6 +141,10 @@ async function procesarNotificacionPago(mpPaymentId: string) {
     if (externalRef.startsWith("contrato:")) {
       const contratoId = externalRef.replace("contrato:", "");
       await procesarPagoRecurrenteAprobado(contratoId, payment.transaction_amount ?? 0, mpPaymentId);
+    }
+    if (externalRef.startsWith("pedido:")) {
+      const ordenId = externalRef.replace("pedido:", "");
+      await procesarPagoPedidoAprobado(ordenId, mpPaymentId);
     }
 
     // Emitir evento para handlers contables (asiento automático)
@@ -391,6 +399,52 @@ async function procesarNotificacionSuscripcion(preapprovalId: string) {
   }
 }
 
+/**
+ * Cuando se confirma el pago de un pedido de repuestos → marca orden PAGADA y descuenta stock.
+ */
+async function procesarPagoPedidoAprobado(ordenId: string, mpPaymentId: string) {
+  const orden = await prisma.ordenVentaRepuesto.findUnique({
+    where: { id: ordenId },
+    include: { items: true },
+  });
+  if (!orden) return;
+  if (orden.estado !== "PENDIENTE_PAGO") return;
+
+  // Update order status
+  await prisma.ordenVentaRepuesto.update({
+    where: { id: ordenId },
+    data: {
+      estado: "PAGADA",
+      mpPaymentId,
+    },
+  });
+
+  // Deduct stock for each item
+  for (const item of orden.items) {
+    await registrarMovimiento({
+      repuestoId: item.repuestoId,
+      tipo: "EGRESO",
+      cantidad: item.cantidad,
+      descripcion: `Venta online — Orden #${orden.numero}`,
+      costoUnitario: Number(item.precioUnitario),
+      referenciaTipo: "OrdenVentaRepuesto",
+      referenciaId: ordenId,
+      userId: "system",
+    });
+  }
+
+  // Emit sale.confirm event for accounting handler
+  await eventBus.emit(
+    OPERATIONS.sale.confirm,
+    "OrdenVentaRepuesto",
+    ordenId,
+    { mpPaymentId, total: Number(orden.total) },
+    "system"
+  ).catch((err) => console.error("[MP Webhook] Error emitiendo evento venta:", err));
+
+  console.log(`[MP Webhook] Pedido ${ordenId} (Orden #${orden.numero}) → PAGADA, stock descontado`);
+}
+
 // ── Helpers ──
 
 function mapearEstadoMP(mpStatus: string): EstadoPagoMP {
@@ -410,5 +464,6 @@ function identificarTipoPago(externalRef: string): TipoPagoMP {
   if (externalRef.startsWith("solicitud:")) return "PRIMER_MES";
   if (externalRef.startsWith("cuota:")) return "CUOTA_INDIVIDUAL";
   if (externalRef.startsWith("contrato:")) return "CUOTA_RECURRENTE";
+  if (externalRef.startsWith("pedido:")) return "PEDIDO_REPUESTOS";
   return "CUOTA_INDIVIDUAL";
 }
