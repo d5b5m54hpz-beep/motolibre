@@ -66,7 +66,6 @@ export async function GET() {
   const topMap = new Map(topRepuestos.map((r) => [r.id, r]));
 
   const categoriasData = categorias.map((c) => {
-    const reps = allRepuestos; // approximate — we don't have per-category breakdown from groupBy
     return {
       categoria: c.categoria,
       count: c._count,

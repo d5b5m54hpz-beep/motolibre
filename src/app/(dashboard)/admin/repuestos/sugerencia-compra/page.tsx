@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { formatMoney } from "@/lib/format";
 import { ShoppingBag, ShoppingCart, AlertTriangle } from "lucide-react";
 
 interface Sugerencia {
@@ -84,12 +83,7 @@ export default function SugerenciaCompraPage() {
 
     // Create one OC per provider
     for (const proveedorId of proveedorIds) {
-      const provItems = items.filter((_, idx) => {
-        const sug = sugerencias.find((s) => selected.has(s.repuestoId) && s.proveedorId === proveedorId);
-        return sug && sugerencias.indexOf(sug) === idx;
-      });
-
-      // Simple approach: all items for first proveedor
+      // All items for this proveedor
       const ocItems = items.filter((item) => {
         const sug = sugerencias.find((s) => s.repuestoId === item.repuestoId);
         return sug?.proveedorId === proveedorId;

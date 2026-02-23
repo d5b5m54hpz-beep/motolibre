@@ -6,8 +6,8 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Fase Actual** | F3 — Operaciones ✅ COMPLETA |
-| **Punto Actual** | 4.1 — siguiente punto (inicio Fase 4) |
+| **Fase Actual** | F4 — Pricing e Inteligencia (en progreso) |
+| **Punto Actual** | 4.3 — Detección de Anomalías (siguiente) |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-22 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -38,6 +38,9 @@
 | 3.4 | Inventario de Repuestos | 2026-02-22 | 4 modelos (Repuesto, MovimientoStock, UbicacionDeposito, HistorialCostoRepuesto), 2 enums (CategoriaRepuesto 12 vals, TipoMovimientoStock 6 vals), registrarMovimiento() central, 10 API routes (repuestos CRUD + ajuste-stock + movimientos + sugerencia-compra + dashboard + ubicaciones CRUD), 4 páginas (inventario con stats/filtros, detalle con gauge+movimientos+historial, ubicaciones grilla visual, sugerencia compra con OC auto), integración OT egreso/devolución automática, integración OC ingreso+precio historial, seed 5 ubicaciones + 8 repuestos (4 stock bajo), sidebar +2 items, dashboard KPI Stock Bajo, Quick Action Stock Bajo |
 | 3.5 | Importaciones | 2026-02-22 | 5 modelos (EmbarqueImportacion, ItemEmbarque, DespachoAduanero, AsignacionCostoImportacion, PortalProveedorToken), 1 enum (EstadoEmbarque 10 vals), flujo 10 estados con validación transiciones, FOB→CIF→nacionalizado con distribución proporcional, 10 API routes (embarques CRUD + estado + items + despacho + confirmar-costos + recepción + generar-link-proveedor + supplier portal), 3 handlers contables completados (Merc.Tránsito/Prov.Exterior, despacho IVA CF, recepción inventario), 2 cuentas nuevas (Merc.Tránsito 1.1.05.001, Prov.Exterior 2.1.01.002, Inventario 1.1.06.001), portal proveedor público bilingüe /supplier/[token], 2 páginas admin (listado con stats, detalle con progress bar + despacho + costos + recepción), seed cuentas contables, dashboard KPI Embarques Activos, Quick Action Embarques en Tránsito — **FASE 3 COMPLETA** |
 | REFACTOR-UI-1 | Design System Infrastructure | 2026-02-22 | Dark-first crypto/fintech theme. Google Fonts (Inter, Space Grotesk, JetBrains Mono), CSS variables dark/light, Tailwind 4 @theme inline config, ThemeProvider + ThemeToggle, sidebar gradient logo + topbar greeting + bell, mobile bottom tab bar, DSCard/DSCardHero/DSStatCard/DSBadge, Button re-estilizado gradiente accent, Skeleton shimmer, scrollbar custom |
+| REFACTOR-UI-2 | Migración de Páginas al DS | 2026-02-22 | 44 páginas admin migradas al design system dark-first, glassmorphism cards, stat cards con íconos y trends, badges semánticos, tablas estilizadas, formularios consistentes |
+| 4.1 | Pricing de Alquiler | 2026-02-22 | 5 modelos (PlanAlquiler, PrecioModeloAlquiler, CostoOperativoConfig, HistorialPrecioAlquiler, TipoCambioCache), motor de pricing con planes y tarifas, simulador de rentabilidad, costos operativos configurables, cache de tipo de cambio, API routes pricing, páginas admin pricing |
+| 4.2 | Pricing de Repuestos | 2026-02-22 | 6 modelos (ListaPrecio, ItemListaPrecio, ReglaMarkup, GrupoCliente, MiembroGrupoCliente, LoteCambioPrecio), markup por categoría, listas de precio múltiples, grupos de clientes con descuentos, cambios batch de precios, API routes pricing-repuestos, páginas admin pricing-repuestos |
 
 ## Decisiones Tomadas
 
@@ -57,7 +60,7 @@
 
 ## Próxima Acción
 
-Pedir: **"Dame el prompt de REFACTOR-UI-2"** (aplicar DS a páginas existentes)
+Implementar: **Punto 4.3 — Detección de Anomalías** (9 algoritmos batch + real-time)
 
 ## Problemas Conocidos
 
@@ -69,21 +72,21 @@ Pedir: **"Dame el prompt de REFACTOR-UI-2"** (aplicar DS a páginas existentes)
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 22 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1) |
+| Puntos completados | 25 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
 | **Fase F2** | ✅ COMPLETA (4 puntos: 2.1-2.4) |
 | **Fase F3** | ✅ COMPLETA (5 puntos: 3.1-3.5) |
-| Fase actual | F4 — Clientes (siguiente) |
-| Modelos Prisma | 56 (+5 importaciones) |
-| Enums | 31 (+1 EstadoEmbarque) |
-| API routes | 121 (+10 embarques/supplier) |
-| Páginas | 47 (+2 admin importaciones + 1 supplier portal) |
+| **Fase F4** | 🔄 EN PROGRESO (2/5: 4.1-4.2 completados, 4.3 siguiente) |
+| Modelos Prisma | 67 |
+| Enums | 46 |
+| API routes | 135 |
+| Páginas admin | 42 |
 | Event handlers contables | 18 (13 completos + 5 stubs) |
-| Cuentas contables seeded | 71 (+6 Merc.Tránsito, Inventario, Prov.Exterior) |
+| Cuentas contables seeded | 71 |
 | Tests | 0 |
 | PermissionProfiles seeded | 8 |
-| Deploy | Railway — motolibre-production.up.railway.app |
+| Deploy | Railway — motolibre-production.up.railway.app (auto-deploy from main) |
 
 ## Flujo de Negocio Implementado
 

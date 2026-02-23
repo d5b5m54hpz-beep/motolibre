@@ -3,7 +3,7 @@ import { requirePermission } from "@/lib/permissions";
 import { OPERATIONS } from "@/lib/events";
 import { procesarLeaseToOwn } from "@/lib/lease-to-own";
 
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   const { error, userId } = await requirePermission(
     OPERATIONS.commercial.contract.finalizePurchase,
     "canExecute",

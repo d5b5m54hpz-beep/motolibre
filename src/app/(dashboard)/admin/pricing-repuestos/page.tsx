@@ -16,7 +16,7 @@ import {
 } from "recharts";
 import {
   Tags, RefreshCw, Plus, TrendingUp, TrendingDown,
-  Pencil, Check, X, ChevronDown, ChevronUp, Play, RotateCcw,
+  Check, X, ChevronDown, ChevronUp, Play, RotateCcw,
   Users, List, BarChart3, Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";

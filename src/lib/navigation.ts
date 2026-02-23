@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Bike, Users, FileText, CreditCard, Receipt,
-  Wrench, Building2, Package, Truck, Ship, DollarSign, ShoppingCart,
+  Wrench, Building2, Package, Truck, Ship, ShoppingCart,
   TrendingUp, PiggyBank, Calculator, BookOpen, FileSpreadsheet,
   BarChart3, UserCog, Shield, Bell, AlertTriangle, Settings,
   Bot, Mail, Languages, ClipboardList, Gauge, Calendar,

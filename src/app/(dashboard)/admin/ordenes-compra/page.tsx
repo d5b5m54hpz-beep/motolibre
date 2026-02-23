@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatMoney, formatDate } from "@/lib/format";
 import {
-  ShoppingCart, Plus, Clock, CheckCircle2, DollarSign, Trash2,
+  ShoppingCart, Plus, Clock, DollarSign, Trash2,
 } from "lucide-react";
 
 interface OC {

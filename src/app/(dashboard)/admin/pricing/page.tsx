@@ -378,7 +378,7 @@ function PlanesPrecios() {
 
               {plan.precios.length === 0 ? (
                 <div className="px-6 py-8 text-center text-sm text-t-tertiary">
-                  Sin precios. Usá "Agregar" para configurar el primer modelo.
+                  Sin precios. Usá &ldquo;Agregar&rdquo; para configurar el primer modelo.
                 </div>
               ) : (
                 plan.precios.map((p) => (
