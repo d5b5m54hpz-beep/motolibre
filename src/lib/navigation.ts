@@ -4,7 +4,7 @@ import {
   TrendingUp, PiggyBank, Calculator, BookOpen, FileSpreadsheet,
   BarChart3, UserCog, Shield, Bell, AlertTriangle, Settings,
   Mail, Languages, ClipboardList, Gauge, Calendar,
-  ArrowUpDown, Target, MapPin, ShoppingBag, Tags, Sparkles,
+  ArrowUpDown, Target, MapPin, ShoppingBag, Tags, Sparkles, Scale,
   type LucideIcon,
 } from "lucide-react";
 
@@ -87,6 +87,7 @@ export const navigation: NavGroup[] = [
       { title: "Períodos", href: "/admin/periodos", icon: Calendar },
       { title: "Facturas Compra", href: "/admin/facturas-compra", icon: FileSpreadsheet },
       { title: "Reportes", href: "/admin/reportes-contables", icon: BarChart3 },
+      { title: "Conciliación", href: "/admin/conciliacion", icon: Scale },
     ],
   },
   {

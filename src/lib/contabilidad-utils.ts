@@ -201,4 +201,5 @@ export const CUENTAS = {
   GASTOS_BANCARIOS: "5.2.02.001",      // Comisiones MP, bancarias
   GASTOS_IMPUESTOS: "5.2.03.001",
   OTROS_EGRESOS: "5.3.01.001",
+  DIFERENCIAS_CONCILIACION: "5.2.04.001", // Diferencias de Conciliación Bancaria
 } as const;

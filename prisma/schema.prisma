@@ -1080,6 +1080,7 @@ enum TipoAsiento {
   GASTO             // Gasto operativo
   AJUSTE            // Ajuste contable
   CIERRE            // Asiento de cierre de ejercicio
+  CONCILIACION      // Ajuste por diferencia de conciliación bancaria
 }
 
 model AsientoContable {
@@ -2599,4 +2600,154 @@ model DocumentoEmpleado {
 
   @@index([empleadoId])
   @@map("documentos_empleado")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONCILIACIÓN BANCARIA
+// ═══════════════════════════════════════════════════════════════
+
+enum TipoCuentaBancaria {
+  CORRIENTE
+  AHORRO
+  MERCADOPAGO
+}
+
+enum EstadoConciliacion {
+  EN_PROCESO
+  COMPLETADA
+  ANULADA
+}
+
+enum EstadoMatch {
+  PROPUESTO       // El algoritmo lo sugirió
+  APROBADO        // El usuario lo confirmó
+  RECHAZADO       // El usuario lo descartó
+}
+
+enum TipoMatch {
+  EXACTO          // Monto + referencia exactos
+  APROXIMADO      // Monto con tolerancia
+  REFERENCIA      // Match por texto de referencia
+  MANUAL          // El usuario lo vinculó manualmente
+}
+
+model CuentaBancaria {
+  id              String              @id @default(cuid())
+  nombre          String              // "Santander CC Pesos", "MercadoPago"
+  banco           String              // "Santander", "BIND", "MercadoPago"
+  tipo            TipoCuentaBancaria
+  numero          String?             // Número de cuenta
+  cbu             String?             @unique
+  alias           String?
+  moneda          String              @default("ARS")
+  saldoActual     Decimal             @db.Decimal(14, 2)  @default(0)
+  activa          Boolean             @default(true)
+
+  // ── Contabilidad ──
+  cuentaContableId String?            // FK a CuentaContable (ej: 1.1.01.002 Banco MP)
+
+  extractos       ExtractoBancario[]
+  conciliaciones  Conciliacion[]
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@map("cuentas_bancarias")
+}
+
+model ExtractoBancario {
+  id              String          @id @default(cuid())
+
+  cuentaBancariaId String
+  cuentaBancaria  CuentaBancaria  @relation(fields: [cuentaBancariaId], references: [id])
+
+  // ── Datos del movimiento bancario ──
+  fecha           DateTime
+  descripcion     String          // Texto del extracto: "TRF DE PEREZ JUAN"
+  referencia      String?         // Número de referencia/comprobante del banco
+  monto           Decimal         @db.Decimal(14, 2)  // Positivo = ingreso, Negativo = egreso
+  saldo           Decimal?        @db.Decimal(14, 2)  // Saldo después del movimiento
+
+  // ── Estado de conciliación ──
+  conciliado      Boolean         @default(false)
+  conciliacionMatchId String?     // FK al match que lo concilió
+
+  // ── Import ──
+  importId        String?         // ID del batch de importación
+  lineaOriginal   String?         // Línea CSV original para auditoría
+
+  createdAt       DateTime        @default(now())
+
+  @@index([cuentaBancariaId])
+  @@index([fecha])
+  @@index([conciliado])
+  @@map("extractos_bancarios")
+}
+
+model Conciliacion {
+  id              String              @id @default(cuid())
+  numero          String              @unique  // "CONC-2026-00001"
+
+  cuentaBancariaId String
+  cuentaBancaria  CuentaBancaria      @relation(fields: [cuentaBancariaId], references: [id])
+
+  estado          EstadoConciliacion  @default(EN_PROCESO)
+  periodoDesde    DateTime
+  periodoHasta    DateTime
+
+  // ── Estadísticas ──
+  totalExtractos  Int                 @default(0)
+  totalConciliados Int                @default(0)
+  totalNoConciliados Int              @default(0)
+  diferencia      Decimal             @db.Decimal(14, 2)  @default(0)
+
+  // ── Proceso ──
+  fechaProceso    DateTime?
+  completadaPor   String?
+  fechaCompletada DateTime?
+  observaciones   String?
+
+  matches         ConciliacionMatch[]
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([cuentaBancariaId])
+  @@index([estado])
+  @@map("conciliaciones")
+}
+
+model ConciliacionMatch {
+  id              String        @id @default(cuid())
+
+  conciliacionId  String
+  conciliacion    Conciliacion  @relation(fields: [conciliacionId], references: [id], onDelete: Cascade)
+
+  // ── Extracto bancario ──
+  extractoId      String
+
+  // ── Movimiento interno ──
+  entidadTipo     String        // "PagoMercadoPago", "Gasto", "FacturaCompra", "ReciboSueldo"
+  entidadId       String
+  entidadLabel    String?       // "Pago MP-123456 — $25.000"
+
+  // ── Match ──
+  tipoMatch       TipoMatch
+  estado          EstadoMatch   @default(PROPUESTO)
+  confianza       Int           // 0-100 (% de confianza del match)
+
+  montoBanco      Decimal       @db.Decimal(14, 2)
+  montoSistema    Decimal       @db.Decimal(14, 2)
+  diferencia      Decimal       @db.Decimal(14, 2)  @default(0)
+
+  // ── Aprobación ──
+  aprobadoPor     String?
+  fechaAprobacion DateTime?
+  motivoRechazo   String?
+
+  createdAt       DateTime      @default(now())
+
+  @@index([conciliacionId])
+  @@index([estado])
+  @@map("conciliacion_matches")
 }

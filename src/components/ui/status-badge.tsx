@@ -48,6 +48,14 @@ const statusColors: Record<string, string> = {
   PAGADO: "bg-green-500/10 text-green-500 border-green-500/20",
   ANULADO: "bg-red-500/10 text-red-500 border-red-500/20",
 
+  // Conciliación
+  EN_PROCESO: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  PROPUESTO: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  EXACTO: "bg-green-500/10 text-green-500 border-green-500/20",
+  APROXIMADO: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  REFERENCIA_MATCH: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+  MANUAL: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+
   // Genéricos
   BORRADOR: "bg-gray-500/10 text-gray-500 border-gray-500/20",
   ENVIADO: "bg-blue-500/10 text-blue-500 border-blue-500/20",

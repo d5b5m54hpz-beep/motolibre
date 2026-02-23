@@ -1010,6 +1010,80 @@ async function main() {
   }
 
   console.log("  ✅ RRHH: 4 empleados demo");
+
+  // ══════════════════════════════════════════════════════════════
+  // CONCILIACIÓN BANCARIA
+  // ══════════════════════════════════════════════════════════════
+  console.log("🏦 Creando cuentas bancarias...");
+
+  // Cuentas contables nivel 3 + 4 para diferencias de conciliación
+  await prisma.cuentaContable.upsert({
+    where: { codigo: "5.2.04" },
+    update: {},
+    create: { codigo: "5.2.04", nombre: "Diferencias de Conciliación", tipo: "EGRESO", nivel: 3, aceptaMovimientos: false },
+  });
+  const padre524 = await prisma.cuentaContable.findUnique({ where: { codigo: "5.2.04" } });
+  const padre52 = await prisma.cuentaContable.findUnique({ where: { codigo: "5.2" } });
+  if (padre524 && padre52) {
+    await prisma.cuentaContable.update({ where: { codigo: "5.2.04" }, data: { padreId: padre52.id } });
+  }
+  await prisma.cuentaContable.upsert({
+    where: { codigo: "5.2.04.001" },
+    update: {},
+    create: { codigo: "5.2.04.001", nombre: "Diferencias de Conciliación Bancaria", tipo: "EGRESO", nivel: 4, aceptaMovimientos: true, padreId: padre524?.id },
+  });
+
+  // Cuentas bancarias
+  const ctaMP = await prisma.cuentaContable.findUnique({ where: { codigo: "1.1.01.002" } });
+  const ctaBIND = await prisma.cuentaContable.findUnique({ where: { codigo: "1.1.01.003" } });
+  const ctaCaja = await prisma.cuentaContable.findUnique({ where: { codigo: "1.1.01.001" } });
+
+  if (ctaMP) {
+    await prisma.cuentaBancaria.upsert({
+      where: { id: "seed-banco-mp" },
+      update: {},
+      create: {
+        id: "seed-banco-mp",
+        nombre: "MercadoPago",
+        banco: "MercadoPago",
+        tipo: "MERCADOPAGO",
+        moneda: "ARS",
+        cuentaContableId: ctaMP.id,
+      },
+    });
+  }
+  if (ctaBIND) {
+    await prisma.cuentaBancaria.upsert({
+      where: { id: "seed-banco-bind" },
+      update: {},
+      create: {
+        id: "seed-banco-bind",
+        nombre: "BIND Cuenta Corriente",
+        banco: "Banco Industrial (BIND)",
+        tipo: "CORRIENTE",
+        cbu: "3220001800000054321098",
+        alias: "MOTOLIBRE.BIND",
+        moneda: "ARS",
+        cuentaContableId: ctaBIND.id,
+      },
+    });
+  }
+  if (ctaCaja) {
+    await prisma.cuentaBancaria.upsert({
+      where: { id: "seed-caja" },
+      update: {},
+      create: {
+        id: "seed-caja",
+        nombre: "Caja en Pesos",
+        banco: "Caja",
+        tipo: "CORRIENTE",
+        moneda: "ARS",
+        cuentaContableId: ctaCaja.id,
+      },
+    });
+  }
+
+  console.log("  ✅ Conciliación: 2 cuentas contables + 3 cuentas bancarias");
   console.log("✅ Seed completado");
 }
 

@@ -7,7 +7,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Fase Actual** | F6 — Complementarios |
-| **Punto Actual** | 6.1 — COMPLETO, siguiente: 6.2 |
+| **Punto Actual** | 6.2 — COMPLETO, siguiente: 6.3 |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-23 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -47,6 +47,7 @@
 | 5.3 | Flow de Alquiler (Wizard) | 2026-02-23 | planAlquilerId FK en Solicitud (bridge old/new pricing), middleware /alquiler whitelisted, 4 Zod schemas, 4 API routes nuevas (register, iniciar, solicitud, confirmar), MP backUrls param, webhook moto RESERVADA→ALQUILADA en 1ra cuota, catalog CTA → wizard link, wizard 5 pasos (moto summary, plan selection, auth+datos, contract preview, MP redirect), sessionStorage para Google OAuth recovery, 3 result pages (exito/error/pendiente), race condition protection via $transaction |
 | 5.4 | Portal Cliente (Mi Cuenta) | 2026-02-23 | 7 API routes mi-cuenta (dashboard, pagos, pagar, perfil, contratos, scan, qr), /mi-cuenta bajo (public) group con layout+tabs (Dashboard/Pagos/Perfil), dashboard moto card + contrato + LTO progress + últimos pagos, pagos con tabla cuotas + stats + Pagar→MP, resultado post-pago 3 estados, perfil editable (contacto+dirección), /scan/[id] público con info moto + branding, QR generator en admin moto detail, navbar auth-conditional (Avatar+DropdownMenu si logueado), /login con Google+credentials, /registro con Google+email, qrcode npm para SVG server-side |
 | 6.1 | RRHH (Recursos Humanos) | 2026-02-23 | 4 modelos (Empleado 37+ campos, Ausencia, ReciboSueldo, DocumentoEmpleado), 10 enums (Departamento, EstadoEmpleado, SexoEmpleado, EstadoCivil, JornadaLaboral, TipoAusencia, EstadoAusencia, TipoRecibo, EstadoRecibo, TipoDocumentoEmpleado), rrhh-utils con cálculo liquidación argentina (jubilación 11%, OS 3%, PAMI 3%, presentismo 8.33%, antigüedad 1%/año, contribuciones patronales), 10 API routes (empleados CRUD, ausencias CRUD+aprobar, liquidación preview+liquidar+masiva, recibos CRUD, stats), 5 páginas admin (dashboard RRHH, empleados listado+detalle con tabs, ausencias con aprobar/rechazar, liquidación con preview+masiva), handler contable #19 payroll.liquidate (asiento 5 líneas partida doble), 7 cuentas contables nuevas (5.1.04.x gastos personal, 2.1.05.x deudas sociales), seed 4 empleados demo, sidebar Dashboard RRHH, StatusBadge RRHH colors |
+| 6.2 | Conciliación Bancaria | 2026-02-23 | 4 modelos (CuentaBancaria, ExtractoBancario, Conciliacion, ConciliacionMatch), 4 enums (TipoCuentaBancaria, EstadoConciliacion, EstadoMatch, TipoMatch), TipoAsiento +CONCILIACION, motor matching 3 pasos (exacto 90-100%, aproximado 1% tolerancia 50-70%, referencia texto 40%), parser CSV flexible (auto-detect separador, formato argentino DD/MM/YYYY y 1.234,56), 11 API routes (cuentas CRUD, extractos importar, conciliación CRUD+auto-match, matches aprobar/rechazar, match manual, aprobar exactos bulk, completar), handler contable #16 reconciliation stub→completo (asiento ajuste diferencia), 2 cuentas contables nuevas (5.2.04.x diferencias conciliación), 2 páginas admin (listado 3 tabs cuentas/conciliaciones/importar, detalle con matches+confianza+aprobar/rechazar+manual+completar), seed 3 cuentas bancarias, sidebar Conciliación en Contabilidad |
 
 ## Decisiones Tomadas
 
@@ -66,7 +67,7 @@
 
 ## Próxima Acción
 
-Pedir: **Prompt del punto 6.2** (nota: 5.5 pendiente)
+Pedir: **Prompt del punto 6.3** (nota: 5.5 pendiente)
 
 ## Problemas Conocidos
 
@@ -78,23 +79,23 @@ Pedir: **Prompt del punto 6.2** (nota: 5.5 pendiente)
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 31 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
+| Puntos completados | 32 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
 | **Fase F2** | ✅ COMPLETA (4 puntos: 2.1-2.4) |
 | **Fase F3** | ✅ COMPLETA (5 puntos: 3.1-3.5) |
 | **Fase F4** | ✅ COMPLETA (5 puntos: 4.1-4.4 + UI refactors) |
 | **Fase F5** | En progreso (5.2, 5.3, 5.4 completos, falta 5.5) |
-| **Fase F6** | En progreso (6.1 completo) |
-| Modelos Prisma | 73 |
-| Enums | 59 |
-| API routes | 166 |
-| Páginas admin | 50 |
+| **Fase F6** | En progreso (6.1, 6.2 completos) |
+| Modelos Prisma | 77 |
+| Enums | 63 |
+| API routes | 177 |
+| Páginas admin | 52 |
 | Páginas públicas | 13 (/catalogo, /catalogo/[id], /alquiler/[motoId], /alquiler/exito, /alquiler/error, /alquiler/pendiente, /mi-cuenta, /mi-cuenta/pagos, /mi-cuenta/pagos/resultado, /mi-cuenta/perfil, /scan/[id], /login, /registro) |
-| Event handlers contables | 19 (14 completos + 5 stubs) |
+| Event handlers contables | 19 (15 completos + 4 stubs) |
 | Event handlers anomalías | 3 (P500: payment.approve, expense.create, adjustStock) |
 | AI Tools | 21 (flota 7, comercial 2, finanzas 6, contabilidad 3, rrhh 2, sistema 1) |
-| Cuentas contables seeded | 78 |
+| Cuentas contables seeded | 80 |
 | Tests | 0 |
 | PermissionProfiles seeded | 8 |
 | Deploy | Railway — motolibre-production.up.railway.app (auto-deploy from main) |
@@ -163,4 +164,22 @@ Admin → Moto detail → QR button → Dialog SVG → Download/Print
   - Deducciones empleado: jubilación 11% + obra social 3% + PAMI 3%
   - Contribuciones empleador: jubilación 10.17% + OS 6% + PAMI 1.5% + ART 2%
   → Liquidar individual o masiva → ReciboSueldo + eventBus → asiento contable 5 líneas partida doble
+```
+
+### Conciliación Bancaria (6.2)
+```
+/admin/conciliacion → Tab "Cuentas Bancarias": CRUD cuentas (Santander, MercadoPago, BIND) con CBU y cuenta contable
+  ↓
+Tab "Importar Extracto": Seleccionar cuenta + subir CSV (formato argentino) → preview → importar → ExtractoBancario
+  ↓
+Tab "Conciliaciones": Nueva conciliación → seleccionar cuenta + período → auto-matching 3 pasos:
+  Paso 1 EXACTO: monto coincide ±$0.01 (confianza 90-100%)
+  Paso 2 APROXIMADO: monto ±1% tolerancia (confianza 50-70%)
+  Paso 3 REFERENCIA: nombre en descripción banco (confianza 40%)
+  ↓
+/admin/conciliacion/[id] → Detalle: matches propuestos → aprobar ✓ / rechazar ✗ individual
+  "Aprobar todos exactos" (confianza ≥90%) → bulk approve
+  "Match manual" → vincular extracto↔movimiento a mano
+  ↓
+"Completar" → si hay diferencia → eventBus → asiento contable ajuste (DEBE/HABER banco vs diferencias)
 ```

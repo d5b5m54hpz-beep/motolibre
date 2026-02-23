@@ -534,10 +534,62 @@ export async function handleCreditNoteCreate(event: BusinessEventData) {
   }
 }
 
-// 16. Conciliación bancaria
+// ═══════════════════════════════════════════════════════════════
+// HANDLER 16 — CONCILIACIÓN BANCARIA (finance.bankReconciliation.approve)
+// Si hay diferencia entre banco y sistema, genera asiento de ajuste
+// ═══════════════════════════════════════════════════════════════
 export async function handleReconciliation(event: BusinessEventData) {
   try {
-    console.log(`[Contabilidad] Stub: reconciliation.complete — ${event.entityId}`);
+    const conciliacion = await prisma.conciliacion.findUnique({
+      where: { id: event.entityId },
+      include: { cuentaBancaria: true },
+    });
+    if (!conciliacion) return;
+
+    const diferencia = Number(conciliacion.diferencia ?? 0);
+    if (Math.abs(diferencia) < 0.01) {
+      console.log(`[Contabilidad] Conciliación ${conciliacion.numero} — sin diferencia`);
+      return;
+    }
+
+    const cuentaContableId = conciliacion.cuentaBancaria.cuentaContableId;
+    if (!cuentaContableId) {
+      console.log(`[Contabilidad] Conciliación ${conciliacion.numero} — cuenta bancaria sin cuenta contable`);
+      return;
+    }
+
+    const ctaBanco = await prisma.cuentaContable.findUnique({ where: { id: cuentaContableId } });
+    if (!ctaBanco) return;
+
+    const ctaDiferencias = await getCuentaPorCodigo(CUENTAS.DIFERENCIAS_CONCILIACION);
+
+    // Si diferencia > 0: banco tiene más que el sistema
+    //   DEBE: Banco, HABER: Diferencias de Conciliación
+    // Si diferencia < 0: sistema tiene más que el banco
+    //   DEBE: Diferencias de Conciliación, HABER: Banco
+    const abs = Math.abs(diferencia);
+    const lineas =
+      diferencia > 0
+        ? [
+            { cuentaId: ctaBanco.id, debe: abs, haber: 0, descripcion: "Ajuste conciliación (banco > libros)" },
+            { cuentaId: ctaDiferencias.id, debe: 0, haber: abs, descripcion: "Diferencia de conciliación bancaria" },
+          ]
+        : [
+            { cuentaId: ctaDiferencias.id, debe: abs, haber: 0, descripcion: "Diferencia de conciliación bancaria" },
+            { cuentaId: ctaBanco.id, debe: 0, haber: abs, descripcion: "Ajuste conciliación (libros > banco)" },
+          ];
+
+    await crearAsiento({
+      fecha: new Date(),
+      tipo: "CONCILIACION",
+      descripcion: `Ajuste conciliación bancaria — ${conciliacion.cuentaBancaria.nombre} — ${conciliacion.numero}`,
+      lineas,
+      origenTipo: "Conciliacion",
+      origenId: conciliacion.id,
+      userId: event.userId ?? "system",
+    });
+
+    console.log(`[Contabilidad] Asiento CONCILIACIÓN creado — diferencia $${diferencia}`);
   } catch (error) {
     console.error("[Contabilidad] Error handler reconciliation:", error);
   }
