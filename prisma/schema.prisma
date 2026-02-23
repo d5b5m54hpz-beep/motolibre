@@ -34,6 +34,7 @@ model User {
   role             Role      @default(CLIENTE)
   totpSecret       String?
   totpEnabled      Boolean   @default(false)
+  activo           Boolean   @default(true)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -433,6 +434,16 @@ model ConfiguracionEmpresa {
   condicionIva      CondicionIva @default(RESPONSABLE_INSCRIPTO)
   inicioActividades DateTime?
   logo              String?
+
+  // ── Config Operativa ──
+  moneda                String   @default("ARS")
+  ivaDefault            Int      @default(21)
+  diasGraciaVencimiento Int      @default(7)
+  diasReservaMaxima     Int      @default(1)
+  puntoVenta            Int      @default(1)
+  tipoFacturaDefault    String   @default("B")
+  emailNotificaciones   String   @default("")
+
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 

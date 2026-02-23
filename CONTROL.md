@@ -7,7 +7,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Fase Actual** | F6 — Complementarios |
-| **Punto Actual** | 6.4 — COMPLETO, siguiente: 6.5 |
+| **Punto Actual** | 6.5 — COMPLETO, F6 COMPLETA, siguiente: 7.1 |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-23 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -50,6 +50,7 @@
 | 6.2 | Conciliación Bancaria | 2026-02-23 | 4 modelos (CuentaBancaria, ExtractoBancario, Conciliacion, ConciliacionMatch), 4 enums (TipoCuentaBancaria, EstadoConciliacion, EstadoMatch, TipoMatch), TipoAsiento +CONCILIACION, motor matching 3 pasos (exacto 90-100%, aproximado 1% tolerancia 50-70%, referencia texto 40%), parser CSV flexible (auto-detect separador, formato argentino DD/MM/YYYY y 1.234,56), 11 API routes (cuentas CRUD, extractos importar, conciliación CRUD+auto-match, matches aprobar/rechazar, match manual, aprobar exactos bulk, completar), handler contable #16 reconciliation stub→completo (asiento ajuste diferencia), 2 cuentas contables nuevas (5.2.04.x diferencias conciliación), 2 páginas admin (listado 3 tabs cuentas/conciliaciones/importar, detalle con matches+confianza+aprobar/rechazar+manual+completar), seed 3 cuentas bancarias, sidebar Conciliación en Contabilidad |
 | 6.3 | Monitor de Eventos + Diagnóstico | 2026-02-23 | 2 modelos (EventoSistema, DiagnosticoEjecucion), 2 enums (NivelLog 5 vals, EstadoDiagnostico 4 vals), event bus instrumentado (timing, handler counts, EventoSistema fire-and-forget, payload sanitizado sin PII), 10 checks diagnóstico (motos huérfanas, contratos sin moto, pagos sin asiento, balance contable partida doble, cuotas vencidas, stock negativo, empleados sin sueldo, usuarios sin perfil, conciliaciones abandonadas, embarques demorados), reparar motos huérfanas ALQUILADA→DISPONIBLE, health endpoint (DB latency, eventos/hora, errores → SALUDABLE/DEGRADADO/CRITICO), métricas 24h (por módulo, por tipo top 10, timeline por hora con Recharts AreaChart), cleanup eventos >90 días, 7 API routes (eventos paginado+filtros, métricas, salud, limpiar, diagnóstico GET+POST, diagnóstico/[id], reparar-motos-huerfanas), 3 páginas admin (monitor dashboard con health+stats+timeline+últimos eventos, eventos con filtros nivel/módulo/tipo+expandible payload+exportar CSV, diagnóstico con ejecutar+resultados+acciones rápidas+historial), sidebar Sistema +Monitor +Eventos +Diagnóstico |
 | 6.4 | Alertas + Cron Jobs | 2026-02-23 | 1 modelo (Alerta), 2 enums (TipoAlerta 12 vals, PrioridadAlerta 4 vals), alertas-utils (crearAlerta anti-duplicado 24h, alertarCreador, contarNoLeidas), 3 notification handlers P200 (payment.approve→PAGO_RECIBIDO, contract.create→SOLICITUD_NUEVA, anomaly.detect→ANOMALIA_DETECTADA), 5 API routes alertas (listado paginado+filtros, count para badge, marcar leída, marcar todas leídas, eliminar), 6 cron jobs protegidos con CRON_SECRET (contratos-por-vencer, cuotas-vencidas, generar-cuotas, mantenimiento-programado, documentos-por-vencer, limpieza), cron-ejecutar wrapper admin, topbar bell badge alertas con polling 60s, 2 páginas admin (alertas feed con filtros tipo/módulo/leídas + cargar más, cron jobs con ejecutar ahora + log resultados), sidebar +Cron Jobs, StatusBadge +prioridades (BAJA/MEDIA/ALTA/URGENTE) |
+| 6.5 | Export/Import + Usuarios + Config Empresa | 2026-02-23 | export-utils (toCSV separador ;, BOM UTF-8, decimal argentino), import-utils (parseCSV auto-detect separador, validarFilas, parseNumeroAR, parseFechaAR), 7 export CSV routes (motos, clientes, contratos, pagos, repuestos, empleados, facturas) con filtros opcionales, 3 import routes (motos DISPONIBLE, clientes skip DNI existente, repuestos upsert por código), templates CSV descargables, User +activo field, ConfiguracionEmpresa +7 campos operativos, CRUD usuarios (crear con bcrypt, cambiar rol, activar/desactivar, reset password temporal), config empresa GET/PUT singleton, 3 páginas admin (usuarios con filtros/create/actions, empresa 3 secciones formulario, export-import con download+dragdrop+resultados), sidebar Empresa + Export/Import — **FASE 6 COMPLETA** |
 
 ## Decisiones Tomadas
 
@@ -69,7 +70,7 @@
 
 ## Próxima Acción
 
-Pedir: **Prompt del punto 6.5** (nota: 5.5 pendiente)
+Pedir: **Prompt del punto 7.1** (nota: 5.5 pendiente)
 
 ## Problemas Conocidos
 
@@ -81,18 +82,18 @@ Pedir: **Prompt del punto 6.5** (nota: 5.5 pendiente)
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 33 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
+| Puntos completados | 34 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
 | **Fase F2** | ✅ COMPLETA (4 puntos: 2.1-2.4) |
 | **Fase F3** | ✅ COMPLETA (5 puntos: 3.1-3.5) |
 | **Fase F4** | ✅ COMPLETA (5 puntos: 4.1-4.4 + UI refactors) |
 | **Fase F5** | En progreso (5.2, 5.3, 5.4 completos, falta 5.5) |
-| **Fase F6** | En progreso (6.1, 6.2, 6.3, 6.4 completos) |
+| **Fase F6** | ✅ COMPLETA (5 puntos: 6.1-6.5) |
 | Modelos Prisma | 80 |
 | Enums | 67 |
-| API routes | 196 |
-| Páginas admin | 57 |
+| API routes | 211 |
+| Páginas admin | 60 |
 | Páginas públicas | 13 (/catalogo, /catalogo/[id], /alquiler/[motoId], /alquiler/exito, /alquiler/error, /alquiler/pendiente, /mi-cuenta, /mi-cuenta/pagos, /mi-cuenta/pagos/resultado, /mi-cuenta/perfil, /scan/[id], /login, /registro) |
 | Event handlers contables | 19 (15 completos + 4 stubs) |
 | Event handlers notificaciones | 3 (P200: payment.approve, contract.create, anomaly.detect) |
@@ -234,4 +235,32 @@ Event handlers P200 → Alertas internas automáticas:
   Domingo 3am: limpieza (eventos >90d, alertas leídas >60d, sesiones, reservas)
   ↓
 /admin/sistema/cron → "Ejecutar ahora" con log de resultados en sesión
+```
+
+### Export/Import + Usuarios + Config (6.5)
+```
+Export CSV (7 entidades): motos, clientes, contratos, pagos, repuestos, empleados, facturas
+  Formato argentino: separador ;, decimal con coma, BOM UTF-8
+  Filtros opcionales: estado, fecha desde/hasta, tipo factura, marca
+  GET /api/export/{entidad} → descarga CSV con Content-Disposition
+  ↓
+Import CSV (3 entidades): motos, clientes, repuestos
+  Templates descargables: GET /api/import/templates/{entidad} (headers + 2 filas ejemplo)
+  Parser argentino auto-detect separador, validación por fila
+  POST /api/import/{entidad} body CSV text → { importados, errores, total }
+  Motos: crea DISPONIBLE, patente única
+  Clientes: skip si DNI existe, crea PENDIENTE
+  Repuestos: upsert por código (crea o actualiza stock/precios)
+  ↓
+/admin/configuracion/export-import → Descargar CSV por entidad + Drag & drop importar + resultados
+
+Gestión Usuarios:
+  /admin/usuarios → CRUD usuarios, cambiar rol, activar/desactivar, reset password
+  POST /api/usuarios → crear con bcrypt hash, rol obligatorio
+  PUT /api/usuarios/[id] → no puede modificar su propia cuenta
+  POST /api/usuarios/[id]/reset-password → genera 12 chars aleatorio
+
+Config Empresa (singleton):
+  /admin/configuracion/empresa → 3 secciones: datos fiscales, config operativa, facturación
+  GET/PUT /api/configuracion/empresa → findFirst or create default
 ```
