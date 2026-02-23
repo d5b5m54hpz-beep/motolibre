@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney, formatDate, formatDateTime } from "@/lib/format";
+import { QRGenerator } from "./_components/qr-generator";
 
 async function getMoto(id: string) {
   return prisma.moto.findUnique({
@@ -42,7 +43,12 @@ export default async function MotoDetallePage({
       <PageHeader
         title={titulo}
         description={`${moto.anio} · ${moto.tipo} · ${moto.km.toLocaleString("es-AR")} km`}
-        actions={<StatusBadge status={moto.estado} className="text-sm px-3 py-1" />}
+        actions={
+          <div className="flex items-center gap-2">
+            <QRGenerator motoId={id} />
+            <StatusBadge status={moto.estado} className="text-sm px-3 py-1" />
+          </div>
+        }
       />
 
       <Tabs defaultValue="info">

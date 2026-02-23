@@ -7,7 +7,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Fase Actual** | F5 — Público y Comunicación |
-| **Punto Actual** | 5.3 — COMPLETO, siguiente: 5.4 |
+| **Punto Actual** | 5.4 — COMPLETO, siguiente: 5.5 |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-23 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -45,6 +45,7 @@
 | 4.4 | Asistente IA Eve | 2026-02-23 | ToolRegistry singleton con 21 tools en 6 módulos (flota 7, comercial 2, finanzas 6, contabilidad 3, rrhh 2, sistema 1), system prompt dinámico por rol (español argentino, personalidad Eve), Vercel AI SDK v6 + Claude Sonnet streaming, role-based access filtering, rate limit 30 msg/min in-memory, stopWhen stepCountIs(5), chat UI full-height con markdown rendering (react-markdown + remark-gfm), sugerencias iniciales clickeables, DefaultChatTransport, stock_bajo con raw SQL, sidebar Inteligencia "Asistente Eve" — **FASE 4 COMPLETA** |
 | 5.2 | Catálogo Público de Motos | 2026-02-23 | 8 campos nuevos Moto (fotos, destacada, potencia, tipoMotor, arranque, frenos, capacidadTanque, peso), 2 API routes públicas (/api/public/motos + /api/public/motos/[id]), layout público (navbar glassmorphism + footer), /catalogo con filtros (marca, tipo, precio, orden), grid MotoCards con next/image, paginación, /catalogo/[id] con gallery thumbnails, plan selector radio cards (3 planes), spec grid 2x4, motos relacionadas, SEO dinámico generateMetadata(), catalog-utils (TIPO_MOTO_LABELS, getCondicion), seed actualizado con specs + Yamaha FZ 25 pricing |
 | 5.3 | Flow de Alquiler (Wizard) | 2026-02-23 | planAlquilerId FK en Solicitud (bridge old/new pricing), middleware /alquiler whitelisted, 4 Zod schemas, 4 API routes nuevas (register, iniciar, solicitud, confirmar), MP backUrls param, webhook moto RESERVADA→ALQUILADA en 1ra cuota, catalog CTA → wizard link, wizard 5 pasos (moto summary, plan selection, auth+datos, contract preview, MP redirect), sessionStorage para Google OAuth recovery, 3 result pages (exito/error/pendiente), race condition protection via $transaction |
+| 5.4 | Portal Cliente (Mi Cuenta) | 2026-02-23 | 7 API routes mi-cuenta (dashboard, pagos, pagar, perfil, contratos, scan, qr), /mi-cuenta bajo (public) group con layout+tabs (Dashboard/Pagos/Perfil), dashboard moto card + contrato + LTO progress + últimos pagos, pagos con tabla cuotas + stats + Pagar→MP, resultado post-pago 3 estados, perfil editable (contacto+dirección), /scan/[id] público con info moto + branding, QR generator en admin moto detail, navbar auth-conditional (Avatar+DropdownMenu si logueado), /login con Google+credentials, /registro con Google+email, qrcode npm para SVG server-side |
 
 ## Decisiones Tomadas
 
@@ -64,7 +65,7 @@
 
 ## Próxima Acción
 
-Pedir: **Prompt del punto 5.4**
+Pedir: **Prompt del punto 5.5**
 
 ## Problemas Conocidos
 
@@ -76,18 +77,18 @@ Pedir: **Prompt del punto 5.4**
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 29 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
+| Puntos completados | 30 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
 | **Fase F2** | ✅ COMPLETA (4 puntos: 2.1-2.4) |
 | **Fase F3** | ✅ COMPLETA (5 puntos: 3.1-3.5) |
 | **Fase F4** | ✅ COMPLETA (5 puntos: 4.1-4.4 + UI refactors) |
-| **Fase F5** | En progreso (5.2, 5.3 completos) |
+| **Fase F5** | En progreso (5.2, 5.3, 5.4 completos) |
 | Modelos Prisma | 69 |
 | Enums | 49 |
-| API routes | 149 |
+| API routes | 156 |
 | Páginas admin | 45 |
-| Páginas públicas | 6 (/catalogo, /catalogo/[id], /alquiler/[motoId], /alquiler/exito, /alquiler/error, /alquiler/pendiente) |
+| Páginas públicas | 13 (/catalogo, /catalogo/[id], /alquiler/[motoId], /alquiler/exito, /alquiler/error, /alquiler/pendiente, /mi-cuenta, /mi-cuenta/pagos, /mi-cuenta/pagos/resultado, /mi-cuenta/perfil, /scan/[id], /login, /registro) |
 | Event handlers contables | 18 (13 completos + 5 stubs) |
 | Event handlers anomalías | 3 (P500: payment.approve, expense.create, adjustStock) |
 | AI Tools | 21 (flota 7, comercial 2, finanzas 6, contabilidad 3, rrhh 2, sistema 1) |
@@ -131,4 +132,17 @@ Paso 4: Preview contrato → "Confirmar y pagar"
     - MP preference → redirect a MercadoPago
   ↓
 Webhook MP: 1ra cuota pagada → Moto RESERVADA → ALQUILADA, Solicitud → ENTREGADA
+```
+
+### Portal Cliente (5.4)
+```
+/login → Google OAuth o email+contraseña → /mi-cuenta
+/registro → crear cuenta (Google o email) → auto sign-in → /mi-cuenta
+  ↓
+/mi-cuenta → Dashboard: moto card, contrato activo, LTO progress, próximo pago, últimos pagos
+/mi-cuenta/pagos → Tabla cuotas: stats (pagado/al día/vencidas), Pagar → MP redirect → /mi-cuenta/pagos/resultado
+/mi-cuenta/perfil → Datos personales (read-only) + contacto/dirección (editable) + cuenta
+  ↓
+/scan/[id] → Página pública QR: info moto, branding MotoLibre, CTA catálogo si disponible
+Admin → Moto detail → QR button → Dialog SVG → Download/Print
 ```

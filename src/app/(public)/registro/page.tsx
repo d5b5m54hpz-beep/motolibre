@@ -2,7 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,59 +15,79 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { Suspense } from "react";
 
-function LoginForm() {
+export default function RegistroPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/mi-cuenta";
-  const error = searchParams.get("error");
+  const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [credError, setCredError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    await signIn("google", { callbackUrl });
+    await signIn("google", { callbackUrl: "/mi-cuenta" });
   };
 
-  const handleCredentials = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setCredError(null);
+    setError(null);
 
-    const result = await signIn("credentials", {
-      email: email.toLowerCase(),
-      password,
-      redirect: false,
-    });
+    try {
+      const res = await fetch("/api/public/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre,
+          email: email.toLowerCase(),
+          password,
+        }),
+      });
 
-    if (result?.error) {
-      setCredError("Email o contraseña incorrectos");
+      if (!res.ok) {
+        const json = await res.json();
+        setError(typeof json.error === "string" ? json.error : "Error al registrar");
+        setLoading(false);
+        return;
+      }
+
+      // Auto sign-in after registration
+      const result = await signIn("credentials", {
+        email: email.toLowerCase(),
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Cuenta creada, pero error al iniciar sesión. Ingresá manualmente.");
+        setLoading(false);
+        return;
+      }
+
+      router.push("/mi-cuenta");
+      router.refresh();
+    } catch {
+      setError("Error de conexión");
       setLoading(false);
-      return;
     }
-
-    router.push(callbackUrl);
-    router.refresh();
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg-base px-4">
+    <div className="flex min-h-[80vh] items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md border-border bg-bg-card">
         <CardHeader className="text-center">
           <CardTitle className="font-display text-2xl font-extrabold text-accent-DEFAULT">
-            MotoLibre
+            Crear cuenta
           </CardTitle>
           <CardDescription className="text-t-secondary">
-            Ingresá a tu cuenta
+            Registrate para alquilar tu moto
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {(error || credError) && (
+          {error && (
             <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">
-              {credError ?? "Error al iniciar sesión. Intentá de nuevo."}
+              {error}
             </div>
           )}
 
@@ -84,7 +104,7 @@ function LoginForm() {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
-            Continuar con Google
+            Registrarse con Google
           </Button>
 
           {/* Divider */}
@@ -99,8 +119,18 @@ function LoginForm() {
             </div>
           </div>
 
-          {/* Credentials form */}
-          <form onSubmit={handleCredentials} className="space-y-4">
+          {/* Registration form */}
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="nombre">Nombre</Label>
+              <Input
+                id="nombre"
+                placeholder="Tu nombre"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                required
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -117,40 +147,27 @@ function LoginForm() {
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Mínimo 6 caracteres"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
               />
             </div>
             <Button type="submit" disabled={loading} className="w-full" size="lg">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Ingresar
+              Crear cuenta
             </Button>
           </form>
 
           <p className="text-center text-sm text-t-secondary">
-            ¿No tenés cuenta?{" "}
-            <Link href="/registro" className="text-accent-DEFAULT hover:underline font-medium">
-              Registrate
+            ¿Ya tenés cuenta?{" "}
+            <Link href="/login" className="text-accent-DEFAULT hover:underline font-medium">
+              Ingresá
             </Link>
           </p>
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-bg-base">
-          <Loader2 className="h-8 w-8 animate-spin text-t-tertiary" />
-        </div>
-      }
-    >
-      <LoginForm />
-    </Suspense>
   );
 }
