@@ -7,7 +7,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Fase Actual** | F6 — Complementarios |
-| **Punto Actual** | 6.2 — COMPLETO, siguiente: 6.3 |
+| **Punto Actual** | 6.3 — COMPLETO, siguiente: 6.4 |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-23 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -48,6 +48,7 @@
 | 5.4 | Portal Cliente (Mi Cuenta) | 2026-02-23 | 7 API routes mi-cuenta (dashboard, pagos, pagar, perfil, contratos, scan, qr), /mi-cuenta bajo (public) group con layout+tabs (Dashboard/Pagos/Perfil), dashboard moto card + contrato + LTO progress + últimos pagos, pagos con tabla cuotas + stats + Pagar→MP, resultado post-pago 3 estados, perfil editable (contacto+dirección), /scan/[id] público con info moto + branding, QR generator en admin moto detail, navbar auth-conditional (Avatar+DropdownMenu si logueado), /login con Google+credentials, /registro con Google+email, qrcode npm para SVG server-side |
 | 6.1 | RRHH (Recursos Humanos) | 2026-02-23 | 4 modelos (Empleado 37+ campos, Ausencia, ReciboSueldo, DocumentoEmpleado), 10 enums (Departamento, EstadoEmpleado, SexoEmpleado, EstadoCivil, JornadaLaboral, TipoAusencia, EstadoAusencia, TipoRecibo, EstadoRecibo, TipoDocumentoEmpleado), rrhh-utils con cálculo liquidación argentina (jubilación 11%, OS 3%, PAMI 3%, presentismo 8.33%, antigüedad 1%/año, contribuciones patronales), 10 API routes (empleados CRUD, ausencias CRUD+aprobar, liquidación preview+liquidar+masiva, recibos CRUD, stats), 5 páginas admin (dashboard RRHH, empleados listado+detalle con tabs, ausencias con aprobar/rechazar, liquidación con preview+masiva), handler contable #19 payroll.liquidate (asiento 5 líneas partida doble), 7 cuentas contables nuevas (5.1.04.x gastos personal, 2.1.05.x deudas sociales), seed 4 empleados demo, sidebar Dashboard RRHH, StatusBadge RRHH colors |
 | 6.2 | Conciliación Bancaria | 2026-02-23 | 4 modelos (CuentaBancaria, ExtractoBancario, Conciliacion, ConciliacionMatch), 4 enums (TipoCuentaBancaria, EstadoConciliacion, EstadoMatch, TipoMatch), TipoAsiento +CONCILIACION, motor matching 3 pasos (exacto 90-100%, aproximado 1% tolerancia 50-70%, referencia texto 40%), parser CSV flexible (auto-detect separador, formato argentino DD/MM/YYYY y 1.234,56), 11 API routes (cuentas CRUD, extractos importar, conciliación CRUD+auto-match, matches aprobar/rechazar, match manual, aprobar exactos bulk, completar), handler contable #16 reconciliation stub→completo (asiento ajuste diferencia), 2 cuentas contables nuevas (5.2.04.x diferencias conciliación), 2 páginas admin (listado 3 tabs cuentas/conciliaciones/importar, detalle con matches+confianza+aprobar/rechazar+manual+completar), seed 3 cuentas bancarias, sidebar Conciliación en Contabilidad |
+| 6.3 | Monitor de Eventos + Diagnóstico | 2026-02-23 | 2 modelos (EventoSistema, DiagnosticoEjecucion), 2 enums (NivelLog 5 vals, EstadoDiagnostico 4 vals), event bus instrumentado (timing, handler counts, EventoSistema fire-and-forget, payload sanitizado sin PII), 10 checks diagnóstico (motos huérfanas, contratos sin moto, pagos sin asiento, balance contable partida doble, cuotas vencidas, stock negativo, empleados sin sueldo, usuarios sin perfil, conciliaciones abandonadas, embarques demorados), reparar motos huérfanas ALQUILADA→DISPONIBLE, health endpoint (DB latency, eventos/hora, errores → SALUDABLE/DEGRADADO/CRITICO), métricas 24h (por módulo, por tipo top 10, timeline por hora con Recharts AreaChart), cleanup eventos >90 días, 7 API routes (eventos paginado+filtros, métricas, salud, limpiar, diagnóstico GET+POST, diagnóstico/[id], reparar-motos-huerfanas), 3 páginas admin (monitor dashboard con health+stats+timeline+últimos eventos, eventos con filtros nivel/módulo/tipo+expandible payload+exportar CSV, diagnóstico con ejecutar+resultados+acciones rápidas+historial), sidebar Sistema +Monitor +Eventos +Diagnóstico |
 
 ## Decisiones Tomadas
 
@@ -67,7 +68,7 @@
 
 ## Próxima Acción
 
-Pedir: **Prompt del punto 6.3** (nota: 5.5 pendiente)
+Pedir: **Prompt del punto 6.4** (nota: 5.5 pendiente)
 
 ## Problemas Conocidos
 
@@ -79,18 +80,18 @@ Pedir: **Prompt del punto 6.3** (nota: 5.5 pendiente)
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 32 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
+| Puntos completados | 33 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
 | **Fase F2** | ✅ COMPLETA (4 puntos: 2.1-2.4) |
 | **Fase F3** | ✅ COMPLETA (5 puntos: 3.1-3.5) |
 | **Fase F4** | ✅ COMPLETA (5 puntos: 4.1-4.4 + UI refactors) |
 | **Fase F5** | En progreso (5.2, 5.3, 5.4 completos, falta 5.5) |
-| **Fase F6** | En progreso (6.1, 6.2 completos) |
-| Modelos Prisma | 77 |
-| Enums | 63 |
-| API routes | 177 |
-| Páginas admin | 52 |
+| **Fase F6** | En progreso (6.1, 6.2, 6.3 completos) |
+| Modelos Prisma | 79 |
+| Enums | 65 |
+| API routes | 184 |
+| Páginas admin | 55 |
 | Páginas públicas | 13 (/catalogo, /catalogo/[id], /alquiler/[motoId], /alquiler/exito, /alquiler/error, /alquiler/pendiente, /mi-cuenta, /mi-cuenta/pagos, /mi-cuenta/pagos/resultado, /mi-cuenta/perfil, /scan/[id], /login, /registro) |
 | Event handlers contables | 19 (15 completos + 4 stubs) |
 | Event handlers anomalías | 3 (P500: payment.approve, expense.create, adjustStock) |
@@ -182,4 +183,29 @@ Tab "Conciliaciones": Nueva conciliación → seleccionar cuenta + período → 
   "Match manual" → vincular extracto↔movimiento a mano
   ↓
 "Completar" → si hay diferencia → eventBus → asiento contable ajuste (DEBE/HABER banco vs diferencias)
+```
+
+### Monitor de Eventos + Diagnóstico (6.3)
+```
+Event Bus instrumentado: cada emit() crea EventoSistema (fire-and-forget)
+  → tipo, payload sanitizado (sin PII), módulo, handlers (ejecutados/exitosos/fallidos), duración ms
+  → nivel: ERROR si algún handler falló, INFO si todo OK
+  ↓
+/admin/sistema → Monitor Dashboard:
+  Health badge (SALUDABLE/DEGRADADO/CRITICO) basado en DB latency + errores/hora
+  4 stat cards (eventos 24h, errores, tasa error %, tiempo promedio ms)
+  AreaChart timeline eventos por hora (Recharts)
+  Tabla por módulo + últimos 10 eventos
+  ↓
+/admin/sistema/eventos → Listado completo con filtros (nivel, módulo, tipo, fecha)
+  Click en fila → expand payload JSON + error/stackTrace
+  "Limpiar > 90 días" → cleanup eventos antiguos
+  "Exportar CSV" → descarga client-side
+  ↓
+/admin/sistema/diagnostico → 10 checks de integridad:
+  Motos huérfanas, contratos sin moto, pagos sin asiento, balance contable,
+  cuotas vencidas, stock negativo, empleados sin sueldo, usuarios sin perfil,
+  conciliaciones abandonadas, embarques demorados
+  → Acción rápida: "Reparar motos huérfanas" (ALQUILADA→DISPONIBLE)
+  → Historial de ejecuciones
 ```

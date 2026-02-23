@@ -5,6 +5,7 @@ import {
   BarChart3, UserCog, Shield, Bell, AlertTriangle, Settings,
   Mail, Languages, ClipboardList, Gauge, Calendar,
   ArrowUpDown, Target, MapPin, ShoppingBag, Tags, Sparkles, Scale,
+  Activity, Radio, Stethoscope,
   type LucideIcon,
 } from "lucide-react";
 
@@ -109,11 +110,13 @@ export const navigation: NavGroup[] = [
   {
     title: "Sistema",
     items: [
+      { title: "Monitor", href: "/admin/sistema", icon: Activity },
+      { title: "Eventos", href: "/admin/sistema/eventos", icon: Radio },
+      { title: "Diagnóstico", href: "/admin/sistema/diagnostico", icon: Stethoscope },
       { title: "Usuarios", href: "/admin/usuarios", icon: Users },
       { title: "Permisos", href: "/admin/permisos", icon: Shield },
       { title: "Alertas", href: "/admin/alertas", icon: Bell },
       { title: "Configuración", href: "/admin/configuracion", icon: Settings },
-      { title: "Diagnóstico", href: "/admin/diagnostico", icon: Gauge },
     ],
   },
   {

@@ -216,6 +216,14 @@ export const OPERATIONS = {
       create: "system.alert.create",
       dismiss: "system.alert.dismiss",
     },
+    monitor: {
+      view: "system.monitor.view",
+      cleanup: "system.monitor.cleanup",
+    },
+    diagnostico: {
+      execute: "system.diagnostico.execute",
+      repair: "system.diagnostico.repair",
+    },
   },
 
   // ── Anomalías ──

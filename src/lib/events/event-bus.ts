@@ -58,6 +58,8 @@ class EventBus {
     payload?: Record<string, unknown>,
     userId?: string | null
   ): Promise<string> {
+    const start = Date.now();
+
     // 1. Persistir evento
     const event = await prisma.businessEvent.create({
       data: {
@@ -83,13 +85,25 @@ class EventBus {
       this.matchPattern(h.pattern, operationId)
     );
 
+    let handlersEjecutados = 0;
+    let handlersExitosos = 0;
+    let handlersFallidos = 0;
+    let errorMsg: string | null = null;
+    let stackTrace: string | null = null;
     const errors: string[] = [];
 
     for (const h of matchingHandlers) {
+      handlersEjecutados++;
       try {
         await h.handler(eventData);
+        handlersExitosos++;
       } catch (error: unknown) {
+        handlersFallidos++;
         const msg = error instanceof Error ? error.message : "Unknown error";
+        if (!errorMsg) {
+          errorMsg = msg;
+          stackTrace = error instanceof Error ? (error.stack ?? null) : null;
+        }
         console.error(
           `[EventBus] Handler "${h.name}" failed for ${operationId}: ${msg}`
         );
@@ -105,6 +119,28 @@ class EventBus {
         error: errors.length > 0 ? errors.join("; ") : null,
       },
     });
+
+    // 4. Registrar en monitor (fire-and-forget, nunca romper por logging)
+    const duracionMs = Date.now() - start;
+    prisma.eventoSistema
+      .create({
+        data: {
+          tipo: operationId,
+          payload: payload
+            ? (sanitizePayload(payload) as Prisma.InputJsonValue)
+            : undefined,
+          origenModulo: operationId.split(".")[0] ?? "unknown",
+          origenUsuario: userId ?? undefined,
+          handlersEjecutados,
+          handlersExitosos,
+          handlersFallidos,
+          duracionMs,
+          nivel: handlersFallidos > 0 ? "ERROR" : "INFO",
+          error: errorMsg,
+          stackTrace,
+        },
+      })
+      .catch(() => {}); // Nunca romper por logging
 
     return event.id;
   }
@@ -152,3 +188,28 @@ const globalForEventBus = globalThis as unknown as {
 export const eventBus = globalForEventBus.eventBus ?? new EventBus();
 
 if (process.env.NODE_ENV !== "production") globalForEventBus.eventBus = eventBus;
+
+/**
+ * Sanitiza payload removiendo campos sensibles (PII).
+ */
+function sanitizePayload(
+  payload: Record<string, unknown>
+): Record<string, unknown> {
+  const sanitized = { ...payload };
+  const sensitiveKeys = [
+    "password",
+    "cbu",
+    "token",
+    "apiKey",
+    "secret",
+    "clave",
+    "accessToken",
+    "refreshToken",
+  ];
+  for (const key of Object.keys(sanitized)) {
+    if (sensitiveKeys.some((sk) => key.toLowerCase().includes(sk.toLowerCase()))) {
+      sanitized[key] = "[REDACTED]";
+    }
+  }
+  return sanitized;
+}

@@ -2751,3 +2751,80 @@ model ConciliacionMatch {
   @@index([estado])
   @@map("conciliacion_matches")
 }
+
+// ═══════════════════════════════════════════════════════════════
+// MONITOR + DIAGNÓSTICO
+// ═══════════════════════════════════════════════════════════════
+
+enum NivelLog {
+  DEBUG
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
+enum EstadoDiagnostico {
+  PENDIENTE
+  EN_EJECUCION
+  COMPLETADO
+  ERROR
+}
+
+model EventoSistema {
+  id              String      @id @default(cuid())
+
+  // ── Evento ──
+  tipo            String      // "payment.approve", "contract.create", etc.
+  payload         Json?       // Datos del evento (sanitizados, sin PII)
+
+  // ── Origen ──
+  origenModulo    String      // "pagos", "contratos", "flota", etc.
+  origenUsuario   String?     // userId que disparó la acción
+  origenAccion    String?     // "POST /api/pagos/[id]/aprobar"
+
+  // ── Handlers ──
+  handlersEjecutados  Int     @default(0)
+  handlersExitosos    Int     @default(0)
+  handlersFallidos    Int     @default(0)
+
+  // ── Timing ──
+  duracionMs      Int?        // Duración total de procesamiento
+
+  // ── Nivel ──
+  nivel           NivelLog    @default(INFO)
+  error           String?     // Mensaje de error si falló algún handler
+  stackTrace      String?     // Stack trace del error
+
+  createdAt       DateTime    @default(now())
+
+  @@index([tipo])
+  @@index([nivel])
+  @@index([createdAt])
+  @@index([origenModulo])
+  @@map("eventos_sistema")
+}
+
+model DiagnosticoEjecucion {
+  id              String              @id @default(cuid())
+
+  estado          EstadoDiagnostico   @default(PENDIENTE)
+
+  // ── Resultados ──
+  checksTotal     Int                 @default(0)
+  checksOk        Int                 @default(0)
+  checksWarning   Int                 @default(0)
+  checksError     Int                 @default(0)
+
+  resultados      Json?               // Array de resultados detallados
+
+  // ── Timing ──
+  duracionMs      Int?
+
+  ejecutadoPor    String?             // userId
+
+  createdAt       DateTime            @default(now())
+
+  @@index([estado])
+  @@map("diagnostico_ejecuciones")
+}
