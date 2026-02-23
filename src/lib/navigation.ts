@@ -3,8 +3,8 @@ import {
   Wrench, Building2, Package, Truck, Ship, ShoppingCart,
   TrendingUp, PiggyBank, Calculator, BookOpen, FileSpreadsheet,
   BarChart3, UserCog, Shield, Bell, AlertTriangle, Settings,
-  Bot, Mail, Languages, ClipboardList, Gauge, Calendar,
-  ArrowUpDown, Target, MapPin, ShoppingBag, Tags,
+  Mail, Languages, ClipboardList, Gauge, Calendar,
+  ArrowUpDown, Target, MapPin, ShoppingBag, Tags, Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -93,6 +93,7 @@ export const navigation: NavGroup[] = [
     title: "Inteligencia",
     items: [
       { title: "Anomalías", href: "/admin/anomalias", icon: AlertTriangle },
+      { title: "Asistente Eve", href: "/admin/asistente", icon: Sparkles },
     ],
   },
   {
@@ -116,7 +117,6 @@ export const navigation: NavGroup[] = [
   {
     title: "Herramientas",
     items: [
-      { title: "Asistente IA", href: "/admin/asistente", icon: Bot },
       { title: "Comunicación", href: "/admin/comunicacion", icon: Mail },
       { title: "Traducciones", href: "/admin/traducciones", icon: Languages },
     ],
