@@ -25,6 +25,11 @@ import {
   handleAnomalyExpenseCreate,
   handleAnomalyStockAdjust,
 } from "./anomaly-detection";
+import {
+  handleNotifyPaymentApprove,
+  handleNotifyContractCreate,
+  handleNotifyAnomalyDetect,
+} from "./notifications";
 
 /**
  * Registra todos los event handlers del sistema.
@@ -185,6 +190,34 @@ export function initializeEventHandlers(): void {
     handler: handlePayrollLiquidate,
   });
 
+  // ── HANDLERS NOTIFICACIONES (P200) ──
+
+  const P_NOTIFICATION = 200;
+
+  // Pago aprobado → alerta al creador del contrato
+  eventBus.register({
+    name: "notify:payment.approve",
+    priority: P_NOTIFICATION,
+    pattern: OPERATIONS.commercial.payment.approve,
+    handler: handleNotifyPaymentApprove,
+  });
+
+  // Contrato creado → alerta al creador
+  eventBus.register({
+    name: "notify:contract.create",
+    priority: P_NOTIFICATION,
+    pattern: OPERATIONS.commercial.contract.create,
+    handler: handleNotifyContractCreate,
+  });
+
+  // Anomalía detectada → alerta al admin
+  eventBus.register({
+    name: "notify:anomaly.detect",
+    priority: P_NOTIFICATION,
+    pattern: OPERATIONS.anomaly.detect,
+    handler: handleNotifyAnomalyDetect,
+  });
+
   // ── HANDLERS ANOMALÍAS (P500) ──
 
   const P_ANOMALY = 500;
@@ -229,6 +262,6 @@ export function initializeEventHandlers(): void {
 
   eventBus.markInitialized();
   console.log(
-    `[EventBus] Initialized with ${eventBus.getHandlers().length} handler(s) (19 contables + 3 anomalías + 1 metrics)`
+    `[EventBus] Initialized with ${eventBus.getHandlers().length} handler(s) (19 contables + 3 notificaciones + 3 anomalías + 1 metrics)`
   );
 }

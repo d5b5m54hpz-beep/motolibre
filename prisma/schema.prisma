@@ -2828,3 +2828,62 @@ model DiagnosticoEjecucion {
   @@index([estado])
   @@map("diagnostico_ejecuciones")
 }
+
+// ═══════════════════════════════════════════════════════════════
+// ALERTAS
+// ═══════════════════════════════════════════════════════════════
+
+enum TipoAlerta {
+  CONTRATO_POR_VENCER
+  CUOTA_VENCIDA
+  CUOTA_POR_VENCER
+  PAGO_RECIBIDO
+  MANTENIMIENTO_PROGRAMADO
+  STOCK_BAJO
+  ANOMALIA_DETECTADA
+  EMBARQUE_ACTUALIZADO
+  CONCILIACION_PENDIENTE
+  SOLICITUD_NUEVA
+  DOCUMENTO_POR_VENCER
+  SISTEMA
+}
+
+enum PrioridadAlerta {
+  BAJA
+  MEDIA
+  ALTA
+  URGENTE
+}
+
+model Alerta {
+  id              String          @id @default(cuid())
+
+  tipo            TipoAlerta
+  prioridad       PrioridadAlerta @default(MEDIA)
+
+  titulo          String
+  mensaje         String
+
+  // ── Módulo y entidad ──
+  modulo          String
+  entidadTipo     String?
+  entidadId       String?
+
+  // ── Destinatario ──
+  usuarioId       String
+
+  // ── Estado ──
+  leida           Boolean         @default(false)
+  fechaLeida      DateTime?
+
+  // ── Acción ──
+  accionUrl       String?
+  accionLabel     String?
+
+  createdAt       DateTime        @default(now())
+
+  @@index([usuarioId, leida])
+  @@index([tipo])
+  @@index([createdAt])
+  @@map("alertas")
+}

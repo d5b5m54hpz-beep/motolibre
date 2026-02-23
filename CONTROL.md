@@ -7,7 +7,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Fase Actual** | F6 — Complementarios |
-| **Punto Actual** | 6.3 — COMPLETO, siguiente: 6.4 |
+| **Punto Actual** | 6.4 — COMPLETO, siguiente: 6.5 |
 | **Estado** | ✅ LISTO |
 | **Última Actualización** | 2026-02-23 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
@@ -49,6 +49,7 @@
 | 6.1 | RRHH (Recursos Humanos) | 2026-02-23 | 4 modelos (Empleado 37+ campos, Ausencia, ReciboSueldo, DocumentoEmpleado), 10 enums (Departamento, EstadoEmpleado, SexoEmpleado, EstadoCivil, JornadaLaboral, TipoAusencia, EstadoAusencia, TipoRecibo, EstadoRecibo, TipoDocumentoEmpleado), rrhh-utils con cálculo liquidación argentina (jubilación 11%, OS 3%, PAMI 3%, presentismo 8.33%, antigüedad 1%/año, contribuciones patronales), 10 API routes (empleados CRUD, ausencias CRUD+aprobar, liquidación preview+liquidar+masiva, recibos CRUD, stats), 5 páginas admin (dashboard RRHH, empleados listado+detalle con tabs, ausencias con aprobar/rechazar, liquidación con preview+masiva), handler contable #19 payroll.liquidate (asiento 5 líneas partida doble), 7 cuentas contables nuevas (5.1.04.x gastos personal, 2.1.05.x deudas sociales), seed 4 empleados demo, sidebar Dashboard RRHH, StatusBadge RRHH colors |
 | 6.2 | Conciliación Bancaria | 2026-02-23 | 4 modelos (CuentaBancaria, ExtractoBancario, Conciliacion, ConciliacionMatch), 4 enums (TipoCuentaBancaria, EstadoConciliacion, EstadoMatch, TipoMatch), TipoAsiento +CONCILIACION, motor matching 3 pasos (exacto 90-100%, aproximado 1% tolerancia 50-70%, referencia texto 40%), parser CSV flexible (auto-detect separador, formato argentino DD/MM/YYYY y 1.234,56), 11 API routes (cuentas CRUD, extractos importar, conciliación CRUD+auto-match, matches aprobar/rechazar, match manual, aprobar exactos bulk, completar), handler contable #16 reconciliation stub→completo (asiento ajuste diferencia), 2 cuentas contables nuevas (5.2.04.x diferencias conciliación), 2 páginas admin (listado 3 tabs cuentas/conciliaciones/importar, detalle con matches+confianza+aprobar/rechazar+manual+completar), seed 3 cuentas bancarias, sidebar Conciliación en Contabilidad |
 | 6.3 | Monitor de Eventos + Diagnóstico | 2026-02-23 | 2 modelos (EventoSistema, DiagnosticoEjecucion), 2 enums (NivelLog 5 vals, EstadoDiagnostico 4 vals), event bus instrumentado (timing, handler counts, EventoSistema fire-and-forget, payload sanitizado sin PII), 10 checks diagnóstico (motos huérfanas, contratos sin moto, pagos sin asiento, balance contable partida doble, cuotas vencidas, stock negativo, empleados sin sueldo, usuarios sin perfil, conciliaciones abandonadas, embarques demorados), reparar motos huérfanas ALQUILADA→DISPONIBLE, health endpoint (DB latency, eventos/hora, errores → SALUDABLE/DEGRADADO/CRITICO), métricas 24h (por módulo, por tipo top 10, timeline por hora con Recharts AreaChart), cleanup eventos >90 días, 7 API routes (eventos paginado+filtros, métricas, salud, limpiar, diagnóstico GET+POST, diagnóstico/[id], reparar-motos-huerfanas), 3 páginas admin (monitor dashboard con health+stats+timeline+últimos eventos, eventos con filtros nivel/módulo/tipo+expandible payload+exportar CSV, diagnóstico con ejecutar+resultados+acciones rápidas+historial), sidebar Sistema +Monitor +Eventos +Diagnóstico |
+| 6.4 | Alertas + Cron Jobs | 2026-02-23 | 1 modelo (Alerta), 2 enums (TipoAlerta 12 vals, PrioridadAlerta 4 vals), alertas-utils (crearAlerta anti-duplicado 24h, alertarCreador, contarNoLeidas), 3 notification handlers P200 (payment.approve→PAGO_RECIBIDO, contract.create→SOLICITUD_NUEVA, anomaly.detect→ANOMALIA_DETECTADA), 5 API routes alertas (listado paginado+filtros, count para badge, marcar leída, marcar todas leídas, eliminar), 6 cron jobs protegidos con CRON_SECRET (contratos-por-vencer, cuotas-vencidas, generar-cuotas, mantenimiento-programado, documentos-por-vencer, limpieza), cron-ejecutar wrapper admin, topbar bell badge alertas con polling 60s, 2 páginas admin (alertas feed con filtros tipo/módulo/leídas + cargar más, cron jobs con ejecutar ahora + log resultados), sidebar +Cron Jobs, StatusBadge +prioridades (BAJA/MEDIA/ALTA/URGENTE) |
 
 ## Decisiones Tomadas
 
@@ -68,7 +69,7 @@
 
 ## Próxima Acción
 
-Pedir: **Prompt del punto 6.4** (nota: 5.5 pendiente)
+Pedir: **Prompt del punto 6.5** (nota: 5.5 pendiente)
 
 ## Problemas Conocidos
 
@@ -87,13 +88,14 @@ Pedir: **Prompt del punto 6.4** (nota: 5.5 pendiente)
 | **Fase F3** | ✅ COMPLETA (5 puntos: 3.1-3.5) |
 | **Fase F4** | ✅ COMPLETA (5 puntos: 4.1-4.4 + UI refactors) |
 | **Fase F5** | En progreso (5.2, 5.3, 5.4 completos, falta 5.5) |
-| **Fase F6** | En progreso (6.1, 6.2, 6.3 completos) |
-| Modelos Prisma | 79 |
-| Enums | 65 |
-| API routes | 184 |
-| Páginas admin | 55 |
+| **Fase F6** | En progreso (6.1, 6.2, 6.3, 6.4 completos) |
+| Modelos Prisma | 80 |
+| Enums | 67 |
+| API routes | 196 |
+| Páginas admin | 57 |
 | Páginas públicas | 13 (/catalogo, /catalogo/[id], /alquiler/[motoId], /alquiler/exito, /alquiler/error, /alquiler/pendiente, /mi-cuenta, /mi-cuenta/pagos, /mi-cuenta/pagos/resultado, /mi-cuenta/perfil, /scan/[id], /login, /registro) |
 | Event handlers contables | 19 (15 completos + 4 stubs) |
+| Event handlers notificaciones | 3 (P200: payment.approve, contract.create, anomaly.detect) |
 | Event handlers anomalías | 3 (P500: payment.approve, expense.create, adjustStock) |
 | AI Tools | 21 (flota 7, comercial 2, finanzas 6, contabilidad 3, rrhh 2, sistema 1) |
 | Cuentas contables seeded | 80 |
@@ -208,4 +210,28 @@ Event Bus instrumentado: cada emit() crea EventoSistema (fire-and-forget)
   conciliaciones abandonadas, embarques demorados
   → Acción rápida: "Reparar motos huérfanas" (ALQUILADA→DISPONIBLE)
   → Historial de ejecuciones
+```
+
+### Alertas + Cron Jobs (6.4)
+```
+Event handlers P200 → Alertas internas automáticas:
+  payment.approve → PAGO_RECIBIDO (BAJA) al creador del contrato
+  contract.create → SOLICITUD_NUEVA (ALTA) al creador
+  anomaly.detect → ANOMALIA_DETECTADA (URGENTE/ALTA) al admin
+  Anti-duplicado: misma alerta tipo+entidad no leída en 24h → skip
+  ↓
+/admin/alertas → Feed de alertas con filtros (no leídas/todas, tipo, módulo)
+  Click alerta → marca leída + navega a accionUrl
+  "Marcar todas como leídas" → bulk update
+  Badge topbar: polling /api/alertas/count cada 60s
+  ↓
+6 Cron Jobs protegidos con CRON_SECRET:
+  Diario 7am: generar-cuotas (safety net cuotas faltantes)
+  Diario 8am: contratos-por-vencer (alertas 30/15/7 días)
+  Diario 9am: cuotas-vencidas (PENDIENTE→VENCIDA + alerta)
+  Diario 10am: mantenimiento-programado (alertas próximos 7 días)
+  Lunes 8am: documentos-por-vencer (docs empleados 30 días)
+  Domingo 3am: limpieza (eventos >90d, alertas leídas >60d, sesiones, reservas)
+  ↓
+/admin/sistema/cron → "Ejecutar ahora" con log de resultados en sesión
 ```

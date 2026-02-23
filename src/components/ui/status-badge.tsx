@@ -71,6 +71,12 @@ const statusColors: Record<string, string> = {
   // Diagnóstico
   COMPLETADO: "bg-green-500/10 text-green-500 border-green-500/20",
 
+  // Prioridad alertas
+  BAJA: "bg-green-500/10 text-green-500 border-green-500/20",
+  MEDIA: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  ALTA: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+  URGENTE: "bg-red-600/10 text-red-600 border-red-600/20",
+
   // Genéricos
   BORRADOR: "bg-gray-500/10 text-gray-500 border-gray-500/20",
   ENVIADO: "bg-blue-500/10 text-blue-500 border-blue-500/20",

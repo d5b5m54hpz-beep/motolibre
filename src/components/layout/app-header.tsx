@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -23,21 +23,22 @@ export function AppHeader() {
   const { data: session } = useSession();
   const user = session?.user;
   const firstName = user?.name?.split(" ")[0] ?? "";
-  const [anomaliaCount, setAnomaliaCount] = useState(0);
+  const [alertCount, setAlertCount] = useState(0);
 
-  useEffect(() => {
-    fetch("/api/anomalias/resumen")
-      .then((r) => r.ok ? r.json() : null)
+  const fetchAlertCount = useCallback(() => {
+    fetch("/api/alertas/count")
+      .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!d?.data) return;
-        // Count NUEVA anomalies with severity ALTA or CRITICA
-        const porSev = d.data.porSeveridad as Array<{ severidad: string; count: number }>;
-        const alta = porSev?.find((s) => s.severidad === "ALTA")?.count ?? 0;
-        const critica = porSev?.find((s) => s.severidad === "CRITICA")?.count ?? 0;
-        setAnomaliaCount(alta + critica);
+        if (d?.count != null) setAlertCount(d.count);
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetchAlertCount();
+    const interval = setInterval(fetchAlertCount, 60_000);
+    return () => clearInterval(interval);
+  }, [fetchAlertCount]);
 
   const initials = user?.name
     ? user.name
@@ -64,13 +65,13 @@ export function AppHeader() {
         <ThemeToggle />
 
         <Link
-          href="/admin/anomalias?estado=NUEVA"
+          href="/admin/alertas"
           className="relative p-2 rounded-xl bg-bg-input border border-border hover:border-border-hover transition-all duration-200"
         >
           <Bell className="h-4 w-4 text-t-secondary" />
-          {anomaliaCount > 0 && (
+          {alertCount > 0 && (
             <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white animate-pulse">
-              {anomaliaCount}
+              {alertCount}
             </span>
           )}
         </Link>
