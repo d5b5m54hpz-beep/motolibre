@@ -7,9 +7,9 @@
 | Campo | Valor |
 |-------|-------|
 | **Fase Actual** | F4 — Pricing e Inteligencia (en progreso) |
-| **Punto Actual** | 4.3 — Detección de Anomalías (siguiente) |
+| **Punto Actual** | 4.4 — siguiente punto |
 | **Estado** | ✅ LISTO |
-| **Última Actualización** | 2026-02-22 |
+| **Última Actualización** | 2026-02-23 |
 | **Bloqueadores** | Google OAuth requiere GOOGLE_CLIENT_ID/SECRET (se configura en Railway) |
 
 ## Puntos Completados
@@ -41,6 +41,7 @@
 | REFACTOR-UI-2 | Migración de Páginas al DS | 2026-02-22 | 44 páginas admin migradas al design system dark-first, glassmorphism cards, stat cards con íconos y trends, badges semánticos, tablas estilizadas, formularios consistentes |
 | 4.1 | Pricing de Alquiler | 2026-02-22 | 5 modelos (PlanAlquiler, PrecioModeloAlquiler, CostoOperativoConfig, HistorialPrecioAlquiler, TipoCambioCache), motor de pricing con planes y tarifas, simulador de rentabilidad, costos operativos configurables, cache de tipo de cambio, API routes pricing, páginas admin pricing |
 | 4.2 | Pricing de Repuestos | 2026-02-22 | 6 modelos (ListaPrecio, ItemListaPrecio, ReglaMarkup, GrupoCliente, MiembroGrupoCliente, LoteCambioPrecio), markup por categoría, listas de precio múltiples, grupos de clientes con descuentos, cambios batch de precios, API routes pricing-repuestos, páginas admin pricing-repuestos |
+| 4.3 | Detección de Anomalías | 2026-02-23 | 2 modelos (Anomalia, AnalisisFinanciero), 3 enums (TipoAnomalia 9 vals, SeveridadAnomalia 4 vals, EstadoAnomalia 4 vals), 9 algoritmos (gasto inusual, pago duplicado, factura sin pago, margen bajo, stock crítico, desvío presupuesto, flujo caja negativo, vencimientos, patrón sospechoso), detección batch ejecutarDeteccionCompleta(), 3 handlers real-time P500, anti-duplicados, 7 API routes (listado, detalle, resolver, descartar, revisar, ejecutar, resumen), 2 páginas admin (listado con severidad visual, detalle con acciones), badge topbar anomalías ALTA+CRITICA, sidebar grupo Inteligencia |
 
 ## Decisiones Tomadas
 
@@ -60,7 +61,7 @@
 
 ## Próxima Acción
 
-Implementar: **Punto 4.3 — Detección de Anomalías** (9 algoritmos batch + real-time)
+Pedir: **Prompt del punto 4.4**
 
 ## Problemas Conocidos
 
@@ -72,17 +73,18 @@ Implementar: **Punto 4.3 — Detección de Anomalías** (9 algoritmos batch + re
 
 | Métrica | Valor |
 |---------|-------|
-| Puntos completados | 25 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
+| Puntos completados | 26 / 35 (+ REFACTOR-A + REFACTOR-B + REFACTOR-UI-1 + REFACTOR-UI-2) |
 | **Fase F0** | ✅ COMPLETA (5/5 puntos) |
 | **Fase F1** | ✅ COMPLETA (5 puntos + 2 refactors) |
 | **Fase F2** | ✅ COMPLETA (4 puntos: 2.1-2.4) |
 | **Fase F3** | ✅ COMPLETA (5 puntos: 3.1-3.5) |
-| **Fase F4** | 🔄 EN PROGRESO (2/5: 4.1-4.2 completados, 4.3 siguiente) |
-| Modelos Prisma | 67 |
-| Enums | 46 |
-| API routes | 135 |
-| Páginas admin | 42 |
+| **Fase F4** | 🔄 EN PROGRESO (3/5: 4.1-4.3 completados, 4.4 siguiente) |
+| Modelos Prisma | 69 |
+| Enums | 49 |
+| API routes | 142 |
+| Páginas admin | 44 |
 | Event handlers contables | 18 (13 completos + 5 stubs) |
+| Event handlers anomalías | 3 (P500: payment.approve, expense.create, adjustStock) |
 | Cuentas contables seeded | 71 |
 | Tests | 0 |
 | PermissionProfiles seeded | 8 |
