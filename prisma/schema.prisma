@@ -2253,3 +2253,89 @@ model LoteCambioPrecio {
 
   @@map("lotes_cambio_precio")
 }
+
+// ═══════════════════════════════════════════════════════════════
+// DETECCIÓN DE ANOMALÍAS
+// ═══════════════════════════════════════════════════════════════
+
+enum TipoAnomalia {
+  GASTO_INUSUAL
+  PAGO_DUPLICADO
+  FACTURA_SIN_PAGO
+  MARGEN_BAJO
+  STOCK_CRITICO
+  DESVIO_PRESUPUESTO
+  FLUJO_CAJA_NEGATIVO
+  VENCIMIENTO_PROXIMO
+  PATRON_SOSPECHOSO
+}
+
+enum SeveridadAnomalia {
+  BAJA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum EstadoAnomalia {
+  NUEVA
+  EN_REVISION
+  RESUELTA
+  DESCARTADA
+}
+
+model Anomalia {
+  id                String              @id @default(cuid())
+
+  tipo              TipoAnomalia
+  severidad         SeveridadAnomalia
+  estado            EstadoAnomalia      @default(NUEVA)
+
+  // —— Entidad afectada ——
+  entidadTipo       String              // "Gasto", "Pago", "Factura", "Moto", "Repuesto", "Presupuesto"
+  entidadId         String              // ID de la entidad
+  entidadLabel      String?             // Descripción legible: "Gasto #123 - Combustible"
+
+  // —— Detección ——
+  titulo            String              // "Gasto inusual detectado: $450.000 en Combustible"
+  descripcion       String              // Explicación detallada
+  valorDetectado    Decimal?            @db.Decimal(14, 2)
+  valorEsperado     Decimal?            @db.Decimal(14, 2)
+
+  // —— Resolución ——
+  resueltoPor       String?
+  resolucion        String?
+  fechaResolucion   DateTime?
+
+  // —— Metadata ——
+  algoritmo         String
+  datosExtra        String?             // JSON con datos adicionales del algoritmo
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([tipo])
+  @@index([estado])
+  @@index([severidad])
+  @@index([entidadTipo, entidadId])
+  @@index([createdAt])
+  @@map("anomalias")
+}
+
+model AnalisisFinanciero {
+  id                  String      @id @default(cuid())
+
+  tipo                String      // "ANOMALIAS_BATCH", "SALUD_FINANCIERA"
+  fechaEjecucion      DateTime    @default(now())
+  duracionMs          Int?
+
+  anomaliasDetectadas Int         @default(0)
+  metricas            String?     // JSON con métricas del análisis
+
+  ejecutadoPor        String?     // userId o "system"
+
+  createdAt           DateTime    @default(now())
+
+  @@index([tipo])
+  @@map("analisis_financieros")
+}

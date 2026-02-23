@@ -19,6 +19,11 @@ import {
   handlePurchaseInvoiceCreate,
   handlePurchaseInvoicePay,
 } from "./accounting";
+import {
+  handleAnomalyPaymentApprove,
+  handleAnomalyExpenseCreate,
+  handleAnomalyStockAdjust,
+} from "./anomaly-detection";
 
 /**
  * Registra todos los event handlers del sistema.
@@ -171,6 +176,34 @@ export function initializeEventHandlers(): void {
     handler: handlePurchaseInvoicePay,
   });
 
+  // ── HANDLERS ANOMALÍAS (P500) ──
+
+  const P_ANOMALY = 500;
+
+  // Pago aprobado → buscar duplicados
+  eventBus.register({
+    name: "anomaly:payment.approve",
+    priority: P_ANOMALY,
+    pattern: OPERATIONS.commercial.payment.approve,
+    handler: handleAnomalyPaymentApprove,
+  });
+
+  // Gasto creado → verificar si es inusual
+  eventBus.register({
+    name: "anomaly:expense.create",
+    priority: P_ANOMALY,
+    pattern: OPERATIONS.finance.expense.create,
+    handler: handleAnomalyExpenseCreate,
+  });
+
+  // Ajuste stock → verificar stock crítico
+  eventBus.register({
+    name: "anomaly:inventory.adjust",
+    priority: P_ANOMALY,
+    pattern: OPERATIONS.supply.inventory.adjustStock,
+    handler: handleAnomalyStockAdjust,
+  });
+
   // ── HANDLER METRICS/LOGGING (P999) ──
   eventBus.register({
     name: "metrics-logger",
@@ -187,6 +220,6 @@ export function initializeEventHandlers(): void {
 
   eventBus.markInitialized();
   console.log(
-    `[EventBus] Initialized with ${eventBus.getHandlers().length} handler(s) (18 contables + 1 metrics)`
+    `[EventBus] Initialized with ${eventBus.getHandlers().length} handler(s) (18 contables + 3 anomalías + 1 metrics)`
   );
 }

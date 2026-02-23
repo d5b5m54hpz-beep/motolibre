@@ -90,6 +90,12 @@ export const navigation: NavGroup[] = [
     ],
   },
   {
+    title: "Inteligencia",
+    items: [
+      { title: "Anomalías", href: "/admin/anomalias", icon: AlertTriangle },
+    ],
+  },
+  {
     title: "RRHH",
     items: [
       { title: "Empleados", href: "/admin/rrhh/empleados", icon: UserCog },
@@ -103,7 +109,6 @@ export const navigation: NavGroup[] = [
       { title: "Usuarios", href: "/admin/usuarios", icon: Users },
       { title: "Permisos", href: "/admin/permisos", icon: Shield },
       { title: "Alertas", href: "/admin/alertas", icon: Bell },
-      { title: "Anomalías", href: "/admin/anomalias", icon: AlertTriangle },
       { title: "Configuración", href: "/admin/configuracion", icon: Settings },
       { title: "Diagnóstico", href: "/admin/diagnostico", icon: Gauge },
     ],
