@@ -829,18 +829,26 @@ async function seedMantenimiento() {
     },
   });
 
-  // Mantenimiento programado
+  // ── Mantenimientos programados (12 registros, varios dentro de los próximos 7 días) ──
+
+  // Próximos 7 días — estos aparecen en la vista default
   await prisma.mantenimientoProgramado.upsert({
     where: { contratoId_numero: { contratoId: ID.con1, numero: 1 } },
     update: {},
     create: {
-      contratoId: ID.con1,
-      motoId: ID.moto1,
-      clienteId: ID.cli1,
-      numero: 1,
-      fechaProgramada: futureDate(15),
-      estado: "PROGRAMADO",
-      notas: "Service 5000km",
+      contratoId: ID.con1, motoId: ID.moto1, clienteId: ID.cli1,
+      numero: 1, fechaProgramada: futureDate(1), estado: "PROGRAMADO",
+      notas: "Service 5000km — Honda CB 125F. Cita a las 9:00 AM.",
+    },
+  });
+
+  await prisma.mantenimientoProgramado.upsert({
+    where: { contratoId_numero: { contratoId: ID.con1, numero: 2 } },
+    update: {},
+    create: {
+      contratoId: ID.con1, motoId: ID.moto1, clienteId: ID.cli1,
+      numero: 2, fechaProgramada: futureDate(3), estado: "NOTIFICADO",
+      notas: "Service 10000km — Cliente notificado por WhatsApp.",
     },
   });
 
@@ -848,43 +856,126 @@ async function seedMantenimiento() {
     where: { contratoId_numero: { contratoId: ID.con2, numero: 1 } },
     update: {},
     create: {
-      contratoId: ID.con2,
-      motoId: ID.moto2,
-      clienteId: ID.cli2,
-      numero: 1,
-      fechaProgramada: monthsAgo(1),
-      fechaRealizada: daysAgo(25),
-      estado: "COMPLETADO",
+      contratoId: ID.con2, motoId: ID.moto2, clienteId: ID.cli2,
+      numero: 1, fechaProgramada: futureDate(2), estado: "PROGRAMADO",
+      notas: "Service 5000km — Yamaha YBR 125. Turno tarde.",
     },
   });
 
-  // Órdenes de trabajo
+  await prisma.mantenimientoProgramado.upsert({
+    where: { contratoId_numero: { contratoId: ID.con3, numero: 1 } },
+    update: {},
+    create: {
+      contratoId: ID.con3, motoId: ID.moto3, clienteId: ID.cli3,
+      numero: 1, fechaProgramada: futureDate(5), estado: "PROGRAMADO",
+      notas: "Revisión general — Bajaj Boxer 150.",
+    },
+  });
+
+  await prisma.mantenimientoProgramado.upsert({
+    where: { contratoId_numero: { contratoId: ID.con4, numero: 1 } },
+    update: {},
+    create: {
+      contratoId: ID.con4, motoId: ID.moto4, clienteId: ID.cli4,
+      numero: 1, fechaProgramada: futureDate(6), estado: "PROGRAMADO",
+      notas: "Service 5000km — Honda Wave 110. Primera revisión.",
+    },
+  });
+
+  // Hoy
+  await prisma.mantenimientoProgramado.upsert({
+    where: { contratoId_numero: { contratoId: ID.con2, numero: 2 } },
+    update: {},
+    create: {
+      contratoId: ID.con2, motoId: ID.moto2, clienteId: ID.cli2,
+      numero: 2, fechaProgramada: futureDate(0), estado: "PROGRAMADO",
+      notas: "Cambio pastillas de freno — urgente, desgaste detectado en OT anterior.",
+    },
+  });
+
+  await prisma.mantenimientoProgramado.upsert({
+    where: { contratoId_numero: { contratoId: ID.con3, numero: 2 } },
+    update: {},
+    create: {
+      contratoId: ID.con3, motoId: ID.moto3, clienteId: ID.cli3,
+      numero: 2, fechaProgramada: futureDate(0), estado: "NOTIFICADO",
+      notas: "Inspección pre-entrega — Bajaj Boxer 150. Turno 10:30 AM.",
+    },
+  });
+
+  // Completados (historial reciente)
+  await prisma.mantenimientoProgramado.upsert({
+    where: { contratoId_numero: { contratoId: ID.con1, numero: 3 } },
+    update: {},
+    create: {
+      contratoId: ID.con1, motoId: ID.moto1, clienteId: ID.cli1,
+      numero: 3, fechaProgramada: daysAgo(5), fechaRealizada: daysAgo(5),
+      estado: "COMPLETADO", notas: "Service 5000km completado sin observaciones.",
+    },
+  });
+
+  await prisma.mantenimientoProgramado.upsert({
+    where: { contratoId_numero: { contratoId: ID.con2, numero: 3 } },
+    update: {},
+    create: {
+      contratoId: ID.con2, motoId: ID.moto2, clienteId: ID.cli2,
+      numero: 3, fechaProgramada: daysAgo(12), fechaRealizada: daysAgo(12),
+      estado: "COMPLETADO", notas: "Service 10000km — se reemplazó cadena.",
+    },
+  });
+
+  await prisma.mantenimientoProgramado.upsert({
+    where: { contratoId_numero: { contratoId: ID.con4, numero: 2 } },
+    update: {},
+    create: {
+      contratoId: ID.con4, motoId: ID.moto4, clienteId: ID.cli4,
+      numero: 2, fechaProgramada: daysAgo(20), fechaRealizada: daysAgo(18),
+      estado: "COMPLETADO", notas: "Revisión general completada. Todo OK.",
+    },
+  });
+
+  // No asistió
+  await prisma.mantenimientoProgramado.upsert({
+    where: { contratoId_numero: { contratoId: ID.con3, numero: 3 } },
+    update: {},
+    create: {
+      contratoId: ID.con3, motoId: ID.moto3, clienteId: ID.cli3,
+      numero: 3, fechaProgramada: daysAgo(8), estado: "NO_ASISTIO",
+      notas: "Cliente no se presentó. Se intentó contactar sin respuesta.",
+    },
+  });
+
+  // Reprogramado
+  await prisma.mantenimientoProgramado.upsert({
+    where: { contratoId_numero: { contratoId: ID.con4, numero: 3 } },
+    update: {},
+    create: {
+      contratoId: ID.con4, motoId: ID.moto4, clienteId: ID.cli4,
+      numero: 3, fechaProgramada: futureDate(10), estado: "REPROGRAMADO",
+      fechaOriginal: daysAgo(3), motivoReprogramacion: "Cliente solicitó cambio de fecha por viaje.",
+      notas: "Reprogramado del 21/02 al 06/03.",
+    },
+  });
+
+  // ── Órdenes de trabajo (10 OTs con distintos estados y tipos) ──
+
+  // OT-1: COMPLETADA — Service 5000km
   await prisma.ordenTrabajo.upsert({
     where: { numero: "OT-2026-00001" },
     update: {},
     create: {
       id: ID.ot1,
       numero: "OT-2026-00001",
-      tipo: "PREVENTIVO",
-      prioridad: "MEDIA",
-      tipoService: "SERVICE_5000KM",
-      estado: "COMPLETADA",
-      motoId: ID.moto2,
-      kmIngreso: 10000,
-      kmEgreso: 10020,
-      contratoId: ID.con2,
-      clienteId: ID.cli2,
-      fechaSolicitud: daysAgo(30),
-      fechaProgramada: daysAgo(25),
-      fechaInicioReal: daysAgo(25),
-      fechaFinReal: daysAgo(25),
-      tallerNombre: "Taller MotoLibre Central",
-      mecanicoNombre: "Carlos Gómez",
+      tipo: "PREVENTIVO", prioridad: "MEDIA", tipoService: "SERVICE_5000KM",
+      estado: "COMPLETADA", motoId: ID.moto2, kmIngreso: 10000, kmEgreso: 10020,
+      contratoId: ID.con2, clienteId: ID.cli2,
+      fechaSolicitud: daysAgo(30), fechaProgramada: daysAgo(25),
+      fechaInicioReal: daysAgo(25), fechaFinReal: daysAgo(25),
+      fechaCheckIn: daysAgo(25), fechaCheckOut: daysAgo(25),
+      tallerNombre: "Taller MotoLibre Central", mecanicoNombre: "Carlos Gómez",
       descripcion: "Service preventivo 5000km — Yamaha YBR 125",
       diagnostico: "Moto en buen estado general. Frenos con desgaste normal.",
-      costoManoObra: 15000,
-      costoRepuestos: 7000,
-      costoTotal: 22000,
+      costoManoObra: 15000, costoRepuestos: 7000, costoTotal: 22000,
       tallerId: ID.taller1,
       tareas: {
         create: [
@@ -903,56 +994,221 @@ async function seedMantenimiento() {
     },
   });
 
+  // OT-2: EN_EJECUCION — Correctivo motor
   await prisma.ordenTrabajo.upsert({
     where: { numero: "OT-2026-00002" },
     update: {},
     create: {
       id: ID.ot2,
       numero: "OT-2026-00002",
-      tipo: "CORRECTIVO",
-      prioridad: "ALTA",
-      estado: "EN_EJECUCION",
-      motoId: ID.moto3,
-      kmIngreso: 18400,
-      contratoId: ID.con4,
-      fechaSolicitud: daysAgo(3),
-      fechaProgramada: daysAgo(1),
-      fechaInicioReal: daysAgo(1),
-      tallerNombre: "Taller MotoLibre Central",
-      mecanicoNombre: "Diego Martínez",
+      tipo: "CORRECTIVO", prioridad: "ALTA", estado: "EN_EJECUCION",
+      motoId: ID.moto3, kmIngreso: 18400, contratoId: ID.con4,
+      fechaSolicitud: daysAgo(3), fechaProgramada: daysAgo(1), fechaInicioReal: daysAgo(1),
+      tallerNombre: "Taller MotoLibre Central", mecanicoNombre: "Diego Martínez",
       descripcion: "Ruido anormal en motor — diagnóstico y reparación",
       tallerId: ID.taller1,
       tareas: {
         create: [
-          { categoria: "MOTOR", descripcion: "Diagnóstico ruido motor", resultado: "PENDIENTE", orden: 1 },
-          { categoria: "MOTOR", descripcion: "Verificar cadena de distribución", resultado: "PENDIENTE", orden: 2 },
+          { categoria: "MOTOR", descripcion: "Diagnóstico ruido motor", resultado: "REQUIERE_ATENCION", observaciones: "Cadena de distribución estirada", orden: 1 },
+          { categoria: "MOTOR", descripcion: "Reemplazo cadena de distribución", resultado: "PENDIENTE", orden: 2 },
+          { categoria: "MOTOR", descripcion: "Ajuste de válvulas", resultado: "PENDIENTE", orden: 3 },
+        ],
+      },
+      repuestos: {
+        create: [
+          { nombre: "Cadena distribución Bajaj", cantidad: 1, precioUnitario: 12000, subtotal: 12000 },
         ],
       },
     },
   });
 
+  // OT-3: PROGRAMADA — Service 10000km
   await prisma.ordenTrabajo.upsert({
     where: { numero: "OT-2026-00003" },
     update: {},
     create: {
       id: ID.ot3,
       numero: "OT-2026-00003",
-      tipo: "PREVENTIVO",
-      prioridad: "MEDIA",
-      tipoService: "SERVICE_10000KM",
-      estado: "PROGRAMADA",
-      motoId: ID.moto1,
-      contratoId: ID.con1,
-      clienteId: ID.cli1,
-      fechaSolicitud: daysAgo(2),
-      fechaProgramada: futureDate(15),
+      tipo: "PREVENTIVO", prioridad: "MEDIA", tipoService: "SERVICE_10000KM",
+      estado: "PROGRAMADA", motoId: ID.moto1, contratoId: ID.con1, clienteId: ID.cli1,
+      fechaSolicitud: daysAgo(2), fechaProgramada: futureDate(3),
       tallerNombre: "Taller MotoLibre Central",
       descripcion: "Service 10000km programado — Honda CB 125F",
       tallerId: ID.taller1,
     },
   });
 
-  console.log("  ✅ 2 talleres + 3 mecánicos + 2 planes + 2 mant. programados + 3 OT");
+  // OT-4: SOLICITADA — Emergencia frenos
+  await prisma.ordenTrabajo.upsert({
+    where: { numero: "OT-2026-00004" },
+    update: {},
+    create: {
+      numero: "OT-2026-00004",
+      tipo: "EMERGENCIA", prioridad: "URGENTE", estado: "SOLICITADA",
+      motoId: ID.moto4, contratoId: ID.con4, clienteId: ID.cli4,
+      fechaSolicitud: futureDate(0),
+      descripcion: "Cliente reporta frenos blandos y ruido al frenar. Revisar urgente.",
+      solicitadoPor: ID.operador,
+    },
+  });
+
+  // OT-5: APROBADA — Correctivo suspensión
+  await prisma.ordenTrabajo.upsert({
+    where: { numero: "OT-2026-00005" },
+    update: {},
+    create: {
+      numero: "OT-2026-00005",
+      tipo: "CORRECTIVO", prioridad: "ALTA", estado: "APROBADA",
+      motoId: ID.moto5, fechaSolicitud: daysAgo(1), fechaAprobacion: futureDate(0),
+      tallerNombre: "Taller Ruiz Motos", tallerId: ID.taller2,
+      descripcion: "Amortiguador trasero pierde aceite — reemplazar",
+      tareas: {
+        create: [
+          { categoria: "SUSPENSION", descripcion: "Reemplazo amortiguador trasero", resultado: "PENDIENTE", orden: 1 },
+          { categoria: "INSPECCION", descripcion: "Verificar alineación de rueda trasera", resultado: "PENDIENTE", orden: 2 },
+        ],
+      },
+    },
+  });
+
+  // OT-6: EN_ESPERA_REPUESTOS
+  await prisma.ordenTrabajo.upsert({
+    where: { numero: "OT-2026-00006" },
+    update: {},
+    create: {
+      numero: "OT-2026-00006",
+      tipo: "CORRECTIVO", prioridad: "MEDIA", estado: "EN_ESPERA_REPUESTOS",
+      motoId: ID.moto6, fechaSolicitud: daysAgo(7), fechaProgramada: daysAgo(5),
+      fechaInicioReal: daysAgo(5),
+      tallerNombre: "Taller MotoLibre Central", mecanicoNombre: "Carlos Gómez",
+      tallerId: ID.taller1,
+      descripcion: "Falla eléctrica en CDI — reemplazo pendiente de repuesto",
+      diagnostico: "CDI original defectuoso. Se pidió repuesto al proveedor.",
+      observaciones: "Repuesto pedido a proveedor exterior, ETA 5 días.",
+      tareas: {
+        create: [
+          { categoria: "ELECTRICA", descripcion: "Diagnóstico sistema encendido", resultado: "REQUIERE_ATENCION", observaciones: "CDI no genera chispa", orden: 1 },
+          { categoria: "ELECTRICA", descripcion: "Reemplazo CDI", resultado: "PENDIENTE", orden: 2 },
+        ],
+      },
+    },
+  });
+
+  // OT-7: EN_REVISION — Service completo terminado, esperando QA
+  await prisma.ordenTrabajo.upsert({
+    where: { numero: "OT-2026-00007" },
+    update: {},
+    create: {
+      numero: "OT-2026-00007",
+      tipo: "PREVENTIVO", prioridad: "BAJA", tipoService: "SERVICE_5000KM",
+      estado: "EN_REVISION", motoId: ID.moto7, kmIngreso: 5100,
+      fechaSolicitud: daysAgo(4), fechaProgramada: daysAgo(2),
+      fechaInicioReal: daysAgo(2),
+      tallerNombre: "Taller MotoLibre Central", mecanicoNombre: "Diego Martínez",
+      tallerId: ID.taller1,
+      descripcion: "Service 5000km — Yamaha XTZ 125. Revisión de calidad pendiente.",
+      costoManoObra: 12000, costoRepuestos: 5500, costoTotal: 17500,
+      tareas: {
+        create: [
+          { categoria: "LUBRICACION", descripcion: "Cambio de aceite motor", resultado: "OK", orden: 1 },
+          { categoria: "MOTOR", descripcion: "Cambio filtro de aceite", resultado: "OK", orden: 2 },
+          { categoria: "FRENOS", descripcion: "Revisión pastillas de freno", resultado: "OK", orden: 3 },
+          { categoria: "TRANSMISION", descripcion: "Lubricación cadena", resultado: "REEMPLAZADO", observaciones: "Cadena reemplazada por desgaste", orden: 4 },
+          { categoria: "INSPECCION", descripcion: "Inspección visual general", resultado: "OK", orden: 5 },
+        ],
+      },
+      repuestos: {
+        create: [
+          { nombre: "Aceite motor 10W-40 1L", cantidad: 1, precioUnitario: 4500, subtotal: 4500 },
+          { nombre: "Filtro de aceite", cantidad: 1, precioUnitario: 2500, subtotal: 2500 },
+          { nombre: "Cadena 428H 118L", cantidad: 1, precioUnitario: 18000, subtotal: 18000 },
+        ],
+      },
+    },
+  });
+
+  // OT-8: COMPLETADA — Reparación antigua
+  await prisma.ordenTrabajo.upsert({
+    where: { numero: "OT-2026-00008" },
+    update: {},
+    create: {
+      numero: "OT-2026-00008",
+      tipo: "CORRECTIVO", prioridad: "ALTA", estado: "COMPLETADA",
+      motoId: ID.moto4, kmIngreso: 3200, kmEgreso: 3210,
+      contratoId: ID.con4, clienteId: ID.cli4,
+      fechaSolicitud: daysAgo(45), fechaProgramada: daysAgo(42),
+      fechaInicioReal: daysAgo(42), fechaFinReal: daysAgo(41),
+      fechaCheckIn: daysAgo(42), fechaCheckOut: daysAgo(41),
+      tallerNombre: "Taller MotoLibre Central", mecanicoNombre: "Carlos Gómez",
+      tallerId: ID.taller1,
+      descripcion: "Neumático trasero pinchado — cambio completo",
+      diagnostico: "Cubierta sin reparación posible, cambio por nueva.",
+      costoManoObra: 5000, costoRepuestos: 22000, costoTotal: 27000,
+      tareas: {
+        create: [
+          { categoria: "NEUMATICOS", descripcion: "Desmontaje rueda trasera", resultado: "OK", orden: 1 },
+          { categoria: "NEUMATICOS", descripcion: "Cambio cubierta + cámara", resultado: "REEMPLAZADO", orden: 2 },
+          { categoria: "NEUMATICOS", descripcion: "Balanceo y montaje", resultado: "OK", orden: 3 },
+        ],
+      },
+      repuestos: {
+        create: [
+          { nombre: "Cubierta 2.75-18 Pirelli", cantidad: 1, precioUnitario: 18000, subtotal: 18000 },
+          { nombre: "Cámara 2.75-18", cantidad: 1, precioUnitario: 4000, subtotal: 4000 },
+        ],
+      },
+    },
+  });
+
+  // OT-9: COMPLETADA — Service preventivo reciente
+  await prisma.ordenTrabajo.upsert({
+    where: { numero: "OT-2026-00009" },
+    update: {},
+    create: {
+      numero: "OT-2026-00009",
+      tipo: "PREVENTIVO", prioridad: "MEDIA", tipoService: "SERVICE_5000KM",
+      estado: "COMPLETADA", motoId: ID.moto1, kmIngreso: 5050, kmEgreso: 5060,
+      contratoId: ID.con1, clienteId: ID.cli1,
+      fechaSolicitud: daysAgo(10), fechaProgramada: daysAgo(7),
+      fechaInicioReal: daysAgo(7), fechaFinReal: daysAgo(7),
+      tallerNombre: "Taller MotoLibre Central", mecanicoNombre: "Diego Martínez",
+      tallerId: ID.taller1,
+      descripcion: "Service 5000km — Honda CB 125F",
+      diagnostico: "Todo en orden. Próximo service a los 10000km.",
+      costoManoObra: 12000, costoRepuestos: 6500, costoTotal: 18500,
+      tareas: {
+        create: [
+          { categoria: "LUBRICACION", descripcion: "Cambio de aceite motor", resultado: "OK", orden: 1 },
+          { categoria: "MOTOR", descripcion: "Cambio filtro de aceite", resultado: "OK", orden: 2 },
+          { categoria: "FRENOS", descripcion: "Revisión sistema de frenos", resultado: "OK", orden: 3 },
+          { categoria: "ELECTRICA", descripcion: "Revisión batería y luces", resultado: "OK", orden: 4 },
+          { categoria: "INSPECCION", descripcion: "Inspección general", resultado: "OK", orden: 5 },
+        ],
+      },
+      repuestos: {
+        create: [
+          { nombre: "Aceite motor 10W-40 1L", cantidad: 1, precioUnitario: 4500, subtotal: 4500 },
+          { nombre: "Filtro de aceite Honda", cantidad: 1, precioUnitario: 2000, subtotal: 2000 },
+        ],
+      },
+    },
+  });
+
+  // OT-10: CANCELADA
+  await prisma.ordenTrabajo.upsert({
+    where: { numero: "OT-2026-00010" },
+    update: {},
+    create: {
+      numero: "OT-2026-00010",
+      tipo: "PREVENTIVO", prioridad: "BAJA", tipoService: "SERVICE_GENERAL",
+      estado: "CANCELADA", motoId: ID.moto8,
+      fechaSolicitud: daysAgo(15),
+      descripcion: "Service general — Bajaj Rouser 135 LS",
+      motivoCancelacion: "Contrato finalizado antes de la fecha programada.",
+    },
+  });
+
+  console.log("  ✅ 2 talleres + 3 mecánicos + 2 planes + 12 mant. programados + 10 OT");
 }
 
 // ══════════════════════════════════════════════════════════════
