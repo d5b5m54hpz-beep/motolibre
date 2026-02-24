@@ -444,6 +444,12 @@ model ConfiguracionEmpresa {
   tipoFacturaDefault    String   @default("B")
   emailNotificaciones   String   @default("")
 
+  // ── Costos Mano de Obra ──
+  costoHoraMecanico     Float?
+  sueldoBrutoMecanico   Float?
+  cargasSocialesPct     Float?   @default(0.43)
+  horasLaborablesMes    Int?     @default(176)
+
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
@@ -1592,6 +1598,26 @@ model HistorialOT {
 // PLANES DE MANTENIMIENTO (TEMPLATES)
 // ═══════════════════════════════════════════════════════════════
 
+model ItemService {
+  id              String          @id @default(cuid())
+  nombre          String
+  categoria       CategoriaTarea
+  accion          AccionTarea     @default(CHECK)
+  descripcion     String?
+  tiempoEstimado  Int?            // minutos
+  activo          Boolean         @default(true)
+
+  // ── Relaciones ──
+  tareasQueLoUsan TareaPlan[]
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([categoria])
+  @@index([activo])
+  @@map("items_service")
+}
+
 model PlanMantenimiento {
   id                String          @id @default(cuid())
   nombre            String
@@ -1642,6 +1668,10 @@ model TareaPlan {
   orden             Int             @default(0)
   tiempoEstimado    Int?            // minutos
 
+  // ── Catálogo ──
+  itemServiceId     String?
+  itemService       ItemService?    @relation(fields: [itemServiceId], references: [id])
+
   createdAt         DateTime        @default(now())
 
   @@index([planId])
@@ -1659,7 +1689,10 @@ model RepuestoTareaPlan {
   unidad            String?         // "litros", "unidad", etc.
   capacidad         String?         // "1.1L ± 0.1L"
   precioUnitario    Float?
-  repuestoId        String?
+
+  // ── Vinculación inventario ──
+  repuestoId            String?
+  repuestoInventario    Repuesto?   @relation(fields: [repuestoId], references: [id])
 
   createdAt         DateTime        @default(now())
 
@@ -1906,6 +1939,7 @@ model Repuesto {
   movimientos       MovimientoStock[]
   historialCostos   HistorialCostoRepuesto[]
   itemsVenta        ItemVentaRepuesto[]
+  planesQueLoUsan   RepuestoTareaPlan[]
 
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt

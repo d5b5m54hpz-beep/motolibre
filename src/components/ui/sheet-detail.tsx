@@ -168,10 +168,13 @@ interface DetailFieldProps {
 export function DetailField({ label, value, mono, className }: DetailFieldProps) {
   return (
     <div className={cn("space-y-0.5", className)}>
-      <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+      <dt className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-0.5">
         {label}
       </dt>
-      <dd className={cn("text-sm font-medium", mono && "font-mono tabular-nums")}>
+      <dd className={cn(
+        "text-sm font-medium text-foreground",
+        mono && "font-mono tabular-nums",
+      )}>
         {value ?? <span className="text-muted-foreground font-normal">—</span>}
       </dd>
     </div>

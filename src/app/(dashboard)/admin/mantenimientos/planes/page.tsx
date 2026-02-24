@@ -132,6 +132,7 @@ export default async function PlanesPage() {
           codigoOEM?: string | null;
           unidad?: string | null;
           precioUnitario?: number | null;
+          repuestoId?: string | null;
         };
         return {
           id: rep.id,
@@ -140,6 +141,7 @@ export default async function PlanesPage() {
           cantidad: rep.cantidad,
           unidad: rep.unidad ?? null,
           precioUnitario: rep.precioUnitario ?? null,
+          repuestoId: rep.repuestoId ?? null,
         };
       }),
     };

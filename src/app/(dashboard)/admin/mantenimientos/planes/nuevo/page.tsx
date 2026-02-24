@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -29,13 +30,16 @@ import {
   Check,
   Plus,
   Trash2,
-  GripVertical,
   ArrowUp,
   ArrowDown,
   Clock,
   Wrench,
   Package,
   DollarSign,
+  Search,
+  Loader2,
+  AlertTriangle,
+  TrendingUp,
 } from "lucide-react";
 
 // ── Constants ──
@@ -84,6 +88,8 @@ interface Tarea {
   descripcion: string;
   accion: string;
   tiempoEstimado: number | null;
+  itemServiceId?: string | null;
+  saveToItemCatalog?: boolean;
 }
 
 interface Repuesto {
@@ -94,12 +100,57 @@ interface Repuesto {
   unidad: string;
   capacidad: string;
   precioUnitario: number | null;
+  repuestoId?: string | null;
+}
+
+interface MarcaModelo {
+  marca: string;
+  modelos: string[];
+}
+
+interface ItemServiceResult {
+  id: string;
+  categoria: string;
+  descripcion: string;
+  accion: string;
+  tiempoEstimado: number | null;
+}
+
+interface RepuestoSearchResult {
+  id: string;
+  nombre: string;
+  codigoOEM: string | null;
+  precioUnitario: number | null;
+  unidad: string | null;
+  stock: number | null;
+}
+
+// ── Helpers ──
+function formatPriceInput(value: number | null): string {
+  if (value === null || value === undefined) return "";
+  return new Intl.NumberFormat("es-AR").format(value);
+}
+
+function parsePriceInput(raw: string): number | null {
+  const cleaned = raw.replace(/\./g, "").replace(/,/g, ".");
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? null : num;
 }
 
 export default function NuevoPlanPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
+
+  // ── Marcas/Modelos data ──
+  const [marcasModelos, setMarcasModelos] = useState<MarcaModelo[]>([]);
+
+  useEffect(() => {
+    fetch("/api/motos/marcas-modelos")
+      .then((r) => r.json())
+      .then((d) => setMarcasModelos(d.data ?? []))
+      .catch(() => {});
+  }, []);
 
   // ── Form state ──
   const [info, setInfo] = useState({
@@ -151,6 +202,33 @@ export default function NuevoPlanPage() {
   async function handleSave(estado: "BORRADOR" | "PUBLICADO") {
     setSaving(true);
     try {
+      // For tareas that need to be saved to the catalog, POST them first
+      const tareasWithCatalogIds = await Promise.all(
+        tareas.map(async (t) => {
+          if (t.saveToItemCatalog && !t.itemServiceId) {
+            try {
+              const res = await fetch("/api/items-service", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  categoria: t.categoria,
+                  descripcion: t.descripcion,
+                  accion: t.accion,
+                  tiempoEstimado: t.tiempoEstimado,
+                }),
+              });
+              if (res.ok) {
+                const json = await res.json();
+                return { ...t, itemServiceId: json.data?.id ?? null };
+              }
+            } catch {
+              // Continue without catalog save
+            }
+          }
+          return t;
+        })
+      );
+
       const body = {
         nombre: info.nombre,
         tipoService: info.tipoService,
@@ -162,11 +240,12 @@ export default function NuevoPlanPage() {
         garantiaMeses: info.garantiaMeses ? parseInt(info.garantiaMeses) : null,
         garantiaKm: info.garantiaKm ? parseInt(info.garantiaKm) : null,
         estado,
-        tareas: tareas.map((t) => ({
+        tareas: tareasWithCatalogIds.map((t) => ({
           categoria: t.categoria,
           descripcion: t.descripcion,
           accion: t.accion,
           tiempoEstimado: t.tiempoEstimado,
+          itemServiceId: t.itemServiceId ?? null,
         })),
         repuestos: repuestos.map((r) => ({
           nombre: r.nombre,
@@ -175,6 +254,7 @@ export default function NuevoPlanPage() {
           unidad: r.unidad || null,
           capacidad: r.capacidad || null,
           precioUnitario: r.precioUnitario,
+          repuestoId: r.repuestoId ?? null,
         })),
       };
 
@@ -197,7 +277,7 @@ export default function NuevoPlanPage() {
     <div className="space-y-6">
       <PageHeader
         title="Nuevo Plan de Mantenimiento"
-        description="Definí las tareas, repuestos y costos del service"
+        description="Defini las tareas, repuestos y costos del service"
       />
 
       {/* ── Stepper ── */}
@@ -239,7 +319,11 @@ export default function NuevoPlanPage() {
       {/* ── Step Content ── */}
       <div className="rounded-lg border bg-card p-6">
         {step === 1 && (
-          <StepInfoGeneral info={info} onChange={setInfo} />
+          <StepInfoGeneral
+            info={info}
+            onChange={setInfo}
+            marcasModelos={marcasModelos}
+          />
         )}
 
         {step === 2 && (
@@ -379,11 +463,25 @@ type InfoState = {
 function StepInfoGeneral({
   info,
   onChange,
+  marcasModelos,
 }: {
   info: InfoState;
   onChange: (info: InfoState) => void;
+  marcasModelos: MarcaModelo[];
 }) {
   const set = (key: keyof InfoState, value: string) => onChange({ ...info, [key]: value });
+
+  const [customMarca, setCustomMarca] = useState(false);
+  const [customModelo, setCustomModelo] = useState(false);
+
+  // Get modelos filtered by selected marca
+  const modelosDisponibles =
+    info.marcaMoto && info.marcaMoto !== "__TODOS__"
+      ? marcasModelos.find((m) => m.marca === info.marcaMoto)?.modelos ?? []
+      : [];
+
+  const marcaIsTodos = info.marcaMoto === "__TODOS__" || info.marcaMoto === "";
+  const modeloDisabled = marcaIsTodos && !customMarca;
 
   return (
     <div className="space-y-6">
@@ -413,33 +511,137 @@ function StepInfoGeneral({
       </div>
 
       <div className="space-y-1.5">
-        <Label>Descripción</Label>
+        <Label>Descripcion</Label>
         <Textarea
           value={info.descripcion}
           onChange={(e) => set("descripcion", e.target.value)}
-          placeholder="Service preventivo estándar para motos 125cc..."
+          placeholder="Service preventivo estandar para motos 125cc..."
           rows={2}
         />
       </div>
 
       <div className="border-t pt-4">
-        <h3 className="text-sm font-medium mb-3">Vehículo</h3>
+        <h3 className="text-sm font-medium mb-3">Vehiculo</h3>
         <div className="grid grid-cols-2 gap-4">
+          {/* Marca */}
           <div className="space-y-1.5">
             <Label>Marca</Label>
-            <Input
-              value={info.marcaMoto}
-              onChange={(e) => set("marcaMoto", e.target.value)}
-              placeholder="Honda, Yamaha, Bajaj..."
-            />
+            {customMarca ? (
+              <div className="flex gap-2">
+                <Input
+                  value={info.marcaMoto}
+                  onChange={(e) => set("marcaMoto", e.target.value)}
+                  placeholder="Escribi la marca..."
+                  autoFocus
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => {
+                    setCustomMarca(false);
+                    set("marcaMoto", "");
+                  }}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            ) : (
+              <Select
+                value={info.marcaMoto || "__TODOS__"}
+                onValueChange={(v) => {
+                  if (v === "__AGREGAR_OTRO__") {
+                    setCustomMarca(true);
+                    set("marcaMoto", "");
+                    return;
+                  }
+                  if (v === "__TODOS__") {
+                    onChange({ ...info, marcaMoto: "", modeloMoto: "" });
+                    setCustomModelo(false);
+                  } else {
+                    onChange({ ...info, marcaMoto: v, modeloMoto: "" });
+                    setCustomModelo(false);
+                  }
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__TODOS__">Todos</SelectItem>
+                  {marcasModelos.map((m) => (
+                    <SelectItem key={m.marca} value={m.marca}>
+                      {m.marca}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="__AGREGAR_OTRO__">
+                    <span className="text-primary font-medium">+ Agregar otro...</span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
+
+          {/* Modelo */}
           <div className="space-y-1.5">
             <Label>Modelo</Label>
-            <Input
-              value={info.modeloMoto}
-              onChange={(e) => set("modeloMoto", e.target.value)}
-              placeholder="CB 125F, YBR 125..."
-            />
+            {customModelo ? (
+              <div className="flex gap-2">
+                <Input
+                  value={info.modeloMoto}
+                  onChange={(e) => set("modeloMoto", e.target.value)}
+                  placeholder="Escribi el modelo..."
+                  autoFocus
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => {
+                    setCustomModelo(false);
+                    set("modeloMoto", "");
+                  }}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            ) : customMarca ? (
+              <Input
+                value={info.modeloMoto}
+                onChange={(e) => set("modeloMoto", e.target.value)}
+                placeholder="Escribi el modelo..."
+              />
+            ) : (
+              <Select
+                value={info.modeloMoto || "__TODOS__"}
+                onValueChange={(v) => {
+                  if (v === "__AGREGAR_OTRO__") {
+                    setCustomModelo(true);
+                    set("modeloMoto", "");
+                    return;
+                  }
+                  set("modeloMoto", v === "__TODOS__" ? "" : v);
+                }}
+                disabled={modeloDisabled}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__TODOS__">Todos</SelectItem>
+                  {modelosDisponibles.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                  {!modeloDisabled && (
+                    <SelectItem value="__AGREGAR_OTRO__">
+                      <span className="text-primary font-medium">+ Agregar otro...</span>
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
       </div>
@@ -457,7 +659,7 @@ function StepInfoGeneral({
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Días Intervalo</Label>
+            <Label>Dias Intervalo</Label>
             <Input
               type="number"
               value={info.diasIntervalo}
@@ -469,7 +671,7 @@ function StepInfoGeneral({
       </div>
 
       <div className="border-t pt-4">
-        <h3 className="text-sm font-medium mb-3">Garantía (opcional)</h3>
+        <h3 className="text-sm font-medium mb-3">Garantia (opcional)</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label>Meses</Label>
@@ -526,7 +728,7 @@ function StepTareas({
           <Wrench className="h-12 w-12 text-muted-foreground/40 mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-1">Sin tareas</h3>
           <p className="text-sm text-muted-foreground max-w-sm mb-4">
-            Agregá las tareas de mantenimiento que componen este plan.
+            Agrega las tareas de mantenimiento que componen este plan.
           </p>
           <Button variant="outline" size="sm" onClick={onAdd}>
             <Plus className="h-4 w-4 mr-1.5" />
@@ -538,7 +740,7 @@ function StepTareas({
           <div className="grid grid-cols-[2rem_1fr_6rem_5rem_4rem_4rem] gap-2 px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
             <span>#</span>
             <span>Tarea</span>
-            <span>Acción</span>
+            <span>Accion</span>
             <span>Tiempo</span>
             <span></span>
             <span></span>
@@ -554,6 +756,11 @@ function StepTareas({
                   <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
                     {t.categoria}
                   </Badge>
+                  {t.itemServiceId && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0 bg-blue-500/10 text-blue-600 border-blue-500/20">
+                      catalogo
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-sm mt-0.5 truncate">{t.descripcion}</p>
               </div>
@@ -561,7 +768,7 @@ function StepTareas({
                 {ACCIONES.find((a) => a.value === t.accion)?.label ?? t.accion}
               </Badge>
               <span className="text-xs font-mono tabular-nums text-muted-foreground text-center">
-                {t.tiempoEstimado ? `${t.tiempoEstimado} min` : "—"}
+                {t.tiempoEstimado ? `${t.tiempoEstimado} min` : "\u2014"}
               </span>
               <div className="flex flex-col gap-0.5">
                 <button
@@ -637,7 +844,7 @@ function StepRepuestos({
           <Package className="h-12 w-12 text-muted-foreground/40 mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-1">Sin repuestos</h3>
           <p className="text-sm text-muted-foreground max-w-sm mb-4">
-            Agregá los repuestos e insumos necesarios para este service.
+            Agrega los repuestos e insumos necesarios para este service.
           </p>
           <Button variant="outline" size="sm" onClick={onAdd}>
             <Plus className="h-4 w-4 mr-1.5" />
@@ -648,7 +855,7 @@ function StepRepuestos({
         <div className="space-y-2">
           <div className="grid grid-cols-[1fr_8rem_4rem_6rem_4rem] gap-2 px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
             <span>Repuesto</span>
-            <span>Código</span>
+            <span>Codigo</span>
             <span className="text-center">Cant</span>
             <span className="text-right">Precio</span>
             <span></span>
@@ -659,15 +866,22 @@ function StepRepuestos({
               className="grid grid-cols-[1fr_8rem_4rem_6rem_4rem] gap-2 items-center px-3 py-2.5 rounded-lg border bg-card"
             >
               <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{r.nombre}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium truncate">{r.nombre}</p>
+                  {r.repuestoId && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0 bg-green-500/10 text-green-600 border-green-500/20">
+                      inventario
+                    </Badge>
+                  )}
+                </div>
                 {r.unidad && <p className="text-xs text-muted-foreground">{r.unidad}</p>}
               </div>
               <span className="text-xs font-mono text-muted-foreground truncate">
-                {r.codigoOEM || "—"}
+                {r.codigoOEM || "\u2014"}
               </span>
               <span className="text-sm font-mono tabular-nums text-center">{r.cantidad}</span>
               <span className="text-sm font-mono tabular-nums text-right">
-                {r.precioUnitario ? formatMoney(r.precioUnitario) : "—"}
+                {r.precioUnitario ? formatMoney(r.precioUnitario) : "\u2014"}
               </span>
               <div className="flex gap-1 justify-end">
                 <button
@@ -710,6 +924,39 @@ function StepResumen({
   tiempoTotal: number;
   costoRepuestos: number;
 }) {
+  const [tarifaHora, setTarifaHora] = useState<number | null>(null);
+  const [tarifaFuente, setTarifaFuente] = useState<string | null>(null);
+  const [tarifaLoading, setTarifaLoading] = useState(true);
+  const [tarifaError, setTarifaError] = useState(false);
+
+  useEffect(() => {
+    setTarifaLoading(true);
+    fetch("/api/configuracion/tarifa-mano-obra")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.data?.tarifaHora != null) {
+          setTarifaHora(d.data.tarifaHora);
+          setTarifaFuente(d.data.fuente ?? null);
+        } else {
+          setTarifaError(true);
+        }
+      })
+      .catch(() => setTarifaError(true))
+      .finally(() => setTarifaLoading(false));
+  }, []);
+
+  const tarifaMinuto = tarifaHora != null ? tarifaHora / 60 : null;
+  const costoManoObra = tarifaMinuto != null ? tiempoTotal * tarifaMinuto : null;
+  const costoTotal = (costoManoObra ?? 0) + costoRepuestos;
+
+  // Proyeccion mensual
+  const kmIntervalo = info.kmIntervalo ? parseInt(info.kmIntervalo) : null;
+  // Assume avg 1500 km/month for a rental moto
+  const AVG_KM_MES = 1500;
+  const mesesEntreService = kmIntervalo ? Math.round(kmIntervalo / AVG_KM_MES) : null;
+  const costoMensualEstimado =
+    mesesEntreService && mesesEntreService > 0 ? costoTotal / mesesEntreService : null;
+
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-medium">
@@ -721,7 +968,7 @@ function StepResumen({
         <div className="rounded-lg border p-4 text-center">
           <Clock className="h-5 w-5 mx-auto text-muted-foreground mb-2" />
           <p className="text-2xl font-bold font-mono tabular-nums">
-            {tiempoTotal > 0 ? `${tiempoTotal}` : "—"}
+            {tiempoTotal > 0 ? `${tiempoTotal}` : "\u2014"}
           </p>
           <p className="text-xs text-muted-foreground mt-1">minutos</p>
         </div>
@@ -737,37 +984,133 @@ function StepResumen({
         </div>
       </div>
 
+      {/* Tarifa warning */}
+      {tarifaError && !tarifaLoading && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+          <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
+              Tarifa de mano de obra no configurada
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Configurala en Talleres &rarr; Taller Central &rarr; Tarifa/hora
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Costos */}
       <div className="border-t pt-4">
         <h4 className="text-sm font-medium mb-3">Costos estimados</h4>
         <div className="space-y-3">
-          {repuestos.filter((r) => r.precioUnitario).map((r) => (
-            <div key={r.tempId} className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                {r.nombre} × {r.cantidad}
-              </span>
-              <span className="font-mono tabular-nums">
-                {formatMoney((r.precioUnitario ?? 0) * r.cantidad)}
-              </span>
-            </div>
-          ))}
-          {costoRepuestos > 0 && (
-            <div className="flex items-center justify-between text-sm pt-2 border-t">
-              <span className="font-medium">Subtotal repuestos</span>
-              <span className="font-mono tabular-nums font-semibold">
-                {formatMoney(costoRepuestos)}
-              </span>
+          {/* Mano de obra */}
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Mano de obra
+            </p>
+            {tarifaLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Cargando tarifa...
+              </div>
+            ) : tarifaMinuto != null ? (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  <span className="font-mono tabular-nums">{tiempoTotal}</span> min &times;{" "}
+                  <span className="font-mono tabular-nums">{formatMoney(tarifaMinuto)}</span>/min
+                </span>
+                <span className="font-mono tabular-nums font-medium">
+                  {formatMoney(costoManoObra ?? 0)}
+                </span>
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground italic">
+                Sin tarifa configurada
+              </div>
+            )}
+          </div>
+
+          {/* Repuestos breakdown */}
+          {repuestos.filter((r) => r.precioUnitario).length > 0 && (
+            <div className="space-y-1 pt-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Repuestos
+              </p>
+              {repuestos
+                .filter((r) => r.precioUnitario)
+                .map((r) => (
+                  <div key={r.tempId} className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {r.nombre} &times; <span className="font-mono tabular-nums">{r.cantidad}</span>
+                    </span>
+                    <span className="font-mono tabular-nums">
+                      {formatMoney((r.precioUnitario ?? 0) * r.cantidad)}
+                    </span>
+                  </div>
+                ))}
             </div>
           )}
+
+          {/* Subtotals */}
+          <div className="space-y-2 pt-3 border-t">
+            {costoManoObra != null && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">Subtotal mano de obra</span>
+                <span className="font-mono tabular-nums font-semibold">
+                  {formatMoney(costoManoObra)}
+                </span>
+              </div>
+            )}
+            {costoRepuestos > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">Subtotal repuestos</span>
+                <span className="font-mono tabular-nums font-semibold">
+                  {formatMoney(costoRepuestos)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Total */}
           <div className="flex items-center justify-between text-base pt-3 border-t-2">
             <span className="font-bold">COSTO TOTAL ESTIMADO</span>
             <span className="font-mono tabular-nums font-bold text-lg">
-              {formatMoney(costoRepuestos)}
+              {formatMoney(costoTotal)}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            * El costo de mano de obra se calcula al asignar taller en la OT. El precio al rider se define en el módulo de Pricing.
-          </p>
+
+          {/* Proyeccion mensual */}
+          {kmIntervalo && mesesEntreService && mesesEntreService > 0 && (
+            <div className="rounded-lg border bg-muted/50 p-4 mt-2 space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                Proyeccion mensual
+              </div>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>
+                  1 service cada{" "}
+                  <span className="font-mono tabular-nums font-medium text-foreground">
+                    {mesesEntreService}
+                  </span>{" "}
+                  meses (basado en ~{AVG_KM_MES} km/mes promedio)
+                </p>
+                {costoMensualEstimado != null && (
+                  <p>
+                    Costo mensual estimado por moto:{" "}
+                    <span className="font-mono tabular-nums font-semibold text-foreground">
+                      {formatMoney(costoMensualEstimado)}
+                    </span>
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {tarifaMinuto != null && (
+            <p className="text-xs text-muted-foreground">
+              * El precio al rider se define en el modulo de Pricing.
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -791,7 +1134,15 @@ function TareaDialog({
     descripcion: tarea?.descripcion ?? "",
     accion: tarea?.accion ?? "CHECK",
     tiempoEstimado: tarea?.tiempoEstimado ?? null,
+    itemServiceId: tarea?.itemServiceId ?? null,
+    saveToItemCatalog: false,
   });
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<ItemServiceResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedFromCatalog, setSelectedFromCatalog] = useState(!!tarea?.itemServiceId);
 
   // Reset when dialog opens
   const [prevOpen, setPrevOpen] = useState(open);
@@ -803,19 +1154,147 @@ function TareaDialog({
         descripcion: tarea?.descripcion ?? "",
         accion: tarea?.accion ?? "CHECK",
         tiempoEstimado: tarea?.tiempoEstimado ?? null,
+        itemServiceId: tarea?.itemServiceId ?? null,
+        saveToItemCatalog: false,
       });
+      setSearchQuery("");
+      setSearchResults([]);
+      setSelectedFromCatalog(!!tarea?.itemServiceId);
     }
+  }
+
+  // Debounced search
+  useEffect(() => {
+    if (searchQuery.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(
+          `/api/items-service/search?q=${encodeURIComponent(searchQuery)}`
+        );
+        const json = await res.json();
+        setSearchResults(json.data ?? []);
+      } catch {
+        setSearchResults([]);
+      }
+      setSearching(false);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
+
+  function selectCatalogItem(item: ItemServiceResult) {
+    setForm({
+      ...form,
+      categoria: item.categoria,
+      descripcion: item.descripcion,
+      accion: item.accion,
+      tiempoEstimado: item.tiempoEstimado,
+      itemServiceId: item.id,
+      saveToItemCatalog: false,
+    });
+    setSelectedFromCatalog(true);
+    setSearchQuery("");
+    setSearchResults([]);
+  }
+
+  function clearCatalogSelection() {
+    setForm({
+      ...form,
+      itemServiceId: null,
+    });
+    setSelectedFromCatalog(false);
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[440px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{tarea ? "Editar Tarea" : "Agregar Tarea"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
+          {/* Search from catalog */}
+          {!tarea && (
+            <div className="space-y-2">
+              <Label>Buscar en catalogo</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar tarea existente..."
+                  className="pl-9"
+                />
+                {searching && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
+
+              {/* Search results */}
+              {searchResults.length > 0 && (
+                <div className="rounded-md border max-h-48 overflow-y-auto">
+                  {searchResults.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => selectCatalogItem(item)}
+                      className="w-full text-left px-3 py-2 hover:bg-accent transition-colors border-b last:border-b-0"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                          {item.categoria}
+                        </Badge>
+                        <span className="text-sm truncate">{item.descripcion}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                        <span>{ACCIONES.find((a) => a.value === item.accion)?.label ?? item.accion}</span>
+                        {item.tiempoEstimado && (
+                          <span className="font-mono tabular-nums">{item.tiempoEstimado} min</span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
+                <p className="text-xs text-muted-foreground">No se encontraron resultados</p>
+              )}
+
+              {/* Separator */}
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    &mdash; o crear tarea nueva &mdash;
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Selected from catalog indicator */}
+          {selectedFromCatalog && form.itemServiceId && (
+            <div className="flex items-center justify-between rounded-md bg-blue-500/10 px-3 py-2">
+              <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                Seleccionada del catalogo (podes editar los campos)
+              </span>
+              <button
+                type="button"
+                onClick={clearCatalogSelection}
+                className="text-xs text-blue-600 dark:text-blue-400 underline hover:no-underline"
+              >
+                Desvincular
+              </button>
+            </div>
+          )}
+
           <div className="space-y-1.5">
-            <Label>Categoría *</Label>
+            <Label>Categoria *</Label>
             <Select value={form.categoria} onValueChange={(v) => setForm({ ...form, categoria: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -827,7 +1306,7 @@ function TareaDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Descripción *</Label>
+            <Label>Descripcion *</Label>
             <Input
               value={form.descripcion}
               onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
@@ -836,7 +1315,7 @@ function TareaDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Acción *</Label>
+            <Label>Accion *</Label>
             <div className="grid grid-cols-2 gap-2">
               {ACCIONES.map((a) => (
                 <button
@@ -865,6 +1344,25 @@ function TareaDialog({
               placeholder="15"
             />
           </div>
+
+          {/* Save to catalog checkbox */}
+          {!tarea && !selectedFromCatalog && (
+            <div className="flex items-center gap-2 pt-1">
+              <Checkbox
+                id="saveToItemCatalog"
+                checked={form.saveToItemCatalog ?? false}
+                onCheckedChange={(checked) =>
+                  setForm({ ...form, saveToItemCatalog: checked === true })
+                }
+              />
+              <label
+                htmlFor="saveToItemCatalog"
+                className="text-sm text-muted-foreground cursor-pointer select-none"
+              >
+                Guardar en catalogo para futuro reuso
+              </label>
+            </div>
+          )}
 
           <Button
             onClick={() => onSave({ ...form, tempId: "" })}
@@ -898,7 +1396,19 @@ function RepuestoDialog({
     unidad: repuesto?.unidad ?? "",
     capacidad: repuesto?.capacidad ?? "",
     precioUnitario: repuesto?.precioUnitario ?? null,
+    repuestoId: repuesto?.repuestoId ?? null,
   });
+
+  // Price input display value
+  const [precioDisplay, setPrecioDisplay] = useState(
+    repuesto?.precioUnitario != null ? formatPriceInput(repuesto.precioUnitario) : ""
+  );
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<RepuestoSearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedFromInventory, setSelectedFromInventory] = useState(!!repuesto?.repuestoId);
 
   const [prevOpen, setPrevOpen] = useState(open);
   if (open !== prevOpen) {
@@ -911,17 +1421,173 @@ function RepuestoDialog({
         unidad: repuesto?.unidad ?? "",
         capacidad: repuesto?.capacidad ?? "",
         precioUnitario: repuesto?.precioUnitario ?? null,
+        repuestoId: repuesto?.repuestoId ?? null,
       });
+      setPrecioDisplay(
+        repuesto?.precioUnitario != null ? formatPriceInput(repuesto.precioUnitario) : ""
+      );
+      setSearchQuery("");
+      setSearchResults([]);
+      setSelectedFromInventory(!!repuesto?.repuestoId);
+    }
+  }
+
+  // Debounced search
+  useEffect(() => {
+    if (searchQuery.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(
+          `/api/repuestos/search?q=${encodeURIComponent(searchQuery)}`
+        );
+        const json = await res.json();
+        setSearchResults(json.data ?? []);
+      } catch {
+        setSearchResults([]);
+      }
+      setSearching(false);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
+
+  function selectInventoryItem(item: RepuestoSearchResult) {
+    const precio = item.precioUnitario ?? null;
+    setForm({
+      ...form,
+      nombre: item.nombre,
+      codigoOEM: item.codigoOEM ?? "",
+      precioUnitario: precio,
+      unidad: item.unidad ?? form.unidad,
+      repuestoId: item.id,
+    });
+    setPrecioDisplay(precio != null ? formatPriceInput(precio) : "");
+    setSelectedFromInventory(true);
+    setSearchQuery("");
+    setSearchResults([]);
+  }
+
+  function clearInventorySelection() {
+    setForm({
+      ...form,
+      repuestoId: null,
+    });
+    setSelectedFromInventory(false);
+  }
+
+  function handlePrecioChange(raw: string) {
+    // Allow only digits and dots for thousands separator
+    const cleaned = raw.replace(/[^\d.]/g, "");
+    setPrecioDisplay(cleaned);
+    setForm({ ...form, precioUnitario: parsePriceInput(cleaned) });
+  }
+
+  function handlePrecioBlur() {
+    // Re-format on blur
+    if (form.precioUnitario != null) {
+      setPrecioDisplay(formatPriceInput(form.precioUnitario));
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[440px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{repuesto ? "Editar Repuesto" : "Agregar Repuesto"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
+          {/* Search from inventory */}
+          {!repuesto && (
+            <div className="space-y-2">
+              <Label>Buscar en inventario</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar repuesto en inventario..."
+                  className="pl-9"
+                />
+                {searching && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
+
+              {/* Search results */}
+              {searchResults.length > 0 && (
+                <div className="rounded-md border max-h-48 overflow-y-auto">
+                  {searchResults.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => selectInventoryItem(item)}
+                      className="w-full text-left px-3 py-2 hover:bg-accent transition-colors border-b last:border-b-0"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium truncate">{item.nombre}</span>
+                        {item.precioUnitario != null && (
+                          <span className="text-sm font-mono tabular-nums text-primary shrink-0 ml-2">
+                            {formatMoney(item.precioUnitario)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
+                        {item.codigoOEM && (
+                          <span className="font-mono">{item.codigoOEM}</span>
+                        )}
+                        {item.stock != null && (
+                          <span
+                            className={cn(
+                              "font-mono tabular-nums",
+                              item.stock > 0 ? "text-green-600" : "text-red-500"
+                            )}
+                          >
+                            Stock: {item.stock}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
+                <p className="text-xs text-muted-foreground">No se encontraron resultados</p>
+              )}
+
+              {/* Separator */}
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    &mdash; o crear repuesto nuevo &mdash;
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Selected from inventory indicator */}
+          {selectedFromInventory && form.repuestoId && (
+            <div className="flex items-center justify-between rounded-md bg-green-500/10 px-3 py-2">
+              <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                Vinculado al inventario (podes editar los campos)
+              </span>
+              <button
+                type="button"
+                onClick={clearInventorySelection}
+                className="text-xs text-green-600 dark:text-green-400 underline hover:no-underline"
+              >
+                Desvincular
+              </button>
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label>Nombre *</Label>
             <Input
@@ -932,7 +1598,7 @@ function RepuestoDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Código OEM</Label>
+            <Label>Codigo OEM</Label>
             <Input
               value={form.codigoOEM}
               onChange={(e) => setForm({ ...form, codigoOEM: e.target.value })}
@@ -966,22 +1632,26 @@ function RepuestoDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Capacidad (para líquidos)</Label>
+            <Label>Capacidad (para liquidos)</Label>
             <Input
               value={form.capacidad}
               onChange={(e) => setForm({ ...form, capacidad: e.target.value })}
-              placeholder="1.1L ± 0.1L"
+              placeholder="1.1L +/- 0.1L"
             />
           </div>
 
           <div className="space-y-1.5">
             <Label>Precio unitario</Label>
-            <Input
-              type="number"
-              value={form.precioUnitario ?? ""}
-              onChange={(e) => setForm({ ...form, precioUnitario: e.target.value ? parseFloat(e.target.value) : null })}
-              placeholder="4500"
-            />
+            <div className="relative">
+              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={precioDisplay}
+                onChange={(e) => handlePrecioChange(e.target.value)}
+                onBlur={handlePrecioBlur}
+                placeholder="4.500"
+                className="pl-9 font-mono tabular-nums"
+              />
+            </div>
           </div>
 
           <Button

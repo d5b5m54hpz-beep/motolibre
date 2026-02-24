@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/data-table/data-table";
 import type { FilterableColumn } from "@/components/data-table/data-table-filters";
@@ -42,6 +42,9 @@ import {
   Clock,
   DollarSign,
   Search,
+  AlertTriangle,
+  CheckCircle,
+  Link2,
 } from "lucide-react";
 
 // ── Types ──
@@ -81,6 +84,7 @@ interface PlanDetail {
     cantidad: number;
     unidad?: string | null;
     precioUnitario?: number | null;
+    repuestoId?: string | null;
   }[];
 }
 
@@ -299,10 +303,30 @@ function PlanSheet({
   onEdit: () => void;
 }) {
   const tiempoTotal = plan.tareas.reduce((sum, t) => sum + (t.tiempoEstimado ?? 0), 0);
+  const tareasConTiempo = plan.tareas.filter((t) => t.tiempoEstimado).length;
+  const tiempoParcial = tareasConTiempo < plan.tareas.length && tareasConTiempo > 0;
   const costoRepuestos = plan.repuestos.reduce(
     (sum, r) => sum + (r.precioUnitario ?? 0) * r.cantidad,
     0
   );
+  const repuestosSinPrecio = plan.repuestos.filter((r) => !r.precioUnitario);
+  const repuestosManuales = plan.repuestos.filter((r) => !r.repuestoId);
+
+  // Fetch labor cost
+  const [tarifaHora, setTarifaHora] = useState<number | null>(null);
+  const [tarifaFuente, setTarifaFuente] = useState<string | null>(null);
+  useEffect(() => {
+    fetch("/api/configuracion/tarifa-mano-obra")
+      .then((r) => r.json())
+      .then((json) => {
+        setTarifaHora(json.data?.tarifaHora ?? null);
+        setTarifaFuente(json.data?.fuente ?? null);
+      })
+      .catch(() => {});
+  }, []);
+
+  const costoManoObra = tarifaHora && tiempoTotal > 0 ? (tarifaHora / 60) * tiempoTotal : 0;
+  const costoTotal = costoManoObra + costoRepuestos;
 
   const tabs = [
     {
@@ -314,8 +338,12 @@ function PlanSheet({
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-lg border p-3 text-center">
               <Clock className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
-              <p className="text-lg font-bold font-mono tabular-nums">{tiempoTotal > 0 ? `${tiempoTotal} min` : "—"}</p>
-              <p className="text-[10px] text-muted-foreground">Tiempo total</p>
+              <p className="text-lg font-bold font-mono tabular-nums">
+                {tiempoTotal > 0 ? `${tiempoTotal} min` : "—"}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                Tiempo{tiempoParcial ? " (parcial)" : ""}
+              </p>
             </div>
             <div className="rounded-lg border p-3 text-center">
               <Wrench className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
@@ -328,6 +356,16 @@ function PlanSheet({
               <p className="text-[10px] text-muted-foreground">Repuestos</p>
             </div>
           </div>
+
+          {/* Legacy / incomplete warnings */}
+          {repuestosSinPrecio.length > 0 && (
+            <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
+              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                {repuestosSinPrecio.length} repuesto(s) sin precio. Editá el plan para vincularlos al inventario.
+              </p>
+            </div>
+          )}
 
           <DetailGrid>
             <DetailField label="Nombre" value={plan.nombre} />
@@ -370,6 +408,46 @@ function PlanSheet({
               </>
             )}
           </DetailGrid>
+
+          {/* ── Costos estimados ── */}
+          <div className="border-t pt-4">
+            <h4 className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-3">
+              Costos estimados
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg border p-3 text-center">
+                <p className="text-[10px] text-muted-foreground mb-1">Mano de obra</p>
+                <p className="text-lg font-bold font-mono tabular-nums">
+                  {costoManoObra > 0 ? formatMoney(costoManoObra) : "—"}
+                </p>
+              </div>
+              <div className="rounded-lg border p-3 text-center">
+                <p className="text-[10px] text-muted-foreground mb-1">Repuestos</p>
+                <p className="text-lg font-bold font-mono tabular-nums">
+                  {costoRepuestos > 0 ? formatMoney(costoRepuestos) : "—"}
+                </p>
+              </div>
+            </div>
+            {costoTotal > 0 && (
+              <div className="flex items-center justify-between mt-3 p-3 rounded-lg bg-muted/50 border">
+                <span className="text-sm font-semibold">Costo Total</span>
+                <span className="text-lg font-bold font-mono tabular-nums">
+                  {formatMoney(costoTotal)}
+                </span>
+              </div>
+            )}
+            {!tarifaHora && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                Tarifa de mano de obra no configurada. Configurala en Talleres → Tarifa/hora.
+              </p>
+            )}
+            {tarifaFuente && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                * Tarifa: {formatMoney(tarifaHora!)}/hora ({tarifaFuente})
+              </p>
+            )}
+          </div>
         </div>
       ),
     },
@@ -410,18 +488,14 @@ function PlanSheet({
                     </div>
                     <p className="text-sm mt-1">{t.descripcion}</p>
                   </div>
-                  {t.tiempoEstimado && (
-                    <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
-                      {t.tiempoEstimado} min
-                    </span>
-                  )}
+                  <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
+                    {t.tiempoEstimado ? `${t.tiempoEstimado} min` : "— min"}
+                  </span>
                 </div>
               ))}
-              {tiempoTotal > 0 && (
-                <div className="text-right text-xs text-muted-foreground font-mono tabular-nums pt-2 border-t">
-                  Tiempo total: {tiempoTotal} min
-                </div>
-              )}
+              <div className="text-right text-xs text-muted-foreground font-mono tabular-nums pt-2 border-t">
+                Tiempo total: {tiempoTotal} min{tiempoParcial ? " (parcial)" : ""}
+              </div>
             </>
           )}
         </div>
@@ -449,8 +523,15 @@ function PlanSheet({
                   className="flex items-center justify-between p-3 rounded-lg border bg-card"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium">{r.nombre}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex items-center gap-1.5">
+                      {r.repuestoId ? (
+                        <CheckCircle className="h-3 w-3 text-emerald-500 shrink-0" />
+                      ) : (
+                        <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" />
+                      )}
+                      <p className="text-sm font-medium">{r.nombre}</p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5 ml-[18px]">
                       {r.codigoOEM && (
                         <span className="text-xs font-mono text-muted-foreground">
                           {r.codigoOEM}
@@ -466,7 +547,7 @@ function PlanSheet({
                   <div className="flex items-center gap-4 shrink-0">
                     <span className="text-sm font-mono tabular-nums">×{r.cantidad}</span>
                     {r.precioUnitario ? (
-                      <span className="text-sm font-mono tabular-nums font-medium">
+                      <span className="text-sm font-mono tabular-nums font-semibold">
                         {formatMoney(r.precioUnitario)}
                       </span>
                     ) : (
@@ -475,11 +556,17 @@ function PlanSheet({
                   </div>
                 </div>
               ))}
-              {costoRepuestos > 0 && (
-                <div className="text-right text-xs text-muted-foreground font-mono tabular-nums pt-2 border-t">
-                  Total repuestos: {formatMoney(costoRepuestos)}
-                </div>
-              )}
+              <div className="flex items-center justify-between pt-2 border-t">
+                {repuestosManuales.length > 0 && (
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    {repuestosManuales.length} no vinculado(s) al inventario
+                  </span>
+                )}
+                <span className="text-xs text-muted-foreground font-mono tabular-nums ml-auto">
+                  Total: {formatMoney(costoRepuestos)}
+                </span>
+              </div>
             </>
           )}
         </div>

@@ -10,7 +10,7 @@ import { formatMoney, formatDate, formatDateTime } from "@/lib/format";
 import { QRGenerator } from "./_components/qr-generator";
 import { cn } from "@/lib/utils";
 import {
-  Clock, FileText, Gauge, TrendingDown, Upload, Pencil,
+  ChevronRight, Clock, FileText, Gauge, TrendingDown, Upload, Pencil,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -42,12 +42,10 @@ export default async function MotoDetallePage({
   return (
     <div className="space-y-6">
       {/* ── Breadcrumb ────────────────────────────────────── */}
-      <nav className="text-sm text-muted-foreground">
-        <Link href="/admin" className="hover:text-foreground transition-colors">Flota</Link>
-        <span className="mx-1.5">/</span>
+      <nav className="flex items-center text-sm text-muted-foreground mb-3">
         <Link href="/admin/motos" className="hover:text-foreground transition-colors">Motos</Link>
-        <span className="mx-1.5">/</span>
-        <span className="text-foreground font-medium">{moto.patente ?? "Sin patentar"}</span>
+        <ChevronRight className="h-3.5 w-3.5 mx-1.5" />
+        <span className="text-foreground font-medium font-mono">{moto.patente ?? "Sin patentar"}</span>
       </nav>
 
       {/* ── Header ────────────────────────────────────────── */}
