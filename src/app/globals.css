@@ -235,5 +235,19 @@
 ::-webkit-scrollbar-thumb { background: var(--border-base); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
 
+/* Hidden scrollbar — keeps scroll functional */
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* ── Collapsible animations (grid-row technique) ── */
+@keyframes collapsible-down {
+  from { grid-template-rows: 0fr; }
+  to { grid-template-rows: 1fr; }
+}
+@keyframes collapsible-up {
+  from { grid-template-rows: 1fr; }
+  to { grid-template-rows: 0fr; }
+}
+
 /* ── Selection ── */
 ::selection { background: var(--accent-bg); color: var(--ds-accent); }

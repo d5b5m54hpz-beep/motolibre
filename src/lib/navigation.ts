@@ -20,18 +20,21 @@ export interface NavItem {
 
 export interface NavGroup {
   title: string;
+  icon: LucideIcon;
   items: NavItem[];
 }
 
 export const navigation: NavGroup[] = [
   {
     title: "General",
+    icon: LayoutDashboard,
     items: [
       { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
     ],
   },
   {
     title: "Flota",
+    icon: Bike,
     items: [
       { title: "Motos", href: "/admin/motos", icon: Bike },
       { title: "Mantenimientos", href: "/admin/mantenimientos", icon: Wrench },
@@ -42,6 +45,7 @@ export const navigation: NavGroup[] = [
   },
   {
     title: "Comercial",
+    icon: Users,
     items: [
       { title: "Solicitudes", href: "/admin/solicitudes", icon: FileText },
       { title: "Clientes", href: "/admin/clientes", icon: Users },
@@ -55,6 +59,7 @@ export const navigation: NavGroup[] = [
   },
   {
     title: "Pricing",
+    icon: Calculator,
     items: [
       { title: "Pricing Alquiler", href: "/admin/pricing", icon: Calculator },
       { title: "Pricing Repuestos", href: "/admin/pricing-repuestos", icon: Tags },
@@ -62,6 +67,7 @@ export const navigation: NavGroup[] = [
   },
   {
     title: "Supply Chain",
+    icon: Package,
     items: [
       { title: "Proveedores", href: "/admin/proveedores", icon: Truck },
       { title: "Órdenes de Compra", href: "/admin/ordenes-compra", icon: ShoppingCart },
@@ -73,6 +79,7 @@ export const navigation: NavGroup[] = [
   },
   {
     title: "Finanzas",
+    icon: BarChart3,
     items: [
       { title: "Dashboard", href: "/admin/finanzas", icon: BarChart3 },
       { title: "Estado Resultados", href: "/admin/finanzas/estado-resultados", icon: TrendingUp },
@@ -85,6 +92,7 @@ export const navigation: NavGroup[] = [
   },
   {
     title: "Contabilidad",
+    icon: BookOpen,
     items: [
       { title: "Plan de Cuentas", href: "/admin/cuentas-contables", icon: BookOpen },
       { title: "Asientos", href: "/admin/asientos", icon: Calculator },
@@ -95,6 +103,7 @@ export const navigation: NavGroup[] = [
   },
   {
     title: "Inteligencia",
+    icon: Sparkles,
     items: [
       { title: "Anomalías", href: "/admin/anomalias", icon: AlertTriangle },
       { title: "Asistente Eve", href: "/admin/asistente", icon: Sparkles },
@@ -102,6 +111,7 @@ export const navigation: NavGroup[] = [
   },
   {
     title: "RRHH",
+    icon: UserCog,
     items: [
       { title: "Dashboard", href: "/admin/rrhh", icon: LayoutDashboard },
       { title: "Empleados", href: "/admin/rrhh/empleados", icon: UserCog },
@@ -111,6 +121,7 @@ export const navigation: NavGroup[] = [
   },
   {
     title: "Comunicación",
+    icon: Inbox,
     items: [
       { title: "Bandeja", href: "/admin/comunicacion", icon: Inbox },
       { title: "Aprobaciones", href: "/admin/comunicacion/aprobaciones", icon: CheckSquare },
@@ -120,6 +131,7 @@ export const navigation: NavGroup[] = [
   },
   {
     title: "Sistema",
+    icon: Activity,
     items: [
       { title: "Monitor", href: "/admin/sistema", icon: Activity },
       { title: "Eventos", href: "/admin/sistema/eventos", icon: Radio },
