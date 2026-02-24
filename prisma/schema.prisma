@@ -2867,6 +2867,7 @@ enum TipoAlerta {
   SOLICITUD_NUEVA
   DOCUMENTO_POR_VENCER
   MENSAJE_NUEVO
+  EMAIL_ENTRANTE
   SISTEMA
 }
 
@@ -3022,4 +3023,225 @@ model MensajeChat {
   @@index([contratoId, createdAt])
   @@index([contratoId, leido])
   @@map("mensajes_chat")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMUNICACIÓN CORPORATIVA
+// ═══════════════════════════════════════════════════════════════
+
+enum TipoContacto {
+  PROVEEDOR
+  CONTADOR
+  ABOGADO
+  DESPACHANTE
+  ASEGURADORA
+  TALLER_EXTERNO
+  CLIENTE_POTENCIAL
+  OTRO
+}
+
+enum EstadoConversacion {
+  ABIERTA
+  RESUELTA
+  ARCHIVADA
+}
+
+enum DireccionMensaje {
+  ENTRANTE
+  SALIENTE
+  INTERNO
+  NOTA_IA
+}
+
+enum EstadoMensaje {
+  BORRADOR
+  PENDIENTE_APROBACION
+  APROBADO
+  ENVIADO
+  ENTREGADO
+  REBOTADO
+  FALLIDO
+}
+
+enum EstadoAprobacion {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  EDITADO
+}
+
+model Contacto {
+  id              String          @id @default(cuid())
+
+  nombre          String
+  email           String          @unique
+  empresa         String?
+  tipo            TipoContacto
+  telefono        String?
+  notas           String?
+  activo          Boolean         @default(true)
+
+  conversaciones  ConversacionContacto[]
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([tipo])
+  @@index([email])
+  @@map("contactos_comunicacion")
+}
+
+model Conversacion {
+  id              String                  @id @default(cuid())
+
+  asunto          String
+  estado          EstadoConversacion      @default(ABIERTA)
+
+  // ── Metadata ──
+  prioridad       String                  @default("MEDIA")
+  etiquetas       String[]                @default([])
+
+  // ── IA ──
+  resumenIA       String?
+
+  // ── Relaciones ──
+  contactos       ConversacionContacto[]
+  mensajes        MensajeComunicacion[]
+
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([estado])
+  @@index([updatedAt])
+  @@map("conversaciones")
+}
+
+model ConversacionContacto {
+  id              String          @id @default(cuid())
+
+  conversacionId  String
+  conversacion    Conversacion    @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+
+  contactoId      String
+  contacto        Contacto        @relation(fields: [contactoId], references: [id])
+
+  @@unique([conversacionId, contactoId])
+  @@map("conversacion_contactos")
+}
+
+model MensajeComunicacion {
+  id              String              @id @default(cuid())
+
+  conversacionId  String
+  conversacion    Conversacion        @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+
+  // ── Dirección y estado ──
+  direccion       DireccionMensaje
+  estado          EstadoMensaje       @default(BORRADOR)
+
+  // ── Email ──
+  de              String
+  para            String[]
+  cc              String[]            @default([])
+  asunto          String
+  cuerpo          String
+  cuerpoTexto     String?
+
+  // ── Email tracking ──
+  resendMessageId String?
+  inReplyTo       String?
+  messageId       String?
+
+  // ── IA ──
+  analisisIA      Json?
+  borradorIA      String?
+
+  // ── Aprobación ──
+  aprobacion      AprobacionMensaje?
+
+  // ── Metadata ──
+  userId          String?
+
+  adjuntos        AdjuntoMensaje[]
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([conversacionId, createdAt])
+  @@index([estado])
+  @@index([direccion])
+  @@map("mensajes_comunicacion")
+}
+
+model AdjuntoMensaje {
+  id              String              @id @default(cuid())
+
+  mensajeId       String
+  mensaje         MensajeComunicacion @relation(fields: [mensajeId], references: [id], onDelete: Cascade)
+
+  nombre          String
+  tipo            String
+  tamanio         Int
+  url             String
+
+  createdAt       DateTime            @default(now())
+
+  @@map("adjuntos_mensaje")
+}
+
+model AprobacionMensaje {
+  id              String              @id @default(cuid())
+
+  mensajeId       String              @unique
+  mensaje         MensajeComunicacion @relation(fields: [mensajeId], references: [id], onDelete: Cascade)
+
+  estado          EstadoAprobacion    @default(PENDIENTE)
+
+  aprobadoPor     String?
+  comentario      String?
+  textoEditado    String?
+
+  fechaAprobacion DateTime?
+
+  createdAt       DateTime            @default(now())
+
+  @@map("aprobaciones_mensaje")
+}
+
+model PlantillaMensaje {
+  id              String      @id @default(cuid())
+
+  nombre          String
+  asunto          String
+  cuerpo          String
+  tipo            String?
+  activa          Boolean     @default(true)
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("plantillas_mensaje")
+}
+
+model ReglaAutonomia {
+  id              String      @id @default(cuid())
+
+  nombre          String
+  descripcion     String?
+
+  // ── Condiciones ──
+  tipoContacto    TipoContacto?
+  palabrasClave   String[]    @default([])
+  prioridadMaxima String      @default("BAJA")
+
+  // ── Acción ──
+  accion          String
+  plantillaId     String?
+
+  activa          Boolean     @default(true)
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("reglas_autonomia")
 }

@@ -6,6 +6,7 @@ import {
   Mail, Languages, ClipboardList, Gauge, Calendar,
   ArrowUpDown, Target, MapPin, ShoppingBag, Tags, Sparkles, Scale,
   Activity, Radio, Stethoscope, Clock, Upload, MessageCircle,
+  Inbox, CheckSquare, BookUser,
   type LucideIcon,
 } from "lucide-react";
 
@@ -123,10 +124,18 @@ export const navigation: NavGroup[] = [
     ],
   },
   {
+    title: "Comunicación",
+    items: [
+      { title: "Bandeja", href: "/admin/comunicacion", icon: Inbox },
+      { title: "Aprobaciones", href: "/admin/comunicacion/aprobaciones", icon: CheckSquare },
+      { title: "Contactos", href: "/admin/comunicacion/contactos", icon: BookUser },
+      { title: "Config", href: "/admin/comunicacion/configuracion", icon: Settings },
+    ],
+  },
+  {
     title: "Herramientas",
     items: [
       { title: "Export/Import", href: "/admin/configuracion/export-import", icon: Upload },
-      { title: "Comunicación", href: "/admin/comunicacion", icon: Mail },
       { title: "Traducciones", href: "/admin/traducciones", icon: Languages },
     ],
   },

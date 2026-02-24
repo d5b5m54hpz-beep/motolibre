@@ -1084,6 +1084,42 @@ async function main() {
   }
 
   console.log("  ✅ Conciliación: 2 cuentas contables + 3 cuentas bancarias");
+
+  // ═══════════════════════════════════════════════════════════
+  // COMUNICACIÓN — Contactos + Plantillas
+  // ═══════════════════════════════════════════════════════════
+  console.log("Seeding comunicación...");
+
+  const contactosSeed = [
+    { id: "seed-contacto-contador", nombre: "Carlos Ruiz", email: "carlos.ruiz@estudio.com", empresa: "Estudio Ruiz & Asoc.", tipo: "CONTADOR" as const },
+    { id: "seed-contacto-proveedor", nombre: "MotoPartes Argentina", email: "ventas@motopartes.com.ar", empresa: "MotoPartes S.R.L.", tipo: "PROVEEDOR" as const },
+    { id: "seed-contacto-aseguradora", nombre: "La Perseverancia Seguros", email: "flota@perseverancia.com.ar", empresa: "La Perseverancia", tipo: "ASEGURADORA" as const },
+    { id: "seed-contacto-abogado", nombre: "Marcelo Díaz", email: "mdiaz@abogados.com.ar", empresa: "Díaz & Asociados", tipo: "ABOGADO" as const },
+  ];
+
+  for (const c of contactosSeed) {
+    await prisma.contacto.upsert({
+      where: { id: c.id },
+      update: {},
+      create: c,
+    });
+  }
+
+  const plantillasSeed = [
+    { id: "seed-plantilla-general", nombre: "Respuesta general", asunto: "Re: {{asunto}}", cuerpo: "Estimado/a {{nombre}},\n\nGracias por su mensaje. {{respuesta}}\n\nSaludos cordiales,\nEquipo MotoLibre" },
+    { id: "seed-plantilla-cotizacion", nombre: "Solicitar cotización", asunto: "Solicitud de cotización", cuerpo: "Estimados,\n\nSolicitamos cotización por los siguientes items:\n\n{{items}}\n\nAguardamos su respuesta.\n\nSaludos,\nMotoLibre S.A." },
+    { id: "seed-plantilla-pedido", nombre: "Confirmar pedido", asunto: "Confirmación de pedido", cuerpo: "Estimados,\n\nConfirmamos el pedido según cotización recibida.\n\n{{detalle}}\n\nFavor enviar factura a: facturacion@motolibre.com.ar\n\nSaludos,\nMotoLibre S.A." },
+  ];
+
+  for (const p of plantillasSeed) {
+    await prisma.plantillaMensaje.upsert({
+      where: { id: p.id },
+      update: {},
+      create: p,
+    });
+  }
+
+  console.log("  ✅ Comunicación: 4 contactos + 3 plantillas");
   console.log("✅ Seed completado");
 }
 
