@@ -1,7 +1,7 @@
 "use client";
 
 import { type Table } from "@tanstack/react-table";
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { Check, ListFilter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -45,10 +45,10 @@ export function DataTableFilters<TData>({
                 size="sm"
                 className={cn(
                   "h-8 border-dashed",
-                  selectedValues.size > 0 && "border-primary/50"
+                  selectedValues.size > 0 && "border-primary/50 bg-primary/5 text-primary"
                 )}
               >
-                <ChevronsUpDown className="mr-2 h-3.5 w-3.5" />
+                <ListFilter className="mr-2 h-3.5 w-3.5" />
                 {col.title}
                 {selectedValues.size > 0 && (
                   <>

@@ -64,6 +64,7 @@ interface DataTableProps<TData, TValue> {
     action?: { label: string; onClick: () => void };
   };
   defaultPageSize?: number;
+  defaultColumnVisibility?: VisibilityState;
   toolbar?: React.ReactNode;
   pageSizeOptions?: number[];
   /** @deprecated Use defaultPageSize instead */
@@ -105,6 +106,7 @@ export function DataTable<TData, TValue>({
   galleryView,
   emptyState,
   defaultPageSize,
+  defaultColumnVisibility,
   toolbar,
   pageSizeOptions,
   pageSize,
@@ -113,9 +115,11 @@ export function DataTable<TData, TValue>({
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() =>
-    loadVisibility()
-  );
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
+    const stored = loadVisibility();
+    // Merge defaults with stored (stored takes precedence if user toggled)
+    return Object.keys(stored).length > 0 ? stored : (defaultColumnVisibility ?? {});
+  });
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [globalFilter, setGlobalFilter] = useState("");
   const [view, setView] = useState<DataTableView>("list");

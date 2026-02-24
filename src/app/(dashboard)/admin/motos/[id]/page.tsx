@@ -1,14 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
-import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatMoney, formatDate, formatDateTime } from "@/lib/format";
 import { QRGenerator } from "./_components/qr-generator";
 import { cn } from "@/lib/utils";
+import {
+  Clock, FileText, Gauge, TrendingDown, Upload, Pencil,
+} from "lucide-react";
+import Link from "next/link";
 
 async function getMoto(id: string) {
   return prisma.moto.findUnique({
@@ -35,26 +39,41 @@ export default async function MotoDetallePage({
   const moto = await getMoto(id);
   if (!moto) notFound();
 
-  const titulo = moto.patente
-    ? `${moto.patente} — ${moto.marca} ${moto.modelo}`
-    : `${moto.marca} ${moto.modelo} (sin patentar)`;
-
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={titulo}
-        description={`${moto.anio} · ${moto.tipo} · ${moto.km.toLocaleString("es-AR")} km`}
-        actions={
-          <div className="flex items-center gap-2">
-            <QRGenerator motoId={id} />
-            <StatusBadge status={moto.estado} className="text-sm px-3 py-1" />
-          </div>
-        }
-      />
+      {/* ── Breadcrumb ────────────────────────────────────── */}
+      <nav className="text-sm text-muted-foreground">
+        <Link href="/admin" className="hover:text-foreground transition-colors">Flota</Link>
+        <span className="mx-1.5">/</span>
+        <Link href="/admin/motos" className="hover:text-foreground transition-colors">Motos</Link>
+        <span className="mx-1.5">/</span>
+        <span className="text-foreground font-medium">{moto.patente ?? "Sin patentar"}</span>
+      </nav>
 
-      <Tabs defaultValue="info">
+      {/* ── Header ────────────────────────────────────────── */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-mono font-bold tracking-tight">
+            {moto.patente ?? "Sin patentar"}
+          </h1>
+          <p className="text-base text-muted-foreground mt-0.5">
+            {moto.marca} {moto.modelo} · {moto.anio} · {moto.tipo} · <span className="font-mono tabular-nums">{moto.km.toLocaleString("es-AR")} km</span>
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <QRGenerator motoId={id} />
+          <Button variant="outline" size="sm">
+            <Pencil className="h-4 w-4 mr-2" />
+            Editar
+          </Button>
+          <StatusBadge status={moto.estado} className="text-sm px-3 py-1" />
+        </div>
+      </div>
+
+      {/* ── Tabs ──────────────────────────────────────────── */}
+      <Tabs defaultValue="resumen">
         <TabsList variant="line">
-          <TabsTrigger value="info">Información</TabsTrigger>
+          <TabsTrigger value="resumen">Resumen</TabsTrigger>
           <TabsTrigger value="historial" className="gap-1.5">
             Historial
             <TabCount count={moto.historialEstados.length} />
@@ -73,8 +92,8 @@ export default async function MotoDetallePage({
           </TabsTrigger>
         </TabsList>
 
-        {/* Tab Información */}
-        <TabsContent value="info" className="space-y-4 pt-4">
+        {/* Tab Resumen */}
+        <TabsContent value="resumen" className="space-y-4 pt-4">
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
@@ -163,9 +182,13 @@ export default async function MotoDetallePage({
           <Card>
             <CardContent className="pt-4">
               {moto.historialEstados.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Sin cambios de estado registrados
-                </p>
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Clock className="h-12 w-12 text-muted-foreground/40 mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-1">Sin cambios registrados</h3>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    Los cambios de estado, servicios y eventos de esta moto aparecerán aquí.
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {moto.historialEstados.map((h) => (
@@ -180,12 +203,12 @@ export default async function MotoDetallePage({
                           <p className="text-xs text-muted-foreground mt-1">{h.motivo}</p>
                         )}
                         {h.userId && (
-                          <p className="text-xs text-muted-foreground/60 mt-0.5">
-                            Por: {h.userId}
+                          <p className="text-xs text-muted-foreground/60 mt-0.5 font-mono">
+                            {h.userId.slice(0, 8)}
                           </p>
                         )}
                       </div>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap font-mono tabular-nums">
                         {formatDateTime(h.createdAt.toISOString())}
                       </span>
                     </div>
@@ -201,9 +224,13 @@ export default async function MotoDetallePage({
           <Card>
             <CardContent className="pt-4">
               {moto.lecturasKm.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Sin lecturas de KM registradas
-                </p>
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Gauge className="h-12 w-12 text-muted-foreground/40 mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-1">Sin lecturas de KM</h3>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    Las lecturas de kilómetros de check-ins y servicios se registrarán aquí automáticamente.
+                  </p>
+                </div>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
@@ -224,7 +251,7 @@ export default async function MotoDetallePage({
                           <Badge variant="outline" className="text-xs">{l.fuente}</Badge>
                         </td>
                         <td className="py-2 text-muted-foreground">{l.notas ?? "—"}</td>
-                        <td className="py-2 text-right text-muted-foreground">
+                        <td className="py-2 text-right text-muted-foreground font-mono tabular-nums">
                           {formatDate(l.createdAt.toISOString())}
                         </td>
                       </tr>
@@ -241,9 +268,17 @@ export default async function MotoDetallePage({
           <Card>
             <CardContent className="pt-4">
               {moto.documentos.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Sin documentos adjuntos
-                </p>
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <FileText className="h-12 w-12 text-muted-foreground/40 mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-1">Sin documentos adjuntos</h3>
+                  <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                    Subí títulos, cédulas verdes, pólizas de seguro y otros documentos de esta moto.
+                  </p>
+                  <Button variant="outline" size="sm">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Subir documento
+                  </Button>
+                </div>
               ) : (
                 <div className="space-y-2">
                   {moto.documentos.map((d) => (
@@ -256,7 +291,7 @@ export default async function MotoDetallePage({
                         href={d.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-primary hover:underline"
+                        className="text-xs text-primary hover:underline font-medium"
                       >
                         Ver
                       </a>
@@ -273,9 +308,13 @@ export default async function MotoDetallePage({
           <Card>
             <CardContent className="pt-4">
               {moto.amortizaciones.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Sin datos de amortización
-                </p>
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <TrendingDown className="h-12 w-12 text-muted-foreground/40 mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-1">Sin datos de amortización</h3>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    La tabla de amortización se genera automáticamente cuando se registra el alta contable de la moto.
+                  </p>
+                </div>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
@@ -309,15 +348,16 @@ export default async function MotoDetallePage({
 // ── Helper: Tab count badge ─────────────────────────────────────────────────
 function TabCount({ count }: { count: number }) {
   return (
-    <Badge
-      variant="secondary"
+    <span
       className={cn(
-        "h-5 min-w-5 rounded-full px-1.5 text-[10px] font-semibold",
-        count === 0 && "text-muted-foreground"
+        "inline-flex items-center justify-center rounded-full px-1.5 h-5 min-w-5 text-[10px] font-mono tabular-nums font-semibold",
+        count > 0
+          ? "bg-primary/10 text-primary"
+          : "bg-muted text-muted-foreground"
       )}
     >
       {count}
-    </Badge>
+    </span>
   );
 }
 
@@ -333,9 +373,9 @@ function Row({
 }) {
   return (
     <div className="flex justify-between gap-2">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={cn("font-medium text-right", mono && "font-mono tabular-nums")}>
-        {value ?? "—"}
+      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+      <span className={cn("text-sm font-medium text-right", mono && "font-mono tabular-nums")}>
+        {value ?? <span className="text-muted-foreground font-normal">—</span>}
       </span>
     </div>
   );

@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { StatusBadge, type StatusVariant } from "@/components/ui/status-badge";
 import { cn } from "@/lib/utils";
 
@@ -69,7 +68,7 @@ export function SheetDetail({
         <SheetHeader className="px-6 pt-6 pb-4 border-b space-y-3 shrink-0">
           <div className="flex items-start justify-between gap-3 pr-8">
             <div className="space-y-1 min-w-0">
-              <SheetTitle className="text-xl font-bold truncate">
+              <SheetTitle className="text-xl font-bold truncate font-mono tracking-tight">
                 {title}
               </SheetTitle>
               {subtitle && (
@@ -116,25 +115,26 @@ export function SheetDetail({
             defaultValue={resolvedDefault}
             className="flex-1 flex flex-col min-h-0"
           >
-            <div className="px-6 pt-3 border-b shrink-0">
-              <TabsList variant="line" className="w-full justify-start">
+            <div className="px-6 pt-3 border-b shrink-0 overflow-x-auto scrollbar-none">
+              <TabsList variant="line" className="inline-flex w-max min-w-full justify-start">
                 {tabs.map((tab) => (
                   <TabsTrigger
                     key={tab.id}
                     value={tab.id}
-                    className="gap-1.5"
+                    className="gap-1.5 text-sm px-3"
                   >
                     {tab.label}
                     {tab.count !== undefined && (
-                      <Badge
-                        variant="secondary"
+                      <span
                         className={cn(
-                          "h-5 min-w-5 rounded-full px-1.5 text-[10px] font-semibold",
-                          tab.count === 0 && "text-muted-foreground"
+                          "inline-flex items-center justify-center rounded-full px-1.5 h-5 min-w-5 text-[10px] font-mono tabular-nums font-semibold",
+                          tab.count > 0
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground"
                         )}
                       >
                         {tab.count}
-                      </Badge>
+                      </span>
                     )}
                   </TabsTrigger>
                 ))}
@@ -167,12 +167,12 @@ interface DetailFieldProps {
 
 export function DetailField({ label, value, mono, className }: DetailFieldProps) {
   return (
-    <div className={cn("space-y-1", className)}>
+    <div className={cn("space-y-0.5", className)}>
       <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
         {label}
       </dt>
-      <dd className={cn("text-sm", mono && "font-mono tabular-nums")}>
-        {value ?? <span className="text-muted-foreground">—</span>}
+      <dd className={cn("text-sm font-medium", mono && "font-mono tabular-nums")}>
+        {value ?? <span className="text-muted-foreground font-normal">—</span>}
       </dd>
     </div>
   );

@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { type Moto } from "@prisma/client";
 import { DataTable } from "@/components/data-table/data-table";
 import type { FilterableColumn } from "@/components/data-table/data-table-filters";
 import type { BulkAction } from "@/components/data-table/data-table-bulk-actions";
-import { SheetDetail, DetailField, DetailGrid, TimelineItem } from "@/components/ui/sheet-detail";
+import { SheetDetail, DetailField, DetailGrid } from "@/components/ui/sheet-detail";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { motosColumns, type MotoRow } from "./motos-columns";
-import { formatMoney, formatDate, formatDateTime } from "@/lib/format";
-import { Bike, Download, QrCode, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { motosColumns, defaultHiddenColumns, type MotoRow } from "./motos-columns";
+import { formatMoney, formatDate } from "@/lib/format";
+import {
+  Bike, Download, QrCode, ExternalLink, Plus,
+  Clock, FileText, Upload,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -48,9 +51,9 @@ export function MotosTable({ data, marcas = [] }: MotosTableProps) {
       icon: Download,
       onClick: (rows) => {
         const csv = [
-          ["Patente", "Marca", "Modelo", "Estado", "KM", "Ubicación"].join(","),
+          ["Patente", "Marca", "Modelo", "Estado", "KM", "Renter", "Ubicación"].join(","),
           ...rows.map((r) =>
-            [r.patente ?? "", r.marca, r.modelo, r.estado, r.km, r.ubicacion ?? ""].join(",")
+            [r.patente ?? "", r.marca, r.modelo, r.estado, r.km, r.renterName ?? "", r.ubicacion ?? ""].join(",")
           ),
         ].join("\n");
         const blob = new Blob([csv], { type: "text/csv" });
@@ -69,7 +72,7 @@ export function MotosTable({ data, marcas = [] }: MotosTableProps) {
       <DataTable
         columns={motosColumns}
         data={data}
-        searchableColumns={["patente", "marcaModelo", "numChasis", "numMotor"]}
+        searchableColumns={["patente", "marcaModelo", "numChasis", "numMotor", "renter"]}
         searchPlaceholder="Buscar por patente, marca, modelo, VIN..."
         filterableColumns={filters}
         bulkActions={bulkActions}
@@ -85,6 +88,17 @@ export function MotosTable({ data, marcas = [] }: MotosTableProps) {
           },
         }}
         defaultPageSize={20}
+        defaultColumnVisibility={defaultHiddenColumns}
+        toolbar={
+          <Button
+            size="sm"
+            className="h-8"
+            onClick={() => router.push("/admin/motos/nueva")}
+          >
+            <Plus className="h-4 w-4 mr-1.5" />
+            Nueva Moto
+          </Button>
+        }
       />
 
       {/* Sheet lateral de detalle */}
@@ -99,10 +113,10 @@ export function MotosTable({ data, marcas = [] }: MotosTableProps) {
   );
 }
 
-// ── Gallery card ────────────────────────────────────────────────────────────
+// ── Gallery card (Fix 10: hover state) ──────────────────────────────────────
 function MotoGalleryCard({ moto }: { moto: MotoRow }) {
   return (
-    <div className="rounded-lg border bg-card overflow-hidden hover:shadow-md transition-shadow">
+    <div className="group rounded-lg border bg-card overflow-hidden transition-all duration-200 hover:border-primary/50 hover:shadow-md hover:shadow-primary/5 hover:-translate-y-0.5">
       <div className="aspect-video relative bg-muted">
         {moto.imagenUrl ? (
           <Image
@@ -114,19 +128,19 @@ function MotoGalleryCard({ moto }: { moto: MotoRow }) {
           />
         ) : (
           <div className="flex items-center justify-center h-full">
-            <Bike className="h-12 w-12 text-muted-foreground/20" />
+            <Bike className="h-16 w-16 text-muted-foreground/20 group-hover:text-muted-foreground/30 transition-colors" />
           </div>
         )}
       </div>
-      <div className="p-3 space-y-2">
-        <div className="flex items-center justify-between">
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-1">
           <span className="font-mono font-bold text-sm">
             {moto.patente ?? "Sin patentar"}
           </span>
           <StatusBadge status={moto.estado} />
         </div>
         <p className="text-sm font-medium">{moto.marca} {moto.modelo}</p>
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
           <span className="font-mono tabular-nums">{moto.km.toLocaleString("es-AR")} km</span>
           <span>{moto.ubicacion ?? "—"}</span>
         </div>
@@ -135,7 +149,7 @@ function MotoGalleryCard({ moto }: { moto: MotoRow }) {
   );
 }
 
-// ── Sheet lateral ───────────────────────────────────────────────────────────
+// ── Sheet lateral (Fix 6: improved empty states) ────────────────────────────
 function MotoSheet({
   moto,
   open,
@@ -181,6 +195,7 @@ function MotoSheet({
           <DetailGrid>
             <DetailField label="Estado" value={<StatusBadge status={moto.estado} />} />
             <DetailField label="Estado Legal" value={moto.estadoLegal} />
+            <DetailField label="Renter" value={moto.renterName} />
             <DetailField label="Patentamiento" value={moto.estadoPatentamiento} />
             <DetailField label="Seguro" value={moto.estadoSeguro} />
             <DetailField label="Aseguradora" value={moto.aseguradora} />
@@ -233,22 +248,27 @@ function MotoSheet({
       label: "Historial",
       count: moto._count.historialEstados,
       content: (
-        <div className="space-y-1">
+        <div>
           {moto._count.historialEstados === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Sin cambios de estado registrados
-            </p>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Clock className="h-12 w-12 text-muted-foreground/40 mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-1">Sin cambios registrados</h3>
+              <p className="text-sm text-muted-foreground max-w-sm">
+                Los cambios de estado, servicios y eventos de esta moto aparecerán aquí.
+              </p>
+            </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              {moto._count.historialEstados} cambios de estado.
-              <br />
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                {moto._count.historialEstados} cambios de estado.
+              </p>
               <Link
                 href={`/admin/motos/${moto.id}`}
-                className="text-primary hover:underline text-xs"
+                className="text-primary hover:underline text-sm mt-2 font-medium"
               >
                 Ver historial completo
               </Link>
-            </p>
+            </div>
           )}
         </div>
       ),
@@ -260,20 +280,29 @@ function MotoSheet({
       content: (
         <div>
           {moto._count.documentos === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Sin documentos adjuntos
-            </p>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <FileText className="h-12 w-12 text-muted-foreground/40 mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-1">Sin documentos adjuntos</h3>
+              <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                Subí títulos, cédulas verdes, pólizas de seguro y otros documentos de esta moto.
+              </p>
+              <Button variant="outline" size="sm">
+                <Upload className="h-4 w-4 mr-2" />
+                Subir documento
+              </Button>
+            </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              {moto._count.documentos} documento(s).
-              <br />
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                {moto._count.documentos} documento(s).
+              </p>
               <Link
                 href={`/admin/motos/${moto.id}`}
-                className="text-primary hover:underline text-xs"
+                className="text-primary hover:underline text-sm mt-2 font-medium"
               >
                 Ver documentos
               </Link>
-            </p>
+            </div>
           )}
         </div>
       ),

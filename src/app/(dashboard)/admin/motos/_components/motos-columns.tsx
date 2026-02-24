@@ -6,9 +6,51 @@ import { DataTableColumnHeader } from "@/components/data-table/column-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatMoney } from "@/lib/format";
+import { Bike, AlertTriangle } from "lucide-react";
 import Image from "next/image";
 
-export type MotoRow = Moto & { _count: { documentos: number; historialEstados: number } };
+export type MotoRow = Moto & {
+  _count: { documentos: number; historialEstados: number };
+  renterName: string | null;
+  ultService: string | null;
+  proxService: string | null;
+};
+
+/** Columns hidden by default — user can enable via column toggle */
+export const defaultHiddenColumns: Record<string, boolean> = {
+  numChasis: false,
+  numMotor: false,
+  precioAlquilerMensual: false,
+  anio: false,
+  cilindrada: false,
+};
+
+function timeAgo(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (days === 0) return "hoy";
+  if (days === 1) return "ayer";
+  if (days < 30) return `hace ${days}d`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `hace ${months}m`;
+  return `hace ${Math.floor(months / 12)}a`;
+}
+
+function daysUntil(dateStr: string): number {
+  const date = new Date(dateStr);
+  const now = new Date();
+  return Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function formatDateShort(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
 
 export const motosColumns: ColumnDef<MotoRow>[] = [
   // ── Select checkbox ──
@@ -46,13 +88,13 @@ export const motosColumns: ColumnDef<MotoRow>[] = [
           <Image src={url} alt="" fill className="object-cover" sizes="40px" />
         </div>
       ) : (
-        <div className="h-10 w-10 rounded bg-muted flex items-center justify-center text-muted-foreground text-xs shrink-0">
-          —
+        <div className="h-10 w-10 rounded bg-muted flex items-center justify-center shrink-0">
+          <Bike className="h-5 w-5 text-muted-foreground/30" />
         </div>
       );
     },
     enableSorting: false,
-    enableHiding: false,
+    enableHiding: true,
   },
   // ── Patente ──
   {
@@ -83,7 +125,83 @@ export const motosColumns: ColumnDef<MotoRow>[] = [
     cell: ({ row }) => <StatusBadge status={row.original.estado} />,
     filterFn: (row, id, value: string[]) => value.includes(row.getValue(id)),
   },
-  // ── VIN / Nº Motor ──
+  // ── Renter ──
+  {
+    id: "renter",
+    accessorFn: (row) => row.renterName ?? "",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Renter" />,
+    cell: ({ row }) => {
+      const name = row.original.renterName;
+      return name ? (
+        <span className="text-sm font-medium">{name}</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
+    },
+  },
+  // ── KM ──
+  {
+    accessorKey: "km",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Km" />,
+    cell: ({ row }) => (
+      <span className="font-mono tabular-nums text-sm">
+        {row.original.km.toLocaleString("es-AR")}
+      </span>
+    ),
+  },
+  // ── Últ. Service ──
+  {
+    id: "ultService",
+    accessorFn: (row) => row.ultService ? new Date(row.ultService).getTime() : 0,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Últ. Service" />,
+    cell: ({ row }) => {
+      const date = row.original.ultService;
+      if (!date) return <span className="text-muted-foreground">—</span>;
+      const days = Math.abs(daysUntil(date));
+      const isOld = days > 90;
+      return (
+        <span
+          className={`text-sm ${isOld ? "text-amber-500 font-medium" : "text-muted-foreground"}`}
+          title={formatDateShort(date)}
+        >
+          {timeAgo(date)}
+        </span>
+      );
+    },
+  },
+  // ── Próx. Service ──
+  {
+    id: "proxService",
+    accessorFn: (row) => row.proxService ? new Date(row.proxService).getTime() : 0,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Próx. Service" />,
+    cell: ({ row }) => {
+      const date = row.original.proxService;
+      if (!date) return <span className="text-muted-foreground text-sm">Sin plan</span>;
+      const days = daysUntil(date);
+      const isOverdue = days < 0;
+      return (
+        <span
+          className={`text-sm font-mono tabular-nums ${isOverdue ? "text-red-500 font-medium" : "text-muted-foreground"}`}
+          title={formatDateShort(date)}
+        >
+          {isOverdue && <AlertTriangle className="inline h-3 w-3 mr-1 -mt-0.5" />}
+          {formatDateShort(date)}
+        </span>
+      );
+    },
+  },
+  // ── Ubicación ──
+  {
+    accessorKey: "ubicacion",
+    header: "Ubicación",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-sm">
+        {row.original.ubicacion ?? "—"}
+      </span>
+    ),
+  },
+  // ── Hidden by default ──
+  // ── VIN ──
   {
     accessorKey: "numChasis",
     header: "VIN",
@@ -98,6 +216,7 @@ export const motosColumns: ColumnDef<MotoRow>[] = [
       );
     },
   },
+  // ── Nº Motor ──
   {
     accessorKey: "numMotor",
     header: "Nº Motor",
@@ -110,16 +229,6 @@ export const motosColumns: ColumnDef<MotoRow>[] = [
       );
     },
   },
-  // ── KM ──
-  {
-    accessorKey: "km",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Km" />,
-    cell: ({ row }) => (
-      <span className="font-mono tabular-nums">
-        {row.original.km.toLocaleString("es-AR")}
-      </span>
-    ),
-  },
   // ── Alquiler/mes ──
   {
     accessorKey: "precioAlquilerMensual",
@@ -127,7 +236,7 @@ export const motosColumns: ColumnDef<MotoRow>[] = [
     cell: ({ row }) => {
       const precio = row.original.precioAlquilerMensual;
       return precio ? (
-        <span className="font-mono tabular-nums text-positive">
+        <span className="font-mono tabular-nums text-sm font-semibold text-positive">
           {formatMoney(Number(precio))}
         </span>
       ) : (
@@ -135,14 +244,23 @@ export const motosColumns: ColumnDef<MotoRow>[] = [
       );
     },
   },
-  // ── Ubicación ──
+  // ── Año (hidden) ──
   {
-    accessorKey: "ubicacion",
-    header: "Ubicación",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground text-sm">
-        {row.original.ubicacion ?? "—"}
-      </span>
-    ),
+    accessorKey: "anio",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Año" />,
+    cell: ({ row }) => <span className="font-mono tabular-nums">{row.original.anio}</span>,
+  },
+  // ── Cilindrada (hidden) ──
+  {
+    accessorKey: "cilindrada",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Cilindrada" />,
+    cell: ({ row }) => {
+      const cc = row.original.cilindrada;
+      return cc ? (
+        <span className="font-mono tabular-nums">{cc} cc</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
+    },
   },
 ];
