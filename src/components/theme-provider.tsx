@@ -4,6 +4,15 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "dark" | "light" | "system";
 
+function getResolvedTheme(theme: Theme): "dark" | "light" {
+  if (theme === "system") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  }
+  return theme;
+}
+
 const ThemeContext = createContext<{
   theme: Theme;
   setTheme: (theme: Theme) => void;
@@ -19,23 +28,19 @@ export function ThemeProvider({
   children: React.ReactNode;
   defaultTheme?: Theme;
 }) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme);
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === "undefined") return defaultTheme;
+    return (localStorage.getItem("theme") as Theme) || defaultTheme;
+  });
 
+  // Apply theme class — only swap if the resolved class actually differs
   useEffect(() => {
-    const stored = localStorage.getItem("theme") as Theme | null;
-    if (stored) setTheme(stored);
-  }, []);
+    const root = document.documentElement;
+    const resolved = getResolvedTheme(theme);
 
-  useEffect(() => {
-    const root = window.document.documentElement;
-    root.classList.remove("light", "dark");
-
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark" : "light";
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(theme);
+    if (!root.classList.contains(resolved)) {
+      root.classList.remove("light", "dark");
+      root.classList.add(resolved);
     }
 
     localStorage.setItem("theme", theme);
