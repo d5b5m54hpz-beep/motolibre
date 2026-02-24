@@ -228,18 +228,22 @@ function NavGroupCollapsible({
         <button
           className={cn(
             "group/trigger flex w-full items-center gap-2 rounded-lg px-2.5 h-7 text-[11px] font-semibold uppercase tracking-wider transition-colors duration-150",
-            "hover:bg-bg-card-hover",
+            "hover:bg-bg-card-hover hover:text-white",
             hasActiveChild
-              ? "text-t-secondary"
-              : "text-t-tertiary hover:text-t-secondary"
+              ? "text-white"
+              : "text-t-tertiary"
           )}
         >
-          <GroupIcon className="h-3.5 w-3.5 shrink-0 opacity-60" />
+          <GroupIcon className={cn(
+            "h-3.5 w-3.5 shrink-0 transition-opacity duration-150 group-hover/trigger:opacity-100",
+            hasActiveChild ? "opacity-100" : "opacity-60"
+          )} />
           <span className="truncate">{group.title}</span>
           <ChevronRight
             className={cn(
-              "ml-auto h-3 w-3 shrink-0 text-t-tertiary transition-transform duration-200",
-              isOpen && "rotate-90"
+              "ml-auto h-3 w-3 shrink-0 text-t-tertiary group-hover/trigger:text-white transition-all duration-200",
+              isOpen && "rotate-90",
+              hasActiveChild && "text-white"
             )}
           />
         </button>
