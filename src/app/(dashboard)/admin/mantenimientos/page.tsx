@@ -2,7 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
+import { KPICard } from "@/components/ui/kpi-card";
 import { MantenimientosTable } from "./_components/mantenimientos-table";
+import { Calendar, CalendarDays, CheckCircle2, XCircle } from "lucide-react";
 import type { EstadoMantenimiento, Prisma } from "@prisma/client";
 
 async function getMantenimientos(
@@ -76,7 +78,6 @@ export default async function MantenimientosPage({
   let desdeStr = sp.desde ?? null;
   let hastaStr = sp.hasta ?? null;
 
-  // Default: próximos 7 días si no hay filtros
   if (!sp.estado && !sp.desde && !sp.hasta) {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -97,19 +98,28 @@ export default async function MantenimientosPage({
         description="Agenda de revisiones técnicas obligatorias"
       />
 
-      {/* Stats */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: "Programados hoy", value: stats.hoyCount, color: "text-warning" },
-          { label: "Esta semana", value: stats.semanaCount, color: "text-ds-info" },
-          { label: "Completados este mes", value: stats.completadosMes, color: "text-positive" },
-          { label: "No asistieron este mes", value: stats.noAsistioMes, color: "text-negative" },
-        ].map((s) => (
-          <div key={s.label} className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm p-3">
-            <p className="text-xs text-muted-foreground">{s.label}</p>
-            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-          </div>
-        ))}
+      {/* KPI Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KPICard
+          label="Programados Hoy"
+          value={stats.hoyCount}
+          icon={Calendar}
+        />
+        <KPICard
+          label="Esta Semana"
+          value={stats.semanaCount}
+          icon={CalendarDays}
+        />
+        <KPICard
+          label="Completados (mes)"
+          value={stats.completadosMes}
+          icon={CheckCircle2}
+        />
+        <KPICard
+          label="No Asistieron (mes)"
+          value={stats.noAsistioMes}
+          icon={XCircle}
+        />
       </div>
 
       {/* Filtros rápidos */}
@@ -124,7 +134,7 @@ export default async function MantenimientosPage({
               key={f.label}
               href={f.href}
               className={`rounded-md border px-3 py-1.5 transition-colors ${
-                isActive ? "bg-foreground text-background" : "hover:bg-muted"
+                isActive ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"
               }`}
             >
               {f.label}

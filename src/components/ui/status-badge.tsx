@@ -1,111 +1,170 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-const statusColors: Record<string, string> = {
-  // Motos
-  EN_DEPOSITO: "bg-gray-500/10 text-gray-500 border-gray-500/20",
-  EN_PATENTAMIENTO: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-  DISPONIBLE: "bg-green-500/10 text-green-500 border-green-500/20",
-  RESERVADA: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  ALQUILADA: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
-  EN_SERVICE: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-  EN_REPARACION: "bg-red-500/10 text-red-500 border-red-500/20",
-  INMOVILIZADA: "bg-red-700/10 text-red-700 border-red-700/20",
-  RECUPERACION: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-  BAJA_TEMP: "bg-gray-600/10 text-gray-600 border-gray-600/20",
-  BAJA_DEFINITIVA: "bg-gray-800/10 text-gray-800 border-gray-800/20",
-  TRANSFERIDA: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
+// ── Semantic variant type ──────────────────────────────────────────────────
+export type StatusVariant = "success" | "warning" | "danger" | "info" | "neutral" | "default";
 
-  // Contratos
-  PENDIENTE: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-  ACTIVO: "bg-green-500/10 text-green-500 border-green-500/20",
-  FINALIZADO: "bg-gray-500/10 text-gray-500 border-gray-500/20",
-  CANCELADO: "bg-red-500/10 text-red-500 border-red-500/20",
-  FINALIZADO_COMPRA: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  VENCIDO: "bg-red-600/10 text-red-600 border-red-600/20",
-
-  // Pagos
-  APROBADO: "bg-green-500/10 text-green-500 border-green-500/20",
-  RECHAZADO: "bg-red-500/10 text-red-500 border-red-500/20",
-  REEMBOLSADO: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-
-  // OTs
-  SOLICITADA: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-  APROBADA: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  PROGRAMADA: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
-  EN_ESPERA_REPUESTOS: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-  EN_EJECUCION: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
-  EN_REVISION: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-  COMPLETADA: "bg-green-500/10 text-green-500 border-green-500/20",
-
-  // RRHH — Empleados
-  LICENCIA: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-  SUSPENDIDO: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-  DESVINCULADO: "bg-gray-600/10 text-gray-600 border-gray-600/20",
-
-  // RRHH — Recibos
-  LIQUIDADO: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  PAGADO: "bg-green-500/10 text-green-500 border-green-500/20",
-  ANULADO: "bg-red-500/10 text-red-500 border-red-500/20",
-
-  // Conciliación
-  EN_PROCESO: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  PROPUESTO: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-  EXACTO: "bg-green-500/10 text-green-500 border-green-500/20",
-  APROXIMADO: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  REFERENCIA_MATCH: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-  MANUAL: "bg-gray-500/10 text-gray-500 border-gray-500/20",
-
-  // Monitor — Salud
-  SALUDABLE: "bg-green-500/10 text-green-500 border-green-500/20",
-  DEGRADADO: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-  CRITICO: "bg-red-700/10 text-red-700 border-red-700/20",
-
-  // Monitor — Niveles log
-  DEBUG: "bg-gray-500/10 text-gray-500 border-gray-500/20",
-  INFO: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  WARNING: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-  ERROR: "bg-red-500/10 text-red-500 border-red-500/20",
-  CRITICAL: "bg-red-700/10 text-red-700 border-red-700/20",
-
-  // Diagnóstico
-  COMPLETADO: "bg-green-500/10 text-green-500 border-green-500/20",
-
-  // Prioridad alertas
-  BAJA: "bg-green-500/10 text-green-500 border-green-500/20",
-  MEDIA: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  ALTA: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-  URGENTE: "bg-red-600/10 text-red-600 border-red-600/20",
-
-  // Órdenes venta repuestos
-  PENDIENTE_PAGO: "bg-gray-500/10 text-gray-500 border-gray-500/20",
-  PAGADA: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-  EN_PREPARACION: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  LISTA_RETIRO: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
-  ENVIADA: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
-  ENTREGADA: "bg-green-500/10 text-green-500 border-green-500/20",
-  CANCELADA: "bg-red-500/10 text-red-500 border-red-500/20",
-
-  // Genéricos
-  BORRADOR: "bg-gray-500/10 text-gray-500 border-gray-500/20",
-  ENVIADO: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  ENTREGADO: "bg-green-500/10 text-green-500 border-green-500/20",
+// ── Variant styles ─────────────────────────────────────────────────────────
+const variantStyles: Record<StatusVariant, { base: string; dot: string }> = {
+  success: {
+    base: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-800",
+    dot: "bg-emerald-500",
+  },
+  warning: {
+    base: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-800",
+    dot: "bg-amber-500",
+  },
+  danger: {
+    base: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800",
+    dot: "bg-red-500",
+  },
+  info: {
+    base: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950 dark:text-sky-400 dark:border-sky-800",
+    dot: "bg-sky-500",
+  },
+  neutral: {
+    base: "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700",
+    dot: "bg-zinc-400",
+  },
+  default: {
+    base: "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700",
+    dot: "bg-zinc-400",
+  },
 };
 
-const defaultColor = "bg-gray-500/10 text-gray-500 border-gray-500/20";
+// ── Auto-map: status string → semantic variant ─────────────────────────────
+const statusToVariant: Record<string, StatusVariant> = {
+  // Motos
+  DISPONIBLE: "success",
+  ALQUILADA: "info",
+  EN_SERVICE: "warning",
+  EN_REPARACION: "warning",
+  EN_DEPOSITO: "neutral",
+  EN_PATENTAMIENTO: "neutral",
+  RESERVADA: "info",
+  INMOVILIZADA: "danger",
+  RECUPERACION: "warning",
+  BAJA_TEMP: "danger",
+  BAJA_DEFINITIVA: "danger",
+  TRANSFERIDA: "neutral",
 
+  // Contratos
+  ACTIVO: "success",
+  FINALIZADO: "neutral",
+  CANCELADO: "danger",
+  FINALIZADO_COMPRA: "info",
+  VENCIDO: "danger",
+
+  // Pagos / Genéricos
+  PENDIENTE: "warning",
+  APROBADO: "success",
+  RECHAZADO: "danger",
+  REEMBOLSADO: "info",
+
+  // OT
+  SOLICITADA: "neutral",
+  APROBADA: "info",
+  PROGRAMADA: "info",
+  EN_ESPERA_REPUESTOS: "warning",
+  EN_EJECUCION: "info",
+  EN_REVISION: "warning",
+  COMPLETADA: "success",
+  CANCELADA: "danger",
+
+  // Mantenimientos
+  PROGRAMADO: "neutral",
+  NOTIFICADO: "info",
+  COMPLETADO: "success",
+  NO_ASISTIO: "danger",
+  REPROGRAMADO: "warning",
+
+  // RRHH
+  LICENCIA: "warning",
+  SUSPENDIDO: "warning",
+  DESVINCULADO: "neutral",
+  LIQUIDADO: "info",
+  PAGADO: "success",
+  PAGADA: "success",
+  ANULADO: "danger",
+
+  // Conciliación
+  EN_PROCESO: "info",
+  PROPUESTO: "warning",
+  EXACTO: "success",
+  APROXIMADO: "info",
+  REFERENCIA_MATCH: "info",
+  MANUAL: "neutral",
+
+  // Monitor
+  SALUDABLE: "success",
+  DEGRADADO: "warning",
+  CRITICO: "danger",
+
+  // Log levels
+  DEBUG: "neutral",
+  INFO: "info",
+  WARNING: "warning",
+  ERROR: "danger",
+  CRITICAL: "danger",
+
+  // Prioridades
+  BAJA: "success",
+  MEDIA: "info",
+  ALTA: "warning",
+  URGENTE: "danger",
+
+  // Órdenes venta
+  PENDIENTE_PAGO: "neutral",
+  EN_PREPARACION: "info",
+  LISTA_RETIRO: "info",
+  ENVIADA: "info",
+  ENTREGADA: "success",
+
+  // Solicitudes
+  PAGO_PENDIENTE: "neutral",
+  EN_EVALUACION: "info",
+  EN_ESPERA: "warning",
+  ASIGNADA: "info",
+
+  // Genéricos
+  BORRADOR: "neutral",
+  ENVIADO: "info",
+  ENTREGADO: "success",
+};
+
+// ── Props ──────────────────────────────────────────────────────────────────
 interface StatusBadgeProps {
   status: string;
+  variant?: StatusVariant;
+  showDot?: boolean;
+  label?: string;
   className?: string;
 }
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const colorClass = statusColors[status] ?? defaultColor;
-  const label = status.replace(/_/g, " ");
+export function StatusBadge({
+  status,
+  variant,
+  showDot = true,
+  label,
+  className,
+}: StatusBadgeProps) {
+  const resolved = variant ?? statusToVariant[status] ?? "default";
+  const styles = variantStyles[resolved];
+  const displayLabel = label ?? status.replace(/_/g, " ");
 
   return (
-    <Badge variant="outline" className={cn(colorClass, className)}>
-      {label}
+    <Badge
+      variant="outline"
+      className={cn(
+        "text-xs px-2 py-0.5 rounded-md font-medium border gap-1.5 inline-flex items-center",
+        styles.base,
+        className
+      )}
+    >
+      {showDot && (
+        <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", styles.dot)} />
+      )}
+      {displayLabel}
     </Badge>
   );
 }

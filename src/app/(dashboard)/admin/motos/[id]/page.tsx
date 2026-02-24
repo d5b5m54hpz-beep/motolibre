@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney, formatDate, formatDateTime } from "@/lib/format";
 import { QRGenerator } from "./_components/qr-generator";
+import { cn } from "@/lib/utils";
 
 async function getMoto(id: string) {
   return prisma.moto.findUnique({
@@ -52,17 +53,23 @@ export default async function MotoDetallePage({
       />
 
       <Tabs defaultValue="info">
-        <TabsList>
+        <TabsList variant="line">
           <TabsTrigger value="info">Información</TabsTrigger>
-          <TabsTrigger value="historial">
-            Historial ({moto.historialEstados.length})
+          <TabsTrigger value="historial" className="gap-1.5">
+            Historial
+            <TabCount count={moto.historialEstados.length} />
           </TabsTrigger>
-          <TabsTrigger value="km">KM ({moto.lecturasKm.length})</TabsTrigger>
-          <TabsTrigger value="documentos">
-            Documentos ({moto.documentos.length})
+          <TabsTrigger value="km" className="gap-1.5">
+            KM
+            <TabCount count={moto.lecturasKm.length} />
           </TabsTrigger>
-          <TabsTrigger value="amortizacion">
-            Amortización ({moto.amortizaciones.length})
+          <TabsTrigger value="documentos" className="gap-1.5">
+            Documentos
+            <TabCount count={moto.documentos.length} />
+          </TabsTrigger>
+          <TabsTrigger value="amortizacion" className="gap-1.5">
+            Amortización
+            <TabCount count={moto.amortizaciones.length} />
           </TabsTrigger>
         </TabsList>
 
@@ -76,13 +83,13 @@ export default async function MotoDetallePage({
               <CardContent className="space-y-2 text-sm">
                 <Row label="Marca" value={moto.marca} />
                 <Row label="Modelo" value={moto.modelo} />
-                <Row label="Año" value={String(moto.anio)} />
+                <Row label="Año" value={String(moto.anio)} mono />
                 <Row label="Tipo" value={moto.tipo} />
-                <Row label="Cilindrada" value={moto.cilindrada ? `${moto.cilindrada} cc` : null} />
+                <Row label="Cilindrada" value={moto.cilindrada ? `${moto.cilindrada} cc` : null} mono />
                 <Row label="Color" value={moto.color} />
-                <Row label="Patente" value={moto.patente} />
-                <Row label="Nº Motor" value={moto.numMotor} />
-                <Row label="Nº Chasis" value={moto.numChasis} />
+                <Row label="Patente" value={moto.patente} mono />
+                <Row label="Nº Motor" value={moto.numMotor} mono />
+                <Row label="Nº Chasis" value={moto.numChasis} mono />
                 <Row label="Ubicación" value={moto.ubicacion} />
               </CardContent>
             </Card>
@@ -93,14 +100,14 @@ export default async function MotoDetallePage({
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-t-secondary">Estado</span>
+                  <span className="text-muted-foreground">Estado</span>
                   <StatusBadge status={moto.estado} />
                 </div>
                 <Row label="Estado Legal" value={moto.estadoLegal} />
                 <Row label="Patentamiento" value={moto.estadoPatentamiento} />
                 <Row label="Seguro" value={moto.estadoSeguro} />
                 <Row label="Aseguradora" value={moto.aseguradora} />
-                <Row label="Póliza" value={moto.numPoliza} />
+                <Row label="Póliza" value={moto.numPoliza} mono />
                 <Row label="Vto. Seguro" value={moto.fechaFinSeguro ? formatDate(moto.fechaFinSeguro.toISOString()) : null} />
               </CardContent>
             </Card>
@@ -113,13 +120,15 @@ export default async function MotoDetallePage({
                 <Row
                   label="Precio Compra"
                   value={moto.precioCompra ? `${formatMoney(Number(moto.precioCompra))} ${moto.monedaCompra}` : null}
+                  mono
                 />
                 <Row label="Fecha Compra" value={moto.fechaCompra ? formatDate(moto.fechaCompra.toISOString()) : null} />
                 <Row label="Proveedor" value={moto.proveedorCompra} />
-                <Row label="Factura" value={moto.numFacturaCompra} />
+                <Row label="Factura" value={moto.numFacturaCompra} mono />
                 <Row
                   label="Alquiler Mensual"
                   value={moto.precioAlquilerMensual ? formatMoney(Number(moto.precioAlquilerMensual)) : null}
+                  mono
                 />
               </CardContent>
             </Card>
@@ -130,8 +139,8 @@ export default async function MotoDetallePage({
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <Row label="Método Amort." value={moto.metodoAmortizacion} />
-                <Row label="Vida Útil" value={`${moto.vidaUtilMeses} meses`} />
-                <Row label="Valor Residual" value={formatMoney(Number(moto.valorResidual))} />
+                <Row label="Vida Útil" value={`${moto.vidaUtilMeses} meses`} mono />
+                <Row label="Valor Residual" value={formatMoney(Number(moto.valorResidual))} mono />
                 <Row label="Alta Contable" value={moto.fechaAltaContable ? formatDate(moto.fechaAltaContable.toISOString()) : null} />
               </CardContent>
             </Card>
@@ -143,7 +152,7 @@ export default async function MotoDetallePage({
                 <CardTitle className="text-sm">Notas</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-t-secondary">{moto.notas}</p>
+                <p className="text-sm text-muted-foreground">{moto.notas}</p>
               </CardContent>
             </Card>
           )}
@@ -154,7 +163,7 @@ export default async function MotoDetallePage({
           <Card>
             <CardContent className="pt-4">
               {moto.historialEstados.length === 0 ? (
-                <p className="text-sm text-t-secondary text-center py-8">
+                <p className="text-sm text-muted-foreground text-center py-8">
                   Sin cambios de estado registrados
                 </p>
               ) : (
@@ -164,14 +173,19 @@ export default async function MotoDetallePage({
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <StatusBadge status={h.estadoAnterior} />
-                          <span className="text-t-tertiary text-xs">→</span>
+                          <span className="text-muted-foreground text-xs">→</span>
                           <StatusBadge status={h.estadoNuevo} />
                         </div>
                         {h.motivo && (
-                          <p className="text-xs text-t-secondary mt-1">{h.motivo}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{h.motivo}</p>
+                        )}
+                        {h.userId && (
+                          <p className="text-xs text-muted-foreground/60 mt-0.5">
+                            Por: {h.userId}
+                          </p>
                         )}
                       </div>
-                      <span className="text-xs text-t-tertiary whitespace-nowrap">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
                         {formatDateTime(h.createdAt.toISOString())}
                       </span>
                     </div>
@@ -187,13 +201,13 @@ export default async function MotoDetallePage({
           <Card>
             <CardContent className="pt-4">
               {moto.lecturasKm.length === 0 ? (
-                <p className="text-sm text-t-secondary text-center py-8">
+                <p className="text-sm text-muted-foreground text-center py-8">
                   Sin lecturas de KM registradas
                 </p>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-t-secondary border-b border-border">
+                    <tr className="text-muted-foreground border-b border-border">
                       <th className="text-left pb-2">KM</th>
                       <th className="text-left pb-2">Fuente</th>
                       <th className="text-left pb-2">Notas</th>
@@ -202,15 +216,15 @@ export default async function MotoDetallePage({
                   </thead>
                   <tbody>
                     {moto.lecturasKm.map((l) => (
-                      <tr key={l.id} className="border-b border-border last:border-0 hover:bg-bg-card-hover transition-colors">
-                        <td className="py-2 tabular-nums font-medium">
+                      <tr key={l.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
+                        <td className="py-2 font-mono tabular-nums font-medium">
                           {l.km.toLocaleString("es-AR")}
                         </td>
                         <td className="py-2">
                           <Badge variant="outline" className="text-xs">{l.fuente}</Badge>
                         </td>
-                        <td className="py-2 text-t-secondary">{l.notas ?? "—"}</td>
-                        <td className="py-2 text-right text-t-tertiary">
+                        <td className="py-2 text-muted-foreground">{l.notas ?? "—"}</td>
+                        <td className="py-2 text-right text-muted-foreground">
                           {formatDate(l.createdAt.toISOString())}
                         </td>
                       </tr>
@@ -227,22 +241,22 @@ export default async function MotoDetallePage({
           <Card>
             <CardContent className="pt-4">
               {moto.documentos.length === 0 ? (
-                <p className="text-sm text-t-secondary text-center py-8">
-                  Sin documentos. El upload a R2 se conecta en F2.
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Sin documentos adjuntos
                 </p>
               ) : (
                 <div className="space-y-2">
                   {moto.documentos.map((d) => (
-                    <div key={d.id} className="flex items-center justify-between border border-border rounded-2xl p-3">
+                    <div key={d.id} className="flex items-center justify-between border border-border rounded-lg p-3">
                       <div>
-                        <p className="text-sm font-medium text-t-primary">{d.nombre}</p>
-                        <p className="text-xs text-t-secondary">{d.tipo}</p>
+                        <p className="text-sm font-medium">{d.nombre}</p>
+                        <p className="text-xs text-muted-foreground">{d.tipo}</p>
                       </div>
                       <a
                         href={d.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-accent-DEFAULT hover:underline"
+                        className="text-xs text-primary hover:underline"
                       >
                         Ver
                       </a>
@@ -259,13 +273,13 @@ export default async function MotoDetallePage({
           <Card>
             <CardContent className="pt-4">
               {moto.amortizaciones.length === 0 ? (
-                <p className="text-sm text-t-secondary text-center py-8">
-                  El cálculo automático de amortizaciones se implementa en F2 (Contabilidad).
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Sin datos de amortización
                 </p>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-t-secondary border-b border-border">
+                    <tr className="text-muted-foreground border-b border-border">
                       <th className="text-left pb-2">Período</th>
                       <th className="text-right pb-2">Cuota</th>
                       <th className="text-right pb-2">Acumulado</th>
@@ -274,11 +288,11 @@ export default async function MotoDetallePage({
                   </thead>
                   <tbody>
                     {moto.amortizaciones.map((a) => (
-                      <tr key={a.id} className="border-b border-border last:border-0 hover:bg-bg-card-hover transition-colors">
+                      <tr key={a.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
                         <td className="py-2 font-mono">{a.periodo}</td>
-                        <td className="py-2 text-right tabular-nums">{formatMoney(Number(a.monto))}</td>
-                        <td className="py-2 text-right tabular-nums">{formatMoney(Number(a.acumulado))}</td>
-                        <td className="py-2 text-right tabular-nums">{formatMoney(Number(a.valorLibros))}</td>
+                        <td className="py-2 text-right font-mono tabular-nums">{formatMoney(Number(a.monto))}</td>
+                        <td className="py-2 text-right font-mono tabular-nums">{formatMoney(Number(a.acumulado))}</td>
+                        <td className="py-2 text-right font-mono tabular-nums">{formatMoney(Number(a.valorLibros))}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -292,11 +306,37 @@ export default async function MotoDetallePage({
   );
 }
 
-function Row({ label, value }: { label: string; value: string | null | undefined }) {
+// ── Helper: Tab count badge ─────────────────────────────────────────────────
+function TabCount({ count }: { count: number }) {
+  return (
+    <Badge
+      variant="secondary"
+      className={cn(
+        "h-5 min-w-5 rounded-full px-1.5 text-[10px] font-semibold",
+        count === 0 && "text-muted-foreground"
+      )}
+    >
+      {count}
+    </Badge>
+  );
+}
+
+// ── Helper: Detail row ──────────────────────────────────────────────────────
+function Row({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string | null | undefined;
+  mono?: boolean;
+}) {
   return (
     <div className="flex justify-between gap-2">
-      <span className="text-t-secondary">{label}</span>
-      <span className="font-medium text-right text-t-primary">{value ?? "—"}</span>
+      <span className="text-muted-foreground">{label}</span>
+      <span className={cn("font-medium text-right", mono && "font-mono tabular-nums")}>
+        {value ?? "—"}
+      </span>
     </div>
   );
 }

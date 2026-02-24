@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -105,17 +106,6 @@ interface OTDetalle {
   fotos: Foto[];
   historial: Historial[];
 }
-
-const ESTADO_COLORS: Record<string, string> = {
-  SOLICITADA: "bg-t-secondary/10 text-t-secondary border-border",
-  APROBADA: "bg-info-bg text-ds-info border-ds-info/20",
-  PROGRAMADA: "bg-accent-DEFAULT/10 text-accent-DEFAULT border-accent-DEFAULT/20",
-  EN_ESPERA_REPUESTOS: "bg-warning-bg text-warning border-warning/20",
-  EN_EJECUCION: "bg-accent-DEFAULT/10 text-accent-DEFAULT border-accent-DEFAULT/20",
-  EN_REVISION: "bg-info-bg text-ds-info border-ds-info/20",
-  COMPLETADA: "bg-positive-bg text-positive border-positive/20",
-  CANCELADA: "bg-negative-bg text-negative border-negative/20",
-};
 
 const RESULTADO_ICONS: Record<string, string> = {
   OK: "✅",
@@ -273,9 +263,7 @@ export default function OTDetallePage() {
             description={ot.descripcion}
           />
         </div>
-        <Badge className={`text-sm px-3 py-1 ${ESTADO_COLORS[ot.estado] ?? ""}`}>
-          {ot.estado.replace(/_/g, " ")}
-        </Badge>
+        <StatusBadge status={ot.estado} className="text-sm px-3 py-1" />
       </div>
 
       {/* Action Bar */}
@@ -467,50 +455,50 @@ export default function OTDetallePage() {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <p className="text-muted-foreground">Tipo</p>
-                <p className="font-medium">{ot.tipo}</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Tipo</p>
+                <p className="font-medium mt-1">{ot.tipo}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Prioridad</p>
-                <p className="font-medium">{ot.prioridad}</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Prioridad</p>
+                <div className="mt-1"><StatusBadge status={ot.prioridad} /></div>
               </div>
               <div>
-                <p className="text-muted-foreground">Tipo Service</p>
-                <p className="font-medium">{ot.tipoService ?? "-"}</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Tipo Service</p>
+                <p className="font-medium mt-1">{ot.tipoService?.replace(/_/g, " ") ?? <span className="text-muted-foreground">—</span>}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Moto ID</p>
-                <p className="font-mono text-xs">{ot.motoId.slice(0, 12)}...</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Moto ID</p>
+                <p className="font-mono tabular-nums text-xs mt-1">{ot.motoId.slice(0, 12)}...</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Taller</p>
-                <p className="font-medium">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Taller</p>
+                <p className="font-medium mt-1">
                   {ot.tallerId ? (
-                    <Link href={`/admin/talleres`} className="text-ds-info hover:underline">
+                    <Link href="/admin/talleres" className="text-primary hover:underline">
                       {ot.tallerNombre ?? "Ver taller"}
                     </Link>
                   ) : (
-                    ot.tallerNombre ?? "-"
+                    ot.tallerNombre ?? <span className="text-muted-foreground">—</span>
                   )}
                 </p>
               </div>
               <div>
-                <p className="text-muted-foreground">Mecánico</p>
-                <p className="font-medium">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Mecánico</p>
+                <p className="font-medium mt-1">
                   {ot.mecanicoId ? (
-                    <span className="text-ds-info">{ot.mecanicoNombre ?? "Asignado"}</span>
+                    <span className="text-primary">{ot.mecanicoNombre ?? "Asignado"}</span>
                   ) : (
-                    ot.mecanicoNombre ?? "-"
+                    ot.mecanicoNombre ?? <span className="text-muted-foreground">—</span>
                   )}
                 </p>
               </div>
               <div>
-                <p className="text-muted-foreground">Km Ingreso</p>
-                <p className="font-mono">{ot.kmIngreso ?? "-"}</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Km Ingreso</p>
+                <p className="font-mono tabular-nums mt-1">{ot.kmIngreso?.toLocaleString("es-AR") ?? <span className="text-muted-foreground">—</span>}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Km Egreso</p>
-                <p className="font-mono">{ot.kmEgreso ?? "-"}</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Km Egreso</p>
+                <p className="font-mono tabular-nums mt-1">{ot.kmEgreso?.toLocaleString("es-AR") ?? <span className="text-muted-foreground">—</span>}</p>
               </div>
             </div>
             {ot.diagnostico && (
@@ -712,9 +700,9 @@ export default function OTDetallePage() {
                   {ot.repuestos.map((r) => (
                     <tr key={r.id} className="border-b">
                       <td className="py-2 px-2">{r.nombre}</td>
-                      <td className="py-2 px-2 text-center">{r.cantidad}</td>
-                      <td className="py-2 px-2 text-right font-mono">{formatMoney(Number(r.precioUnitario))}</td>
-                      <td className="py-2 px-2 text-right font-mono">{formatMoney(Number(r.subtotal))}</td>
+                      <td className="py-2 px-2 text-center font-mono tabular-nums">{r.cantidad}</td>
+                      <td className="py-2 px-2 text-right font-mono tabular-nums">{formatMoney(Number(r.precioUnitario))}</td>
+                      <td className="py-2 px-2 text-right font-mono tabular-nums">{formatMoney(Number(r.subtotal))}</td>
                       {isEditable && (
                         <td className="py-2 px-2 text-right">
                           <Button
@@ -731,7 +719,7 @@ export default function OTDetallePage() {
                   ))}
                 </tbody>
               </table>
-              <div className="flex justify-end mt-2 text-sm font-bold">
+              <div className="flex justify-end mt-2 text-sm font-bold font-mono tabular-nums">
                 Total: {formatMoney(Number(ot.costoRepuestos ?? 0))}
               </div>
             </>
@@ -745,7 +733,7 @@ export default function OTDetallePage() {
           <CardTitle className="text-sm font-medium">Costos</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="font-mono text-sm space-y-1 max-w-xs">
+          <div className="font-mono tabular-nums text-sm space-y-2 max-w-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Mano de Obra</span>
               <span>{formatMoney(Number(ot.costoManoObra ?? 0))}</span>
@@ -754,10 +742,11 @@ export default function OTDetallePage() {
               <span className="text-muted-foreground">Repuestos</span>
               <span>{formatMoney(Number(ot.costoRepuestos ?? 0))}</span>
             </div>
-            <div className="border-t border-muted-foreground/30 my-1" />
-            <div className="flex justify-between font-bold">
-              <span>Total</span>
-              <span>{formatMoney(Number(ot.costoTotal ?? 0))}</span>
+            <div className="border-t pt-2">
+              <div className="flex justify-between font-bold">
+                <span>Total</span>
+                <span>{formatMoney(Number(ot.costoTotal ?? 0))}</span>
+              </div>
             </div>
           </div>
           {isEditable && (
@@ -809,24 +798,34 @@ export default function OTDetallePage() {
           {ot.historial.length === 0 ? (
             <p className="text-center py-4 text-muted-foreground text-sm">Sin historial</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {ot.historial.map((h) => (
-                <div key={h.id} className="flex items-start gap-3 text-sm">
-                  <div className="w-2 h-2 mt-1.5 rounded-full bg-muted-foreground/50 shrink-0" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Badge className={`text-xs ${ESTADO_COLORS[h.estadoAnterior] ?? ""}`}>
-                        {h.estadoAnterior.replace(/_/g, " ")}
-                      </Badge>
-                      <span className="text-muted-foreground">→</span>
-                      <Badge className={`text-xs ${ESTADO_COLORS[h.estadoNuevo] ?? ""}`}>
-                        {h.estadoNuevo.replace(/_/g, " ")}
-                      </Badge>
+                <div key={h.id} className="flex gap-3 pb-4 last:pb-0 border-b last:border-0">
+                  <div className="flex flex-col items-center">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted">
+                      <div className="h-2 w-2 rounded-full bg-muted-foreground/40" />
                     </div>
-                    {h.descripcion && <p className="text-muted-foreground text-xs mt-1">{h.descripcion}</p>}
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {formatDateTime(new Date(h.createdAt))}
-                    </p>
+                    <div className="flex-1 w-px bg-border mt-1" />
+                  </div>
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <StatusBadge status={h.estadoAnterior} />
+                      <span className="text-muted-foreground text-xs">→</span>
+                      <StatusBadge status={h.estadoNuevo} />
+                    </div>
+                    {h.descripcion && (
+                      <p className="text-muted-foreground text-xs mt-1">{h.descripcion}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-1">
+                      {h.userId && (
+                        <span className="text-xs font-medium text-muted-foreground font-mono">
+                          {h.userId.slice(0, 8)}
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                        {formatDateTime(new Date(h.createdAt))}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -840,10 +839,10 @@ export default function OTDetallePage() {
 
 function FechaRow({ label, fecha }: { label: string; fecha: string | null }) {
   return (
-    <div className="flex justify-between">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-mono text-xs">
-        {fecha ? formatDateTime(new Date(fecha)) : "-"}
+    <div className="flex justify-between items-center py-1">
+      <span className="text-muted-foreground text-sm">{label}</span>
+      <span className="font-mono tabular-nums text-xs">
+        {fecha ? formatDateTime(new Date(fecha)) : <span className="text-muted-foreground">—</span>}
       </span>
     </div>
   );

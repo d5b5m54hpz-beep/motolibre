@@ -2,13 +2,22 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings, Bell } from "lucide-react";
+import {
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
+import { LogOut, Settings, Bell, Search } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 
@@ -24,6 +33,8 @@ export function AppHeader() {
   const user = session?.user;
   const firstName = user?.name?.split(" ")[0] ?? "";
   const [alertCount, setAlertCount] = useState(0);
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const router = useRouter();
 
   const fetchAlertCount = useCallback(() => {
     fetch("/api/alertas/count")
@@ -39,6 +50,18 @@ export function AppHeader() {
     const interval = setInterval(fetchAlertCount, 60_000);
     return () => clearInterval(interval);
   }, [fetchAlertCount]);
+
+  // Cmd+K shortcut
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCmdOpen((prev) => !prev);
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const initials = user?.name
     ? user.name
@@ -59,6 +82,48 @@ export function AppHeader() {
       </div>
 
       <div className="flex-1" />
+
+      {/* Search trigger */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="hidden sm:flex items-center gap-2 text-muted-foreground h-8 w-56 justify-start"
+        onClick={() => setCmdOpen(true)}
+      >
+        <Search className="h-3.5 w-3.5" />
+        <span className="text-xs">Buscar...</span>
+        <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+          <span className="text-xs">⌘</span>K
+        </kbd>
+      </Button>
+
+      {/* Command Palette */}
+      <CommandDialog open={cmdOpen} onOpenChange={setCmdOpen} title="Búsqueda global" description="Buscar motos, contratos, riders, órdenes de trabajo...">
+        <CommandInput placeholder="Buscar motos, contratos, riders..." />
+        <CommandList>
+          <CommandEmpty>No se encontraron resultados.</CommandEmpty>
+          <CommandGroup heading="Navegación rápida">
+            <CommandItem onSelect={() => { router.push("/admin/motos"); setCmdOpen(false); }}>
+              Motos
+            </CommandItem>
+            <CommandItem onSelect={() => { router.push("/admin/mantenimientos"); setCmdOpen(false); }}>
+              Mantenimientos
+            </CommandItem>
+            <CommandItem onSelect={() => { router.push("/admin/mantenimientos/ordenes"); setCmdOpen(false); }}>
+              Órdenes de Trabajo
+            </CommandItem>
+            <CommandItem onSelect={() => { router.push("/admin/clientes"); setCmdOpen(false); }}>
+              Clientes
+            </CommandItem>
+            <CommandItem onSelect={() => { router.push("/admin/contratos"); setCmdOpen(false); }}>
+              Contratos
+            </CommandItem>
+            <CommandItem onSelect={() => { router.push("/admin/repuestos"); setCmdOpen(false); }}>
+              Inventario
+            </CommandItem>
+          </CommandGroup>
+        </CommandList>
+      </CommandDialog>
 
       {/* Right side: Theme + Bell + Avatar */}
       <div className="flex items-center gap-2">
