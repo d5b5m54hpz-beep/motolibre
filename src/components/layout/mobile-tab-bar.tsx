@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Bike, ClipboardList, CreditCard, Settings } from "lucide-react";
+import { LayoutDashboard, Bike, ClipboardList, CreditCard, Bell } from "lucide-react";
 
 const tabs = [
   { title: "Home", href: "/admin", icon: LayoutDashboard },
   { title: "Motos", href: "/admin/motos", icon: Bike },
   { title: "Solicitudes", href: "/admin/solicitudes", icon: ClipboardList },
   { title: "Pagos", href: "/admin/pagos", icon: CreditCard },
-  { title: "Config", href: "/admin/configuracion", icon: Settings },
+  { title: "Alertas", href: "/admin/alertas", icon: Bell },
 ];
 
 export function MobileTabBar() {

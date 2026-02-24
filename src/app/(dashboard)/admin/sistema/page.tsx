@@ -74,6 +74,13 @@ interface EventoReciente {
   error: string | null;
 }
 
+const CHART_TOOLTIP_STYLE = {
+  backgroundColor: "var(--bg-card)",
+  border: "1px solid var(--border-base)",
+  borderRadius: "12px",
+  color: "var(--text-primary)",
+};
+
 // ── Helpers ────────────────────────────────────────────────────────
 
 function timeAgo(dateStr: string): string {
@@ -404,28 +411,23 @@ export default function SistemaMonitorPage() {
                 </defs>
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="#1E1E2A"
+                  stroke="var(--border-base)"
                   opacity={0.5}
                 />
                 <XAxis
                   dataKey="hora"
-                  tick={{ fill: "#44445A", fontSize: 12 }}
+                  tick={{ fill: "var(--text-tertiary)", fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={(value: string) => formatHour(value)}
                 />
                 <YAxis
-                  tick={{ fill: "#44445A", fontSize: 12 }}
+                  tick={{ fill: "var(--text-tertiary)", fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#13131A",
-                    border: "1px solid #1E1E2A",
-                    borderRadius: "12px",
-                    color: "#FFFFFF",
-                  }}
+                  contentStyle={CHART_TOOLTIP_STYLE}
                   labelFormatter={(value) => formatHour(String(value))}
                 />
                 <Area

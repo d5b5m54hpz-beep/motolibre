@@ -49,6 +49,13 @@ interface FlujoCaja {
   diario: Array<{ fecha: string; entradas: number; salidas: number; saldo: number }>;
 }
 
+const CHART_TOOLTIP_STYLE = {
+  backgroundColor: "var(--bg-card)",
+  border: "1px solid var(--border-base)",
+  borderRadius: "12px",
+  color: "var(--text-primary)",
+};
+
 const COLORS = ["#00D68F", "#4DA6FF", "#FFB020", "#7B61FF"];
 const EGRESO_COLORS = ["#FF4D6A", "#FF8C42", "#FFB020", "#7B61FF", "#EC4899"];
 
@@ -183,11 +190,11 @@ export default function FinanzasDashboardPage() {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={flujoDiario}>
-                <CartesianGrid stroke="#1E1E2A" strokeDasharray="3 3" opacity={0.5} />
-                <XAxis dataKey="fecha" tick={{ fill: "#44445A", fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: "#44445A", fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
+                <CartesianGrid stroke="var(--border-base)" strokeDasharray="3 3" opacity={0.5} />
+                <XAxis dataKey="fecha" tick={{ fill: "var(--text-tertiary)", fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "var(--text-tertiary)", fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: "#13131A", border: "1px solid #1E1E2A", borderRadius: "12px", color: "#FFFFFF" }}
+                  contentStyle={CHART_TOOLTIP_STYLE}
                   formatter={(value) => formatMoney(Number(value))}
                 />
                 <defs>

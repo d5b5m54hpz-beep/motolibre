@@ -6,8 +6,7 @@ import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { navigation } from "@/lib/navigation";
 import { Sidebar, useSidebar } from "@/components/ui/sidebar";
-import { useTheme } from "@/components/theme-provider";
-import { PanelLeft, PanelRight, Sun, Moon, LogOut } from "lucide-react";
+import { PanelLeft, PanelRight, LogOut } from "lucide-react";
 
 // ── Motolibre Icon (wing only, for collapsed state) ──────────────────────────
 function MotolibreIcon({ className }: { className?: string }) {
@@ -54,8 +53,7 @@ function MotolibreIcon({ className }: { className?: string }) {
 function MotolibreWordmark() {
   return (
     <span
-      className="text-[#23DFFF] font-bold text-lg tracking-tight leading-none font-display"
-      style={{ letterSpacing: "-0.02em" }}
+      className="text-[#23DFFF] font-bold text-lg leading-none font-display tracking-[-0.02em]"
     >
       motolibre
     </span>
@@ -89,7 +87,6 @@ function ToggleBtn({
 export function AppSidebar() {
   const pathname = usePathname();
   const { state, toggleSidebar } = useSidebar();
-  const { theme, setTheme } = useTheme();
 
   const collapsed = state === "collapsed";
 
@@ -199,31 +196,6 @@ export function AppSidebar() {
             collapsed ? "px-2" : "px-3"
           )}
         >
-          {/* Theme toggle */}
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            title={
-              collapsed
-                ? theme === "dark"
-                  ? "Modo claro"
-                  : "Modo oscuro"
-                : undefined
-            }
-            className={cn(
-              "w-full flex items-center gap-3 rounded-xl text-sm text-t-secondary hover:bg-bg-card-hover hover:text-t-primary transition-all duration-200",
-              collapsed ? "justify-center p-2.5" : "px-3 py-2"
-            )}
-          >
-            {theme === "dark" ? (
-              <Sun className="h-4 w-4 shrink-0" />
-            ) : (
-              <Moon className="h-4 w-4 shrink-0" />
-            )}
-            {!collapsed && (
-              <span>{theme === "dark" ? "Modo claro" : "Modo oscuro"}</span>
-            )}
-          </button>
-
           {/* Logout */}
           <button
             onClick={() => signOut({ callbackUrl: "/login-admin" })}

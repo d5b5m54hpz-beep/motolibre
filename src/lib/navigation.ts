@@ -3,10 +3,10 @@ import {
   Wrench, Building2, Package, Truck, Ship, ShoppingCart,
   TrendingUp, PiggyBank, Calculator, BookOpen, FileSpreadsheet,
   BarChart3, UserCog, Shield, Bell, AlertTriangle, Settings,
-  Mail, Languages, ClipboardList, Gauge, Calendar,
+  ClipboardList, Gauge, Calendar,
   ArrowUpDown, Target, MapPin, ShoppingBag, Tags, Sparkles, Scale,
   Activity, Radio, Stethoscope, Clock, Upload, MessageCircle,
-  Inbox, CheckSquare, BookUser,
+  Inbox, CheckSquare, BookUser, ListChecks, Wallet, CalendarClock,
   type LucideIcon,
 } from "lucide-react";
 
@@ -34,21 +34,21 @@ export const navigation: NavGroup[] = [
     title: "Flota",
     items: [
       { title: "Motos", href: "/admin/motos", icon: Bike },
-      { title: "Mantenimientos", href: "/admin/mantenimientos", icon: Calendar },
-      { title: "Órdenes de Trabajo", href: "/admin/mantenimientos/ordenes", icon: Wrench },
-      { title: "Planes Service", href: "/admin/mantenimientos/planes", icon: ClipboardList },
+      { title: "Mantenimientos", href: "/admin/mantenimientos", icon: Wrench },
+      { title: "Órdenes de Trabajo", href: "/admin/mantenimientos/ordenes", icon: ClipboardList },
+      { title: "Planes Service", href: "/admin/mantenimientos/planes", icon: ListChecks },
       { title: "Talleres", href: "/admin/talleres", icon: Building2 },
     ],
   },
   {
     title: "Comercial",
     items: [
-      { title: "Solicitudes", href: "/admin/solicitudes", icon: ClipboardList },
+      { title: "Solicitudes", href: "/admin/solicitudes", icon: FileText },
       { title: "Clientes", href: "/admin/clientes", icon: Users },
-      { title: "Contratos", href: "/admin/contratos", icon: FileText },
+      { title: "Contratos", href: "/admin/contratos", icon: Receipt },
       { title: "Pagos", href: "/admin/pagos", icon: CreditCard },
-      { title: "Facturas", href: "/admin/facturas", icon: Receipt },
-      { title: "Notas de Crédito", href: "/admin/notas-credito", icon: FileSpreadsheet },
+      { title: "Facturas", href: "/admin/facturas", icon: FileSpreadsheet },
+      { title: "Notas de Crédito", href: "/admin/notas-credito", icon: FileText },
       { title: "Ventas Repuestos", href: "/admin/ventas-repuestos", icon: ShoppingBag },
       { title: "Conversaciones", href: "/admin/chat", icon: MessageCircle },
     ],
@@ -67,7 +67,7 @@ export const navigation: NavGroup[] = [
       { title: "Órdenes de Compra", href: "/admin/ordenes-compra", icon: ShoppingCart },
       { title: "Inventario", href: "/admin/repuestos", icon: Package },
       { title: "Ubicaciones", href: "/admin/repuestos/ubicaciones", icon: MapPin },
-      { title: "Sugerencia Compra", href: "/admin/repuestos/sugerencia-compra", icon: ShoppingBag },
+      { title: "Sugerencia Compra", href: "/admin/repuestos/sugerencia-compra", icon: Target },
       { title: "Importaciones", href: "/admin/importaciones", icon: Ship },
     ],
   },
@@ -80,7 +80,7 @@ export const navigation: NavGroup[] = [
       { title: "Indicadores", href: "/admin/finanzas/indicadores", icon: Gauge },
       { title: "Rentabilidad", href: "/admin/finanzas/rentabilidad", icon: Target },
       { title: "Gastos", href: "/admin/gastos", icon: PiggyBank },
-      { title: "Presupuestos", href: "/admin/presupuestos", icon: ClipboardList },
+      { title: "Presupuestos", href: "/admin/presupuestos", icon: Wallet },
     ],
   },
   {
@@ -88,9 +88,8 @@ export const navigation: NavGroup[] = [
     items: [
       { title: "Plan de Cuentas", href: "/admin/cuentas-contables", icon: BookOpen },
       { title: "Asientos", href: "/admin/asientos", icon: Calculator },
-      { title: "Períodos", href: "/admin/periodos", icon: Calendar },
+      { title: "Períodos", href: "/admin/periodos", icon: CalendarClock },
       { title: "Facturas Compra", href: "/admin/facturas-compra", icon: FileSpreadsheet },
-      { title: "Reportes", href: "/admin/reportes-contables", icon: BarChart3 },
       { title: "Conciliación", href: "/admin/conciliacion", icon: Scale },
     ],
   },
@@ -106,8 +105,17 @@ export const navigation: NavGroup[] = [
     items: [
       { title: "Dashboard", href: "/admin/rrhh", icon: LayoutDashboard },
       { title: "Empleados", href: "/admin/rrhh/empleados", icon: UserCog },
-      { title: "Ausencias", href: "/admin/rrhh/ausencias", icon: ClipboardList },
+      { title: "Ausencias", href: "/admin/rrhh/ausencias", icon: Calendar },
       { title: "Liquidación", href: "/admin/rrhh/liquidacion", icon: Receipt },
+    ],
+  },
+  {
+    title: "Comunicación",
+    items: [
+      { title: "Bandeja", href: "/admin/comunicacion", icon: Inbox },
+      { title: "Aprobaciones", href: "/admin/comunicacion/aprobaciones", icon: CheckSquare },
+      { title: "Contactos", href: "/admin/comunicacion/contactos", icon: BookUser },
+      { title: "Configuración", href: "/admin/comunicacion/configuracion", icon: Settings },
     ],
   },
   {
@@ -117,26 +125,10 @@ export const navigation: NavGroup[] = [
       { title: "Eventos", href: "/admin/sistema/eventos", icon: Radio },
       { title: "Diagnóstico", href: "/admin/sistema/diagnostico", icon: Stethoscope },
       { title: "Cron Jobs", href: "/admin/sistema/cron", icon: Clock },
-      { title: "Usuarios", href: "/admin/usuarios", icon: Users },
-      { title: "Permisos", href: "/admin/permisos", icon: Shield },
       { title: "Alertas", href: "/admin/alertas", icon: Bell },
+      { title: "Usuarios", href: "/admin/usuarios", icon: Shield },
       { title: "Empresa", href: "/admin/configuracion/empresa", icon: Settings },
-    ],
-  },
-  {
-    title: "Comunicación",
-    items: [
-      { title: "Bandeja", href: "/admin/comunicacion", icon: Inbox },
-      { title: "Aprobaciones", href: "/admin/comunicacion/aprobaciones", icon: CheckSquare },
-      { title: "Contactos", href: "/admin/comunicacion/contactos", icon: BookUser },
-      { title: "Config", href: "/admin/comunicacion/configuracion", icon: Settings },
-    ],
-  },
-  {
-    title: "Herramientas",
-    items: [
       { title: "Export/Import", href: "/admin/configuracion/export-import", icon: Upload },
-      { title: "Traducciones", href: "/admin/traducciones", icon: Languages },
     ],
   },
 ];
