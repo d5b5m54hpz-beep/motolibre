@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       contacto: parsed.data.contacto ?? undefined,
       especialidades: parsed.data.especialidades,
       notas: parsed.data.notas ?? undefined,
+      tarifaHora: parsed.data.tarifaHora ?? undefined,
     },
   });
 

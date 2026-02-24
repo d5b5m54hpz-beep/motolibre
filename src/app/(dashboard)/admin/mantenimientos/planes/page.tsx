@@ -1,466 +1,190 @@
-"use client";
-
-import { useEffect, useState, useCallback } from "react";
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  ClipboardList,
-  Plus,
-  Wrench,
-  Trash2,
-} from "lucide-react";
+import { KPICard } from "@/components/ui/kpi-card";
+import { PlanesTable } from "./_components/planes-table";
+import { ClipboardList, CheckCircle, FileEdit, Bike } from "lucide-react";
 
-interface TareaPlan {
-  id: string;
-  categoria: string;
-  descripcion: string;
-  orden: number;
+async function getPlanes() {
+  return prisma.planMantenimiento.findMany({
+    include: {
+      tareas: { orderBy: { orden: "asc" } },
+      repuestos: true,
+      _count: { select: { tareas: true, repuestos: true } },
+    },
+    orderBy: { nombre: "asc" },
+  });
 }
 
-interface RepuestoPlan {
-  id: string;
-  nombre: string;
-  cantidad: number;
-}
+async function getStats() {
+  const [total, byEstado, marcas] = await Promise.all([
+    prisma.planMantenimiento.count(),
+    prisma.planMantenimiento.groupBy({
+      by: ["estado"],
+      _count: { estado: true },
+    }),
+    prisma.planMantenimiento.findMany({
+      select: { marcaMoto: true },
+      distinct: ["marcaMoto"],
+      where: { marcaMoto: { not: null } },
+      orderBy: { marcaMoto: "asc" },
+    }),
+  ]);
 
-interface Plan {
-  id: string;
-  nombre: string;
-  tipoService: string;
-  descripcion: string | null;
-  kmIntervalo: number | null;
-  diasIntervalo: number | null;
-  activo: boolean;
-  tareas: TareaPlan[];
-  repuestos: RepuestoPlan[];
-  _count: { tareas: number; repuestos: number };
-}
+  const estadoMap = Object.fromEntries(
+    byEstado.map((e) => [e.estado, e._count.estado])
+  );
 
-const TIPOS_SERVICE = [
-  "SERVICE_5000KM",
-  "SERVICE_10000KM",
-  "SERVICE_15000KM",
-  "SERVICE_20000KM",
-  "SERVICE_GENERAL",
-  "REPARACION",
-  "INSPECCION",
-  "OTRO",
-];
-
-const CATEGORIAS = [
-  "MOTOR", "FRENOS", "SUSPENSION", "ELECTRICA", "CARROCERIA",
-  "NEUMATICOS", "TRANSMISION", "LUBRICACION", "INSPECCION", "OTRO",
-];
-
-export default function PlanesMantenimientoPage() {
-  const [planes, setPlanes] = useState<Plan[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [generarDialog, setGenerarDialog] = useState<string | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  // Nuevo plan form
-  const [form, setForm] = useState({
-    nombre: "",
-    tipoService: "SERVICE_GENERAL",
-    descripcion: "",
-    kmIntervalo: "",
-    diasIntervalo: "",
-    tareas: [] as Array<{ categoria: string; descripcion: string }>,
-    repuestos: [] as Array<{ nombre: string; cantidad: number }>,
+  // Count distinct marca+modelo combinations
+  const modelosCubiertos = await prisma.planMantenimiento.findMany({
+    select: { marcaMoto: true, modeloMoto: true },
+    distinct: ["marcaMoto", "modeloMoto"],
+    where: { marcaMoto: { not: null } },
   });
 
-  // Generar OT form
-  const [motoId, setMotoId] = useState("");
-  const [motos, setMotos] = useState<Array<{ id: string; patente: string; marca: string; modelo: string }>>([]);
+  return {
+    total,
+    publicados: estadoMap["PUBLICADO"] ?? 0,
+    borradores: estadoMap["BORRADOR"] ?? 0,
+    modelosCubiertos: modelosCubiertos.length,
+    marcas: marcas.map((m) => m.marcaMoto!).filter(Boolean),
+  };
+}
 
-  const fetchPlanes = useCallback(async () => {
-    const res = await fetch("/api/mantenimientos/planes");
-    if (res.ok) {
-      const j = await res.json();
-      setPlanes(j.data);
-    }
-    setLoading(false);
-  }, []);
+export default async function PlanesPage() {
+  const session = await auth();
+  if (!session?.user) redirect("/login-admin");
 
-  useEffect(() => {
-    void fetchPlanes();
-  }, [fetchPlanes]);
+  const [rawPlanes, stats] = await Promise.all([getPlanes(), getStats()]);
 
-  useEffect(() => {
-    void fetch("/api/motos?limit=200").then(async (r) => {
-      if (r.ok) {
-        const j = await r.json();
-        setMotos(j.data);
-      }
-    });
-  }, []);
+  // Transform planes for the table rows
+  const tableData = rawPlanes.map((p) => {
+    const plan = p as typeof p & {
+      marcaMoto?: string | null;
+      modeloMoto?: string | null;
+      garantiaMeses?: number | null;
+      garantiaKm?: number | null;
+      estado?: string;
+    };
+    return {
+      id: plan.id,
+      nombre: plan.nombre,
+      tipoService: plan.tipoService,
+      descripcion: plan.descripcion,
+      marcaMoto: plan.marcaMoto ?? null,
+      modeloMoto: plan.modeloMoto ?? null,
+      kmIntervalo: plan.kmIntervalo,
+      diasIntervalo: plan.diasIntervalo,
+      garantiaMeses: plan.garantiaMeses ?? null,
+      garantiaKm: plan.garantiaKm ?? null,
+      estado: plan.estado ?? (plan.activo ? "BORRADOR" : "ARCHIVADO"),
+      activo: plan.activo,
+      tareasCount: plan._count.tareas,
+      repuestosCount: plan._count.repuestos,
+      tiempoTotal: plan.tareas.reduce((sum, t) => {
+        const tarea = t as typeof t & { tiempoEstimado?: number | null };
+        return sum + (tarea.tiempoEstimado ?? 0);
+      }, 0),
+      costoRepuestos: plan.repuestos.reduce((sum, r) => {
+        const rep = r as typeof r & { precioUnitario?: number | null };
+        return sum + (rep.precioUnitario ?? 0) * r.cantidad;
+      }, 0),
+      createdAt: plan.createdAt.toISOString(),
+    };
+  });
 
-  async function handleCreate() {
-    if (!form.nombre) return;
-    const res = await fetch("/api/mantenimientos/planes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        nombre: form.nombre,
-        tipoService: form.tipoService,
-        descripcion: form.descripcion || undefined,
-        kmIntervalo: form.kmIntervalo ? Number(form.kmIntervalo) : undefined,
-        diasIntervalo: form.diasIntervalo ? Number(form.diasIntervalo) : undefined,
-        tareas: form.tareas.length > 0 ? form.tareas : undefined,
-        repuestos: form.repuestos.length > 0 ? form.repuestos : undefined,
+  // Full plan details for sheet
+  const planDetails = rawPlanes.map((p) => {
+    const plan = p as typeof p & {
+      marcaMoto?: string | null;
+      modeloMoto?: string | null;
+      garantiaMeses?: number | null;
+      garantiaKm?: number | null;
+      estado?: string;
+    };
+    return {
+      id: plan.id,
+      nombre: plan.nombre,
+      tipoService: plan.tipoService,
+      descripcion: plan.descripcion,
+      marcaMoto: plan.marcaMoto ?? null,
+      modeloMoto: plan.modeloMoto ?? null,
+      kmIntervalo: plan.kmIntervalo,
+      diasIntervalo: plan.diasIntervalo,
+      garantiaMeses: plan.garantiaMeses ?? null,
+      garantiaKm: plan.garantiaKm ?? null,
+      estado: plan.estado ?? (plan.activo ? "BORRADOR" : "ARCHIVADO"),
+      activo: plan.activo,
+      tareas: plan.tareas.map((t) => {
+        const tarea = t as typeof t & { accion?: string; tiempoEstimado?: number | null };
+        return {
+          id: tarea.id,
+          categoria: tarea.categoria,
+          descripcion: tarea.descripcion,
+          accion: tarea.accion,
+          orden: tarea.orden,
+          tiempoEstimado: tarea.tiempoEstimado ?? null,
+        };
       }),
-    });
-    if (res.ok) {
-      setDialogOpen(false);
-      setForm({
-        nombre: "",
-        tipoService: "SERVICE_GENERAL",
-        descripcion: "",
-        kmIntervalo: "",
-        diasIntervalo: "",
-        tareas: [],
-        repuestos: [],
-      });
-      void fetchPlanes();
-    }
-  }
-
-  async function handleDelete(id: string) {
-    await fetch(`/api/mantenimientos/planes/${id}`, { method: "DELETE" });
-    void fetchPlanes();
-  }
-
-  async function handleGenerarOT(planId: string) {
-    if (!motoId) return;
-    const res = await fetch(`/api/mantenimientos/planes/${planId}/generar-ot`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ motoId }),
-    });
-    if (res.ok) {
-      setGenerarDialog(null);
-      setMotoId("");
-      alert("OT generada exitosamente");
-    }
-  }
-
-  function addTareaToForm() {
-    setForm({
-      ...form,
-      tareas: [...form.tareas, { categoria: "OTRO", descripcion: "" }],
-    });
-  }
-
-  function addRepuestoToForm() {
-    setForm({
-      ...form,
-      repuestos: [...form.repuestos, { nombre: "", cantidad: 1 }],
-    });
-  }
+      repuestos: plan.repuestos.map((r) => {
+        const rep = r as typeof r & {
+          codigoOEM?: string | null;
+          unidad?: string | null;
+          precioUnitario?: number | null;
+        };
+        return {
+          id: rep.id,
+          nombre: rep.nombre,
+          codigoOEM: rep.codigoOEM ?? null,
+          cantidad: rep.cantidad,
+          unidad: rep.unidad ?? null,
+          precioUnitario: rep.precioUnitario ?? null,
+        };
+      }),
+    };
+  });
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Planes de Mantenimiento"
-        description="Templates de service con tareas y repuestos pre-cargados"
+        description="Definí los services estándar para cada modelo de moto"
       />
 
-      <div className="flex justify-end">
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" /> Nuevo Plan
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Nuevo Plan de Mantenimiento</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Nombre *</Label>
-                <Input
-                  value={form.nombre}
-                  onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                  placeholder="Service 5000km Honda CB 125F"
-                />
-              </div>
-              <div>
-                <Label>Tipo Service</Label>
-                <Select value={form.tipoService} onValueChange={(v) => setForm({ ...form, tipoService: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {TIPOS_SERVICE.map((t) => (
-                      <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Descripción</Label>
-                <Textarea
-                  value={form.descripcion}
-                  onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Km Intervalo</Label>
-                  <Input
-                    type="number"
-                    value={form.kmIntervalo}
-                    onChange={(e) => setForm({ ...form, kmIntervalo: e.target.value })}
-                    placeholder="5000"
-                  />
-                </div>
-                <div>
-                  <Label>Días Intervalo</Label>
-                  <Input
-                    type="number"
-                    value={form.diasIntervalo}
-                    onChange={(e) => setForm({ ...form, diasIntervalo: e.target.value })}
-                    placeholder="180"
-                  />
-                </div>
-              </div>
-
-              {/* Tareas inline */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Tareas</Label>
-                  <Button type="button" size="sm" variant="outline" onClick={addTareaToForm}>
-                    <Plus className="h-3 w-3 mr-1" /> Tarea
-                  </Button>
-                </div>
-                {form.tareas.map((t, i) => (
-                  <div key={i} className="flex gap-2 mb-2">
-                    <Select
-                      value={t.categoria}
-                      onValueChange={(v) => {
-                        const tareas = [...form.tareas];
-                        tareas[i] = { categoria: v, descripcion: t.descripcion };
-                        setForm({ ...form, tareas });
-                      }}
-                    >
-                      <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {CATEGORIAS.map((c) => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      value={t.descripcion}
-                      onChange={(e) => {
-                        const tareas = [...form.tareas];
-                        tareas[i] = { categoria: t.categoria, descripcion: e.target.value };
-                        setForm({ ...form, tareas });
-                      }}
-                      placeholder="Descripción"
-                      className="flex-1"
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setForm({ ...form, tareas: form.tareas.filter((_, j) => j !== i) });
-                      }}
-                    >
-                      ✕
-                    </Button>
-                  </div>
-                ))}
-              </div>
-
-              {/* Repuestos inline */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Repuestos</Label>
-                  <Button type="button" size="sm" variant="outline" onClick={addRepuestoToForm}>
-                    <Plus className="h-3 w-3 mr-1" /> Repuesto
-                  </Button>
-                </div>
-                {form.repuestos.map((r, i) => (
-                  <div key={i} className="flex gap-2 mb-2">
-                    <Input
-                      value={r.nombre}
-                      onChange={(e) => {
-                        const repuestos = [...form.repuestos];
-                        repuestos[i] = { nombre: e.target.value, cantidad: r.cantidad };
-                        setForm({ ...form, repuestos });
-                      }}
-                      placeholder="Nombre"
-                      className="flex-1"
-                    />
-                    <Input
-                      type="number"
-                      value={r.cantidad}
-                      onChange={(e) => {
-                        const repuestos = [...form.repuestos];
-                        repuestos[i] = { nombre: r.nombre, cantidad: Number(e.target.value) };
-                        setForm({ ...form, repuestos });
-                      }}
-                      className="w-20"
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setForm({ ...form, repuestos: form.repuestos.filter((_, j) => j !== i) });
-                      }}
-                    >
-                      ✕
-                    </Button>
-                  </div>
-                ))}
-              </div>
-
-              <Button onClick={handleCreate} disabled={!form.nombre} className="w-full">
-                Crear Plan
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+      {/* KPI Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KPICard
+          label="Total Planes"
+          value={stats.total}
+          icon={ClipboardList}
+          description="planes definidos"
+        />
+        <KPICard
+          label="Publicados"
+          value={stats.publicados}
+          icon={CheckCircle}
+          description="planes activos"
+        />
+        <KPICard
+          label="Borradores"
+          value={stats.borradores}
+          icon={FileEdit}
+          description="en edición"
+        />
+        <KPICard
+          label="Modelos Cubiertos"
+          value={stats.modelosCubiertos}
+          icon={Bike}
+          description="marca/modelo con plan"
+        />
       </div>
 
-      {/* Generar OT Dialog */}
-      <Dialog open={!!generarDialog} onOpenChange={() => { setGenerarDialog(null); setMotoId(""); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Generar OT desde Plan</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Moto *</Label>
-              <Select value={motoId} onValueChange={setMotoId}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar moto" /></SelectTrigger>
-                <SelectContent>
-                  {motos.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.patente} — {m.marca} {m.modelo}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={() => generarDialog && handleGenerarOT(generarDialog)} disabled={!motoId} className="w-full">
-              Generar OT
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Plans list */}
-      {loading ? (
-        <div className="text-center py-12 text-muted-foreground">Cargando...</div>
-      ) : planes.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">No hay planes de mantenimiento</div>
-      ) : (
-        <div className="space-y-4">
-          {planes.map((plan) => (
-            <Card key={plan.id}>
-              <CardHeader
-                className="cursor-pointer"
-                onClick={() => setExpandedId(expandedId === plan.id ? null : plan.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <ClipboardList className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <CardTitle className="text-sm font-medium">{plan.nombre}</CardTitle>
-                      {plan.descripcion && (
-                        <p className="text-xs text-muted-foreground mt-1">{plan.descripcion}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">{plan.tipoService.replace(/_/g, " ")}</Badge>
-                    <Badge variant="outline" className="text-xs">{plan._count.tareas} tareas</Badge>
-                    <Badge variant="outline" className="text-xs">{plan._count.repuestos} repuestos</Badge>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => { e.stopPropagation(); setGenerarDialog(plan.id); }}
-                    >
-                      <Wrench className="h-4 w-4 mr-1" /> Generar OT
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-negative"
-                      onClick={(e) => { e.stopPropagation(); handleDelete(plan.id); }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              {expandedId === plan.id && (
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="font-medium text-sm mb-2">Tareas</h4>
-                      {plan.tareas.length === 0 ? (
-                        <p className="text-muted-foreground text-xs">Sin tareas</p>
-                      ) : (
-                        <div className="space-y-1">
-                          {plan.tareas.map((t) => (
-                            <div key={t.id} className="flex items-center gap-2 text-sm">
-                              <Badge variant="outline" className="text-xs shrink-0">{t.categoria}</Badge>
-                              <span>{t.descripcion}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm mb-2">Repuestos</h4>
-                      {plan.repuestos.length === 0 ? (
-                        <p className="text-muted-foreground text-xs">Sin repuestos</p>
-                      ) : (
-                        <div className="space-y-1">
-                          {plan.repuestos.map((r) => (
-                            <div key={r.id} className="flex items-center gap-2 text-sm">
-                              <span className="font-mono text-xs text-muted-foreground">x{r.cantidad}</span>
-                              <span>{r.nombre}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
-                    {plan.kmIntervalo && <span>Cada {plan.kmIntervalo.toLocaleString()} km</span>}
-                    {plan.diasIntervalo && <span>Cada {plan.diasIntervalo} días</span>}
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
+      <PlanesTable
+        data={tableData}
+        planes={planDetails}
+        marcas={stats.marcas}
+      />
     </div>
   );
 }

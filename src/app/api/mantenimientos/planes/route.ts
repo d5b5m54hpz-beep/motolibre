@@ -46,14 +46,21 @@ export async function POST(req: NextRequest) {
       nombre: parsed.data.nombre,
       tipoService: parsed.data.tipoService,
       descripcion: parsed.data.descripcion ?? undefined,
+      marcaMoto: parsed.data.marcaMoto ?? undefined,
+      modeloMoto: parsed.data.modeloMoto ?? undefined,
       kmIntervalo: parsed.data.kmIntervalo ?? undefined,
       diasIntervalo: parsed.data.diasIntervalo ?? undefined,
+      garantiaMeses: parsed.data.garantiaMeses ?? undefined,
+      garantiaKm: parsed.data.garantiaKm ?? undefined,
+      estado: parsed.data.estado ?? "BORRADOR",
       tareas: body.tareas?.length
         ? {
             create: body.tareas.map(
-              (t: { categoria: string; descripcion: string }, i: number) => ({
+              (t: { categoria: string; descripcion: string; accion?: string; tiempoEstimado?: number | null }, i: number) => ({
                 categoria: t.categoria,
                 descripcion: t.descripcion,
+                accion: t.accion ?? "CHECK",
+                tiempoEstimado: t.tiempoEstimado ?? undefined,
                 orden: i + 1,
               })
             ),
@@ -62,9 +69,13 @@ export async function POST(req: NextRequest) {
       repuestos: body.repuestos?.length
         ? {
             create: body.repuestos.map(
-              (r: { nombre: string; cantidad: number }) => ({
+              (r: { nombre: string; cantidad: number; codigoOEM?: string; unidad?: string; capacidad?: string; precioUnitario?: number }) => ({
                 nombre: r.nombre,
                 cantidad: r.cantidad,
+                codigoOEM: r.codigoOEM ?? undefined,
+                unidad: r.unidad ?? undefined,
+                capacidad: r.capacidad ?? undefined,
+                precioUnitario: r.precioUnitario ?? undefined,
               })
             ),
           }

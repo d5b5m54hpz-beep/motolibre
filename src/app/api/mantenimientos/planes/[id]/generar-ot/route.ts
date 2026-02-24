@@ -48,6 +48,7 @@ export async function POST(
           contratoId: body.contratoId ?? undefined,
           clienteId: body.clienteId ?? undefined,
           descripcion: `${plan.nombre}${plan.descripcion ? ` — ${plan.descripcion}` : ""}`,
+          planMantenimientoId: plan.id,
           solicitadoPor: userId,
           tareas: {
             create: plan.tareas.map((t) => ({

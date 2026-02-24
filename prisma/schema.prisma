@@ -1429,6 +1429,19 @@ enum CategoriaTarea {
   OTRO
 }
 
+enum AccionTarea {
+  CHECK
+  REPLACE
+  CHECK_AND_ADJUST
+  ADJUST
+}
+
+enum EstadoPlan {
+  BORRADOR
+  PUBLICADO
+  ARCHIVADO
+}
+
 enum ResultadoTarea {
   PENDIENTE
   OK
@@ -1482,6 +1495,8 @@ model OrdenTrabajo {
 
   // ── Origen ──
   mantenimientoProgramadoId String?
+  planMantenimientoId String?
+  planMantenimiento   PlanMantenimiento? @relation(fields: [planMantenimientoId], references: [id])
   solicitadoPor       String?
 
   // ── Taller/Mecánico FK ──
@@ -1582,16 +1597,37 @@ model PlanMantenimiento {
   nombre            String
   tipoService       TipoService
   descripcion       String?
+
+  // ── Vehículo vinculado ──
+  marcaMoto         String?
+  modeloMoto        String?
+
+  // ── Intervalos ──
   kmIntervalo       Int?
   diasIntervalo     Int?
+
+  // ── Garantía ──
+  garantiaMeses     Int?
+  garantiaKm        Int?
+
+  // ── Estado ──
+  estado            EstadoPlan      @default(BORRADOR)
   activo            Boolean         @default(true)
 
+  // ── Audit ──
+  creadoPor         String?
+  actualizadoPor    String?
+
+  // ── Relaciones ──
   tareas            TareaPlan[]
   repuestos         RepuestoTareaPlan[]
+  ordenesGeneradas  OrdenTrabajo[]
 
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
+  @@index([estado])
+  @@index([marcaMoto, modeloMoto])
   @@map("planes_mantenimiento")
 }
 
@@ -1602,7 +1638,9 @@ model TareaPlan {
 
   categoria         CategoriaTarea
   descripcion       String
+  accion            AccionTarea     @default(CHECK)
   orden             Int             @default(0)
+  tiempoEstimado    Int?            // minutos
 
   createdAt         DateTime        @default(now())
 
@@ -1616,7 +1654,11 @@ model RepuestoTareaPlan {
   plan              PlanMantenimiento @relation(fields: [planId], references: [id], onDelete: Cascade)
 
   nombre            String
-  cantidad          Int
+  codigoOEM         String?
+  cantidad          Int             @default(1)
+  unidad            String?         // "litros", "unidad", etc.
+  capacidad         String?         // "1.1L ± 0.1L"
+  precioUnitario    Float?
   repuestoId        String?
 
   createdAt         DateTime        @default(now())
@@ -1645,6 +1687,7 @@ model Taller {
   especialidades  String[]
   activo          Boolean     @default(true)
   notas           String?
+  tarifaHora      Float?      // $/hora para cálculo de costos
 
   mecanicos       Mecanico[]
 

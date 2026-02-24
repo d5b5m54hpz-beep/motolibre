@@ -5,10 +5,11 @@ export const tallerCreateSchema = z.object({
   tipo: z.enum(["INTERNO", "EXTERNO"]),
   direccion: z.string().optional().nullable(),
   telefono: z.string().optional().nullable(),
-  email: z.string().email().optional().nullable(),
+  email: z.string().email().optional().nullable().or(z.literal("")),
   contacto: z.string().optional().nullable(),
   especialidades: z.array(z.string()).default([]),
   notas: z.string().optional().nullable(),
+  tarifaHora: z.number().positive().optional().nullable(),
 });
 
 export const mecanicoCreateSchema = z.object({

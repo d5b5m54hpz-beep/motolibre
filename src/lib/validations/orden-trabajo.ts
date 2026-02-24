@@ -43,6 +43,11 @@ export const planMantenimientoSchema = z.object({
   nombre: z.string().min(1),
   tipoService: z.enum(["SERVICE_5000KM", "SERVICE_10000KM", "SERVICE_15000KM", "SERVICE_20000KM", "SERVICE_GENERAL", "REPARACION", "INSPECCION", "OTRO"]),
   descripcion: z.string().optional().nullable(),
+  marcaMoto: z.string().optional().nullable(),
+  modeloMoto: z.string().optional().nullable(),
   kmIntervalo: z.number().int().positive().optional().nullable(),
   diasIntervalo: z.number().int().positive().optional().nullable(),
+  garantiaMeses: z.number().int().positive().optional().nullable(),
+  garantiaKm: z.number().int().positive().optional().nullable(),
+  estado: z.enum(["BORRADOR", "PUBLICADO", "ARCHIVADO"]).optional(),
 });

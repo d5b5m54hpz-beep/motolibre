@@ -126,6 +126,10 @@ const statusToVariant: Record<string, StatusVariant> = {
   EN_ESPERA: "warning",
   ASIGNADA: "info",
 
+  // Planes
+  PUBLICADO: "success",
+  ARCHIVADO: "neutral",
+
   // Genéricos
   BORRADOR: "neutral",
   ENVIADO: "info",

@@ -58,8 +58,13 @@ export async function PUT(
       nombre: parsed.data.nombre,
       tipoService: parsed.data.tipoService,
       descripcion: parsed.data.descripcion ?? undefined,
+      marcaMoto: parsed.data.marcaMoto ?? undefined,
+      modeloMoto: parsed.data.modeloMoto ?? undefined,
       kmIntervalo: parsed.data.kmIntervalo ?? undefined,
       diasIntervalo: parsed.data.diasIntervalo ?? undefined,
+      garantiaMeses: parsed.data.garantiaMeses ?? undefined,
+      garantiaKm: parsed.data.garantiaKm ?? undefined,
+      estado: parsed.data.estado ?? undefined,
     },
   });
 
