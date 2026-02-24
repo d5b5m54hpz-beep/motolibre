@@ -12,6 +12,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed-audit": "tsx prisma/seed-audit.ts",
     "db:studio": "prisma studio",
     "test": "vitest run",
     "test:watch": "vitest",
