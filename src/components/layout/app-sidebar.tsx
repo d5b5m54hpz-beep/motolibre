@@ -299,8 +299,8 @@ export function AppSidebar() {
           className={cn(
             "flex shrink-0 items-center border-b border-border",
             collapsed
-              ? "h-[60px] flex-col justify-center gap-1.5 py-3 px-2"
-              : "h-[60px] px-4 gap-2.5"
+              ? "h-14 flex-col justify-center gap-1 py-2 px-2"
+              : "h-14 px-4 gap-2.5"
           )}
         >
           {collapsed ? (
