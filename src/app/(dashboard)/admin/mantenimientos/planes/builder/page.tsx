@@ -26,6 +26,11 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/format";
+import { toast } from "sonner";
+import {
+  useRepuestosSugeridos,
+  type RepuestoSugerido,
+} from "@/hooks/use-repuestos-sugeridos";
 import {
   ChevronLeft,
   ChevronDown,
@@ -43,6 +48,10 @@ import {
   Wrench,
   X,
   BookOpen,
+  Sparkles,
+  ThumbsUp,
+  ThumbsDown,
+  Zap,
 } from "lucide-react";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -360,6 +369,21 @@ export default function PlanBuilderPage() {
   const [categoryCollapsed, setCategoryCollapsed] = useState<
     Record<string, boolean>
   >({});
+
+  // ── Repuestos sugeridos ──
+  const {
+    sugerencias,
+    allSugerencias,
+    loading: sugerenciasLoading,
+    dismiss: dismissSugerencia,
+  } = useRepuestosSugeridos({
+    tareaItems,
+    assignments,
+    milestones,
+    repuestoItems,
+    marcaMoto: marca || undefined,
+    modeloMoto: modelo || undefined,
+  });
 
   // ── Fetch marcas/modelos ──
   useEffect(() => {
@@ -886,6 +910,91 @@ export default function PlanBuilderPage() {
       });
       return next;
     });
+  }
+
+  // ── Accept suggested repuesto ──
+  function acceptSugerencia(sug: RepuestoSugerido) {
+    // 1. Add repuesto
+    const newRepuesto: RepuestoItem = {
+      repuestoId: sug.repuestoId,
+      nombre: sug.repuestoNombre,
+      codigoOEM: sug.repuestoCodigo ?? undefined,
+      unidad: sug.repuestoUnidad ?? undefined,
+      precioUnitario: sug.repuestoPrecio ?? undefined,
+      cantidadDefault: sug.cantidadDefault,
+    };
+    setRepuestoItems((prev) => [...prev, newRepuesto]);
+    const newIdx = repuestoItems.length;
+
+    // 2. Auto-assign milestones: find ALL tareas that map to this repuestoId
+    const matchingTareaIndices = allSugerencias
+      .filter((s) => s.repuestoId === sug.repuestoId)
+      .map((s) =>
+        tareaItems.findIndex((t) => t.itemServiceId === s.itemServiceId)
+      )
+      .filter((idx) => idx >= 0);
+
+    setAssignments((prev) => {
+      const next = { ...prev };
+      milestones.forEach((_, mIdx) => {
+        const shouldAssign = matchingTareaIndices.some(
+          (tIdx) => prev[`tarea-${tIdx}-${mIdx}`]
+        );
+        if (shouldAssign) {
+          next[assignmentKey("repuesto", newIdx, mIdx)] = true;
+        }
+      });
+      return next;
+    });
+
+    // 3. Set cantidades for assigned milestones
+    setRepuestoCantidades((prev) => {
+      const next = { ...prev };
+      milestones.forEach((_, mIdx) => {
+        const shouldAssign = matchingTareaIndices.some(
+          (tIdx) => assignments[`tarea-${tIdx}-${mIdx}`]
+        );
+        if (shouldAssign) {
+          next[cantidadKey(newIdx, mIdx)] = sug.cantidadDefault;
+        }
+      });
+      return next;
+    });
+
+    // 4. Feedback loop: offer to save IA suggestion as permanent mapping
+    if (sug.origenIA && sug.itemServiceId) {
+      toast("Sugerencia IA aceptada", {
+        description: `¿Guardar "${sug.repuestoNombre}" como mapeo permanente para "${sug.itemServiceNombre}"?`,
+        action: {
+          label: "Guardar mapeo",
+          onClick: async () => {
+            try {
+              const res = await fetch(
+                `/api/items-service/${sug.itemServiceId}/repuestos`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    repuestoId: sug.repuestoId,
+                    cantidadDefault: sug.cantidadDefault,
+                    obligatorio: false,
+                    origenIA: true,
+                  }),
+                }
+              );
+              if (res.ok) {
+                toast.success("Mapeo guardado");
+              } else {
+                toast.error("Error al guardar mapeo");
+              }
+            } catch {
+              toast.error("Error al guardar mapeo");
+            }
+          },
+        },
+        duration: 8000,
+      });
+    }
   }
 
   // ── Inline search callbacks (Task 2) ──
@@ -1722,7 +1831,8 @@ export default function PlanBuilderPage() {
 
                       {/* ── Divider ── */}
                       {tareaItems.length > 0 &&
-                        repuestoItems.length > 0 && (
+                        (repuestoItems.length > 0 ||
+                          sugerencias.length > 0) && (
                           <tr>
                             <td
                               colSpan={milestones.length + 2}
@@ -1732,6 +1842,102 @@ export default function PlanBuilderPage() {
                             </td>
                           </tr>
                         )}
+
+                      {/* ── SUGERENCIAS Section ── */}
+                      {sugerencias.length > 0 && (
+                        <>
+                          <tr className="bg-amber-50/50 dark:bg-amber-950/20">
+                            <td
+                              colSpan={milestones.length + 2}
+                              className="sticky left-0 z-10 bg-amber-50/50 dark:bg-amber-950/20 px-4 py-2"
+                            >
+                              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                                <Sparkles className="h-3.5 w-3.5" />
+                                Repuestos Sugeridos ({sugerencias.length})
+                                {sugerenciasLoading && (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                          {sugerencias.map((sug) => (
+                            <tr
+                              key={`sug-${sug.repuestoId}`}
+                              className="group border-b border-amber-200/30 dark:border-amber-800/30 bg-amber-50/30 dark:bg-amber-950/10 hover:bg-amber-100/50 dark:hover:bg-amber-950/30 transition-colors"
+                            >
+                              <td
+                                colSpan={milestones.length + 2}
+                                className="sticky left-0 z-10 bg-inherit px-4 py-2"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium">
+                                      {sug.repuestoNombre}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground flex-wrap">
+                                      {sug.repuestoCodigo && (
+                                        <span className="font-mono">
+                                          {sug.repuestoCodigo}
+                                        </span>
+                                      )}
+                                      <span>
+                                        x{sug.cantidadDefault}{" "}
+                                        {sug.repuestoUnidad ?? "u"}
+                                      </span>
+                                      {sug.repuestoPrecio != null && (
+                                        <span className="font-mono tabular-nums">
+                                          {formatMoney(sug.repuestoPrecio)}/u
+                                        </span>
+                                      )}
+                                      <span className="text-amber-600 dark:text-amber-500">
+                                        Por: {sug.itemServiceNombre}
+                                      </span>
+                                      {sug.obligatorio && (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-[9px] py-0 px-1 border-amber-400"
+                                        >
+                                          Obligatorio
+                                        </Badge>
+                                      )}
+                                      {sug.origenIA && (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-[9px] py-0 px-1 border-purple-400 text-purple-500"
+                                        >
+                                          <Zap className="h-2.5 w-2.5 mr-0.5" />
+                                          IA
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 px-2 text-xs text-green-600 hover:bg-green-100 dark:hover:bg-green-950/30"
+                                      onClick={() => acceptSugerencia(sug)}
+                                    >
+                                      <ThumbsUp className="h-3.5 w-3.5 mr-1" />
+                                      Aceptar
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 px-2 text-xs text-muted-foreground hover:bg-red-100 dark:hover:bg-red-950/30"
+                                      onClick={() =>
+                                        dismissSugerencia(sug.repuestoId)
+                                      }
+                                    >
+                                      <ThumbsDown className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </>
+                      )}
 
                       {/* ── REPUESTOS Section ── */}
                       {repuestoItems.length > 0 && (

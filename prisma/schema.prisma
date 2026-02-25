@@ -1652,7 +1652,8 @@ model ItemService {
   activo          Boolean         @default(true)
 
   // ── Relaciones ──
-  tareasQueLoUsan TareaPlan[]
+  tareasQueLoUsan    TareaPlan[]
+  repuestosSugeridos ItemServiceRepuesto[]
 
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -1660,6 +1661,29 @@ model ItemService {
   @@index([categoria])
   @@index([activo])
   @@map("items_service")
+}
+
+model ItemServiceRepuesto {
+  id              String      @id @default(cuid())
+
+  itemServiceId   String
+  itemService     ItemService @relation(fields: [itemServiceId], references: [id], onDelete: Cascade)
+
+  repuestoId      String
+  repuesto        Repuesto    @relation(fields: [repuestoId], references: [id], onDelete: Cascade)
+
+  cantidadDefault Int         @default(1)
+  obligatorio     Boolean     @default(false)
+  notas           String?
+  origenIA        Boolean     @default(false)
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([itemServiceId, repuestoId])
+  @@index([itemServiceId])
+  @@index([repuestoId])
+  @@map("item_service_repuestos")
 }
 
 model PlanMantenimiento {
@@ -2016,6 +2040,7 @@ model Repuesto {
   historialCostos   HistorialCostoRepuesto[]
   itemsVenta        ItemVentaRepuesto[]
   planesQueLoUsan   RepuestoTareaPlan[]
+  tareasAsociadas   ItemServiceRepuesto[]
 
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
