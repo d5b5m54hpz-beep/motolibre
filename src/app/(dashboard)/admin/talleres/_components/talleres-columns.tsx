@@ -147,11 +147,20 @@ export const talleresColumns: ColumnDef<TallerRow>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="$/hora" />,
     cell: ({ row }) => {
       const tarifa = row.original.tarifaHora;
-      return tarifa ? (
-        <span className="font-mono tabular-nums text-sm">{formatMoney(tarifa)}</span>
-      ) : (
-        <span className="text-muted-foreground">—</span>
-      );
+      const isInterno = row.original.tipo === "INTERNO";
+      if (tarifa) {
+        return (
+          <span className="font-mono tabular-nums text-sm">{formatMoney(tarifa)}</span>
+        );
+      }
+      if (isInterno) {
+        return (
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-300 text-blue-600">
+            RRHH
+          </Badge>
+        );
+      }
+      return <span className="text-muted-foreground">—</span>;
     },
   },
   // ── Estado ──
