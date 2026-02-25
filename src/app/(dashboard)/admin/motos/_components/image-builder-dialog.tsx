@@ -25,7 +25,11 @@ import {
   Loader2,
   ImageIcon,
   ZoomIn,
+  ZoomOut,
   Save,
+  FlipHorizontal2,
+  FlipVertical2,
+  Maximize,
 } from "lucide-react";
 import { getCroppedImg } from "./crop-utils";
 import { ApplyImageDialog } from "./apply-image-dialog";
@@ -71,6 +75,10 @@ export function ImageBuilderDialog({
   const [showApplyAll, setShowApplyAll] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
 
+  // Flip state
+  const [flipH, setFlipH] = useState(false);
+  const [flipV, setFlipV] = useState(false);
+
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -87,6 +95,8 @@ export function ImageBuilderDialog({
     setIsRemovingBg(false);
     setBgRemoved(false);
     setIsUploading(false);
+    setFlipH(false);
+    setFlipV(false);
     setIsDragging(false);
   }
 
@@ -153,6 +163,13 @@ export function ImageBuilderDialog({
     });
   }
 
+  // ── Fit to frame ──
+  function fitToFrame() {
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setRotation(0);
+  }
+
   // ── Background removal ──
   async function handleRemoveBackground() {
     if (!imageSrc) return;
@@ -190,11 +207,13 @@ export function ImageBuilderDialog({
 
     setIsUploading(true);
     try {
-      // 1. Crop via Canvas
+      // 1. Crop via Canvas (with rotation + flip)
       const croppedBlob = await getCroppedImg(
         imageSrc,
         croppedAreaPixels,
-        rotation
+        rotation,
+        flipH,
+        flipV
       );
 
       // 2. Compress to WebP
@@ -328,31 +347,43 @@ export function ImageBuilderDialog({
             <div className="space-y-4 flex-1 min-h-0">
               {/* Crop area */}
               <div className="relative h-[350px] bg-muted rounded-lg overflow-hidden">
-                <Cropper
-                  image={imageSrc}
-                  crop={crop}
-                  zoom={zoom}
-                  rotation={rotation}
-                  aspect={16 / 9}
-                  onCropChange={setCrop}
-                  onZoomChange={setZoom}
-                  onCropComplete={onCropComplete}
-                />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    transform: `scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`,
+                  }}
+                >
+                  <Cropper
+                    image={imageSrc}
+                    crop={crop}
+                    zoom={zoom}
+                    rotation={rotation}
+                    aspect={16 / 9}
+                    objectFit="contain"
+                    minZoom={0.3}
+                    maxZoom={3}
+                    restrictPosition={false}
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onCropComplete={onCropComplete}
+                  />
+                </div>
               </div>
 
               {/* Controls */}
               <div className="space-y-3">
                 {/* Zoom */}
                 <div className="flex items-center gap-3">
-                  <ZoomIn className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <ZoomOut className="h-4 w-4 text-muted-foreground shrink-0" />
                   <Slider
-                    min={1}
+                    min={0.3}
                     max={3}
                     step={0.05}
                     value={[zoom]}
                     onValueChange={(vals) => setZoom(vals[0] ?? zoom)}
                     className="flex-1"
                   />
+                  <ZoomIn className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span className="text-xs text-muted-foreground font-mono w-10 text-right">
                     {zoom.toFixed(1)}x
                   </span>
@@ -365,6 +396,7 @@ export function ImageBuilderDialog({
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => rotate90("ccw")}
+                    title="Rotar 90° izquierda"
                   >
                     <RotateCcw className="h-4 w-4" />
                   </Button>
@@ -381,6 +413,7 @@ export function ImageBuilderDialog({
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => rotate90("cw")}
+                    title="Rotar 90° derecha"
                   >
                     <RotateCw className="h-4 w-4" />
                   </Button>
@@ -389,8 +422,38 @@ export function ImageBuilderDialog({
                   </span>
                 </div>
 
-                {/* Background removal */}
-                <div className="flex items-center gap-2">
+                {/* Flip + Fit + Background removal */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    variant={flipH ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setFlipH((v) => !v)}
+                    title="Voltear horizontal"
+                  >
+                    <FlipHorizontal2 className="h-4 w-4 mr-1" />
+                    Voltear H
+                  </Button>
+                  <Button
+                    variant={flipV ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setFlipV((v) => !v)}
+                    title="Voltear vertical"
+                  >
+                    <FlipVertical2 className="h-4 w-4 mr-1" />
+                    Voltear V
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fitToFrame}
+                    title="Encajar en el marco"
+                  >
+                    <Maximize className="h-4 w-4 mr-1" />
+                    Encajar
+                  </Button>
+
+                  <div className="w-px h-6 bg-border mx-1" />
+
                   <Button
                     variant="outline"
                     size="sm"
@@ -416,7 +479,7 @@ export function ImageBuilderDialog({
                       onClick={restoreOriginal}
                     >
                       <Undo2 className="h-4 w-4 mr-2" />
-                      Restaurar original
+                      Restaurar
                     </Button>
                   )}
                 </div>

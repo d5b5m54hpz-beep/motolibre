@@ -1,5 +1,5 @@
 /**
- * Canvas helpers for image cropping and rotation.
+ * Canvas helpers for image cropping, rotation and flipping.
  */
 
 export interface PixelCrop {
@@ -34,13 +34,15 @@ function rotateSize(width: number, height: number, rotation: number) {
 }
 
 /**
- * Crops and rotates an image using Canvas API.
+ * Crops, rotates and flips an image using Canvas API.
  * Returns a WebP Blob ready for compression/upload.
  */
 export async function getCroppedImg(
   imageSrc: string,
   pixelCrop: PixelCrop,
-  rotation = 0
+  rotation = 0,
+  flipH = false,
+  flipV = false
 ): Promise<Blob> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
@@ -60,6 +62,7 @@ export async function getCroppedImg(
 
   ctx.translate(bBoxWidth / 2, bBoxHeight / 2);
   ctx.rotate(rotRad);
+  ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
   ctx.translate(-image.width / 2, -image.height / 2);
   ctx.drawImage(image, 0, 0);
 
