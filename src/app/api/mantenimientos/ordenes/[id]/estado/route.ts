@@ -98,15 +98,37 @@ export async function POST(
       if (body.observaciones) updateData.observaciones = body.observaciones;
       if (body.costoManoObra !== undefined) updateData.costoManoObra = body.costoManoObra;
 
-      // Calcular costo total
-      const repuestos = await prisma.repuestoOrdenTrabajo.aggregate({
+      // Calcular costo total desde ItemOT si hay items, sino fallback a legacy
+      const items = await prisma.itemOT.findMany({
         where: { ordenTrabajoId: id },
-        _sum: { subtotal: true },
       });
-      const costoRepuestos = Number(repuestos._sum.subtotal ?? 0);
-      const costoManoObra = body.costoManoObra !== undefined ? Number(body.costoManoObra) : Number(ot.costoManoObra ?? 0);
-      updateData.costoRepuestos = costoRepuestos;
-      updateData.costoTotal = costoManoObra + costoRepuestos;
+
+      if (items.length > 0) {
+        // Nuevo sistema: calcular desde ItemOT
+        const costoManoObraItems = items
+          .filter((i) => i.tipo === "MANO_OBRA")
+          .reduce((sum, i) => sum + Number(i.subtotal), 0);
+        const costoRepuestosItems = items
+          .filter((i) => i.tipo === "REPUESTO")
+          .reduce((sum, i) => sum + Number(i.subtotal), 0);
+        const costoInsumosItems = items
+          .filter((i) => i.tipo === "INSUMO")
+          .reduce((sum, i) => sum + Number(i.subtotal), 0);
+
+        updateData.costoManoObra = costoManoObraItems;
+        updateData.costoRepuestos = costoRepuestosItems + costoInsumosItems;
+        updateData.costoTotal = costoManoObraItems + costoRepuestosItems + costoInsumosItems;
+      } else {
+        // Legacy: calcular desde RepuestoOrdenTrabajo
+        const repuestos = await prisma.repuestoOrdenTrabajo.aggregate({
+          where: { ordenTrabajoId: id },
+          _sum: { subtotal: true },
+        });
+        const costoRepuestos = Number(repuestos._sum.subtotal ?? 0);
+        const costoManoObra = body.costoManoObra !== undefined ? Number(body.costoManoObra) : Number(ot.costoManoObra ?? 0);
+        updateData.costoRepuestos = costoRepuestos;
+        updateData.costoTotal = costoManoObra + costoRepuestos;
+      }
       break;
     }
     case "CANCELADA":

@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import {
   Wrench,
@@ -33,6 +34,9 @@ import {
   Clock,
   Camera,
   ArrowLeft,
+  Trash2,
+  Search,
+  DollarSign,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -58,6 +62,20 @@ interface Foto {
   url: string;
   tipo: string;
   descripcion: string | null;
+  createdAt: string;
+}
+
+interface ItemCosto {
+  id: string;
+  tipo: "MANO_OBRA" | "REPUESTO" | "INSUMO";
+  descripcion: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
+  mecanicoId: string | null;
+  tiempoMinutos: number | null;
+  repuestoId: string | null;
+  codigoOEM: string | null;
   createdAt: string;
 }
 
@@ -103,6 +121,7 @@ interface OTDetalle {
   mantenimientoProgramadoId: string | null;
   tareas: Tarea[];
   repuestos: Repuesto[];
+  items: ItemCosto[];
   fotos: Foto[];
   historial: Historial[];
 }
@@ -137,9 +156,36 @@ export default function OTDetallePage() {
   const [nuevoRepuesto, setNuevoRepuesto] = useState({ nombre: "", cantidad: 1, precioUnitario: 0 });
   const [actionForm, setActionForm] = useState<Record<string, string | number>>({});
 
+  // Items de Costo
+  const [itemDialog, setItemDialog] = useState(false);
+  const [nuevoItem, setNuevoItem] = useState<{
+    tipo: "MANO_OBRA" | "REPUESTO" | "INSUMO";
+    descripcion: string;
+    cantidad: number;
+    precioUnitario: number;
+    mecanicoId: string;
+    tiempoMinutos: number;
+    repuestoId: string;
+    codigoOEM: string;
+  }>({
+    tipo: "MANO_OBRA",
+    descripcion: "",
+    cantidad: 1,
+    precioUnitario: 0,
+    mecanicoId: "",
+    tiempoMinutos: 0,
+    repuestoId: "",
+    codigoOEM: "",
+  });
+  const [tarifaMecanico, setTarifaMecanico] = useState<number | null>(null);
+  const [repuestoSearch, setRepuestoSearch] = useState("");
+  const [repuestosResult, setRepuestosResult] = useState<Array<{ id: string; codigo: string; nombre: string; precioCompra: number | null; stock: number; unidad: string; categoria: string }>>([]);
+  const [searchingRepuestos, setSearchingRepuestos] = useState(false);
+
   // Talleres/Mecánicos for selects
   const [talleres, setTalleres] = useState<Array<{ id: string; nombre: string; tipo: string; mecanicos: Array<{ id: string; nombre: string; apellido: string }> }>>([]);
   const [mecanicosFiltrados, setMecanicosFiltrados] = useState<Array<{ id: string; nombre: string; apellido: string }>>([]);
+  const [todosMecanicos, setTodosMecanicos] = useState<Array<{ id: string; nombre: string; apellido: string; tallerId: string }>>([]);
 
   const fetchOT = useCallback(async () => {
     const res = await fetch(`/api/mantenimientos/ordenes/${id}`);
@@ -159,6 +205,14 @@ export default function OTDetallePage() {
       if (r.ok) {
         const j = await r.json();
         setTalleres(j.data);
+        // Build flat list of all mechanics for item dialog
+        const allMecs: Array<{ id: string; nombre: string; apellido: string; tallerId: string }> = [];
+        for (const t of j.data) {
+          for (const m of t.mecanicos) {
+            allMecs.push({ ...m, tallerId: t.id });
+          }
+        }
+        setTodosMecanicos(allMecs);
       }
     });
   }, []);
@@ -215,6 +269,100 @@ export default function OTDetallePage() {
 
   async function eliminarRepuesto(repuestoId: string) {
     await fetch(`/api/mantenimientos/ordenes/${id}/repuestos/${repuestoId}`, {
+      method: "DELETE",
+    });
+    void fetchOT();
+  }
+
+  async function buscarRepuestos(query: string) {
+    setRepuestoSearch(query);
+    if (query.length < 2) {
+      setRepuestosResult([]);
+      return;
+    }
+    setSearchingRepuestos(true);
+    try {
+      const r = await fetch(`/api/repuestos/search?q=${encodeURIComponent(query)}`);
+      if (r.ok) {
+        const j = await r.json();
+        setRepuestosResult(j.data ?? []);
+      }
+    } finally {
+      setSearchingRepuestos(false);
+    }
+  }
+
+  async function fetchTarifaMecanico(mecanicoId: string) {
+    if (!mecanicoId) {
+      setTarifaMecanico(null);
+      return;
+    }
+    try {
+      const r = await fetch(`/api/mecanicos/${mecanicoId}/tarifa`);
+      if (r.ok) {
+        const j = await r.json();
+        setTarifaMecanico(j.data?.tarifaHora ?? null);
+      }
+    } catch {
+      setTarifaMecanico(null);
+    }
+  }
+
+  function calcularPrecioManoObra(tarifaHora: number | null, minutos: number): number {
+    if (!tarifaHora || !minutos) return 0;
+    return Math.round((tarifaHora / 60) * minutos);
+  }
+
+  async function agregarItem() {
+    if (!nuevoItem.descripcion) return;
+
+    let precioUnitario = nuevoItem.precioUnitario;
+    if (nuevoItem.tipo === "MANO_OBRA" && tarifaMecanico && nuevoItem.tiempoMinutos) {
+      precioUnitario = calcularPrecioManoObra(tarifaMecanico, nuevoItem.tiempoMinutos);
+    }
+
+    const payload: Record<string, unknown> = {
+      tipo: nuevoItem.tipo,
+      descripcion: nuevoItem.descripcion,
+      cantidad: nuevoItem.cantidad,
+      precioUnitario,
+    };
+
+    if (nuevoItem.tipo === "MANO_OBRA") {
+      if (nuevoItem.mecanicoId) payload.mecanicoId = nuevoItem.mecanicoId;
+      if (nuevoItem.tiempoMinutos) payload.tiempoMinutos = nuevoItem.tiempoMinutos;
+    }
+    if (nuevoItem.tipo === "REPUESTO") {
+      if (nuevoItem.repuestoId) payload.repuestoId = nuevoItem.repuestoId;
+      if (nuevoItem.codigoOEM) payload.codigoOEM = nuevoItem.codigoOEM;
+    }
+
+    const res = await fetch(`/api/mantenimientos/ordenes/${id}/items`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      setItemDialog(false);
+      setNuevoItem({
+        tipo: "MANO_OBRA",
+        descripcion: "",
+        cantidad: 1,
+        precioUnitario: 0,
+        mecanicoId: "",
+        tiempoMinutos: 0,
+        repuestoId: "",
+        codigoOEM: "",
+      });
+      setTarifaMecanico(null);
+      setRepuestoSearch("");
+      setRepuestosResult([]);
+      void fetchOT();
+    }
+  }
+
+  async function eliminarItem(itemId: string) {
+    await fetch(`/api/mantenimientos/ordenes/${id}/items/${itemId}`, {
       method: "DELETE",
     });
     void fetchOT();
@@ -727,6 +875,329 @@ export default function OTDetallePage() {
         </CardContent>
       </Card>
 
+      {/* Items de Costo */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-sm font-medium">
+            <DollarSign className="h-4 w-4" /> Items de Costo ({ot.items.length})
+          </CardTitle>
+          {isEditable && (
+            <Dialog open={itemDialog} onOpenChange={(open) => {
+              setItemDialog(open);
+              if (!open) {
+                setNuevoItem({
+                  tipo: "MANO_OBRA",
+                  descripcion: "",
+                  cantidad: 1,
+                  precioUnitario: 0,
+                  mecanicoId: "",
+                  tiempoMinutos: 0,
+                  repuestoId: "",
+                  codigoOEM: "",
+                });
+                setTarifaMecanico(null);
+                setRepuestoSearch("");
+                setRepuestosResult([]);
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline">
+                  <Plus className="h-4 w-4 mr-1" /> Agregar Item
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Nuevo Item de Costo</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Tipo</Label>
+                    <Select
+                      value={nuevoItem.tipo}
+                      onValueChange={(v) => {
+                        setNuevoItem({
+                          ...nuevoItem,
+                          tipo: v as "MANO_OBRA" | "REPUESTO" | "INSUMO",
+                          descripcion: "",
+                          cantidad: 1,
+                          precioUnitario: 0,
+                          mecanicoId: "",
+                          tiempoMinutos: 0,
+                          repuestoId: "",
+                          codigoOEM: "",
+                        });
+                        setTarifaMecanico(null);
+                        setRepuestoSearch("");
+                        setRepuestosResult([]);
+                      }}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MANO_OBRA">Mano de Obra</SelectItem>
+                        <SelectItem value="REPUESTO">Repuesto</SelectItem>
+                        <SelectItem value="INSUMO">Insumo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* MANO_OBRA fields */}
+                  {nuevoItem.tipo === "MANO_OBRA" && (
+                    <>
+                      <div>
+                        <Label>Mecanico</Label>
+                        <Select
+                          value={nuevoItem.mecanicoId}
+                          onValueChange={(v) => {
+                            setNuevoItem({ ...nuevoItem, mecanicoId: v });
+                            void fetchTarifaMecanico(v);
+                          }}
+                        >
+                          <SelectTrigger><SelectValue placeholder="Seleccionar mecanico" /></SelectTrigger>
+                          <SelectContent>
+                            {todosMecanicos.map((m) => (
+                              <SelectItem key={m.id} value={m.id}>
+                                {m.nombre} {m.apellido}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {tarifaMecanico !== null && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Tarifa: {formatMoney(tarifaMecanico)}/hora
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <Label>Descripcion</Label>
+                        <Input
+                          value={nuevoItem.descripcion}
+                          onChange={(e) => setNuevoItem({ ...nuevoItem, descripcion: e.target.value })}
+                          placeholder="Ej: Cambio de aceite"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Tiempo (min)</Label>
+                          <Input
+                            type="number"
+                            value={nuevoItem.tiempoMinutos || ""}
+                            onChange={(e) => setNuevoItem({ ...nuevoItem, tiempoMinutos: Number(e.target.value) })}
+                            placeholder="Minutos"
+                          />
+                        </div>
+                        <div>
+                          <Label>Precio Calculado</Label>
+                          <div className="h-9 flex items-center px-3 rounded-md border bg-muted font-mono tabular-nums text-sm">
+                            {formatMoney(calcularPrecioManoObra(tarifaMecanico, nuevoItem.tiempoMinutos))}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* REPUESTO fields */}
+                  {nuevoItem.tipo === "REPUESTO" && (
+                    <>
+                      <div>
+                        <Label>Buscar Repuesto</Label>
+                        <div className="relative">
+                          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            value={repuestoSearch}
+                            onChange={(e) => void buscarRepuestos(e.target.value)}
+                            placeholder="Buscar por nombre o codigo..."
+                            className="pl-9"
+                          />
+                        </div>
+                        {searchingRepuestos && (
+                          <p className="text-xs text-muted-foreground mt-1">Buscando...</p>
+                        )}
+                        {repuestosResult.length > 0 && (
+                          <div className="mt-2 border rounded-md max-h-32 overflow-y-auto">
+                            {repuestosResult.map((rp) => (
+                              <button
+                                key={rp.id}
+                                type="button"
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-muted border-b last:border-0"
+                                onClick={() => {
+                                  setNuevoItem({
+                                    ...nuevoItem,
+                                    repuestoId: rp.id,
+                                    descripcion: rp.nombre,
+                                    codigoOEM: rp.codigo ?? "",
+                                    precioUnitario: Number(rp.precioCompra ?? 0),
+                                  });
+                                  setRepuestoSearch(rp.nombre);
+                                  setRepuestosResult([]);
+                                }}
+                              >
+                                <span className="font-medium">{rp.nombre}</span>
+                                {rp.codigo && (
+                                  <span className="text-xs text-muted-foreground ml-2">({rp.codigo})</span>
+                                )}
+                                <span className="float-right font-mono tabular-nums text-xs">
+                                  {formatMoney(Number(rp.precioCompra ?? 0))} - Stock: {rp.stock}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <Label>Descripcion</Label>
+                        <Input
+                          value={nuevoItem.descripcion}
+                          onChange={(e) => setNuevoItem({ ...nuevoItem, descripcion: e.target.value })}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Cantidad</Label>
+                          <Input
+                            type="number"
+                            value={nuevoItem.cantidad}
+                            onChange={(e) => setNuevoItem({ ...nuevoItem, cantidad: Number(e.target.value) })}
+                          />
+                        </div>
+                        <div>
+                          <Label>Precio Unitario</Label>
+                          <Input
+                            type="number"
+                            value={nuevoItem.precioUnitario}
+                            onChange={(e) => setNuevoItem({ ...nuevoItem, precioUnitario: Number(e.target.value) })}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* INSUMO fields */}
+                  {nuevoItem.tipo === "INSUMO" && (
+                    <>
+                      <div>
+                        <Label>Descripcion</Label>
+                        <Input
+                          value={nuevoItem.descripcion}
+                          onChange={(e) => setNuevoItem({ ...nuevoItem, descripcion: e.target.value })}
+                          placeholder="Ej: Aceite 10W40, Filtro de aire..."
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Cantidad</Label>
+                          <Input
+                            type="number"
+                            value={nuevoItem.cantidad}
+                            onChange={(e) => setNuevoItem({ ...nuevoItem, cantidad: Number(e.target.value) })}
+                          />
+                        </div>
+                        <div>
+                          <Label>Precio Unitario</Label>
+                          <Input
+                            type="number"
+                            value={nuevoItem.precioUnitario}
+                            onChange={(e) => setNuevoItem({ ...nuevoItem, precioUnitario: Number(e.target.value) })}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Subtotal preview */}
+                  <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                    <span className="text-sm font-medium">Subtotal</span>
+                    <span className="font-mono tabular-nums font-bold">
+                      {formatMoney(
+                        nuevoItem.tipo === "MANO_OBRA"
+                          ? calcularPrecioManoObra(tarifaMecanico, nuevoItem.tiempoMinutos) * nuevoItem.cantidad
+                          : nuevoItem.cantidad * nuevoItem.precioUnitario
+                      )}
+                    </span>
+                  </div>
+
+                  <Button onClick={agregarItem} className="w-full">Agregar Item</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </CardHeader>
+        <CardContent>
+          {ot.items.length === 0 ? (
+            <p className="text-center py-4 text-muted-foreground text-sm">Sin items de costo</p>
+          ) : (
+            <>
+              <Tabs defaultValue="MANO_OBRA">
+                <TabsList>
+                  <TabsTrigger value="MANO_OBRA">
+                    Mano de Obra ({ot.items.filter((i) => i.tipo === "MANO_OBRA").length})
+                  </TabsTrigger>
+                  <TabsTrigger value="REPUESTO">
+                    Repuestos ({ot.items.filter((i) => i.tipo === "REPUESTO").length})
+                  </TabsTrigger>
+                  <TabsTrigger value="INSUMO">
+                    Insumos ({ot.items.filter((i) => i.tipo === "INSUMO").length})
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="MANO_OBRA">
+                  <ItemsTable
+                    items={ot.items.filter((i) => i.tipo === "MANO_OBRA")}
+                    tipo="MANO_OBRA"
+                    isEditable={isEditable}
+                    onDelete={eliminarItem}
+                    mecanicos={todosMecanicos}
+                  />
+                </TabsContent>
+
+                <TabsContent value="REPUESTO">
+                  <ItemsTable
+                    items={ot.items.filter((i) => i.tipo === "REPUESTO")}
+                    tipo="REPUESTO"
+                    isEditable={isEditable}
+                    onDelete={eliminarItem}
+                    mecanicos={todosMecanicos}
+                  />
+                </TabsContent>
+
+                <TabsContent value="INSUMO">
+                  <ItemsTable
+                    items={ot.items.filter((i) => i.tipo === "INSUMO")}
+                    tipo="INSUMO"
+                    isEditable={isEditable}
+                    onDelete={eliminarItem}
+                    mecanicos={todosMecanicos}
+                  />
+                </TabsContent>
+              </Tabs>
+
+              {/* Summary */}
+              <div className="mt-4 border-t pt-4">
+                <div className="font-mono tabular-nums text-sm space-y-2 max-w-xs ml-auto">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Mano de Obra</span>
+                    <span>{formatMoney(ot.items.filter((i) => i.tipo === "MANO_OBRA").reduce((s, i) => s + Number(i.subtotal), 0))}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Repuestos</span>
+                    <span>{formatMoney(ot.items.filter((i) => i.tipo === "REPUESTO").reduce((s, i) => s + Number(i.subtotal), 0))}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Insumos</span>
+                    <span>{formatMoney(ot.items.filter((i) => i.tipo === "INSUMO").reduce((s, i) => s + Number(i.subtotal), 0))}</span>
+                  </div>
+                  <div className="border-t pt-2">
+                    <div className="flex justify-between font-bold">
+                      <span>Total Items</span>
+                      <span>{formatMoney(ot.items.reduce((s, i) => s + Number(i.subtotal), 0))}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Costos */}
       <Card>
         <CardHeader>
@@ -845,5 +1316,107 @@ function FechaRow({ label, fecha }: { label: string; fecha: string | null }) {
         {fecha ? formatDateTime(new Date(fecha)) : <span className="text-muted-foreground">—</span>}
       </span>
     </div>
+  );
+}
+
+const TIPO_LABELS: Record<string, string> = {
+  MANO_OBRA: "Mano de Obra",
+  REPUESTO: "Repuesto",
+  INSUMO: "Insumo",
+};
+
+function ItemsTable({
+  items,
+  tipo,
+  isEditable,
+  onDelete,
+  mecanicos,
+}: {
+  items: ItemCosto[];
+  tipo: "MANO_OBRA" | "REPUESTO" | "INSUMO";
+  isEditable: boolean;
+  onDelete: (id: string) => void;
+  mecanicos: Array<{ id: string; nombre: string; apellido: string }>;
+}) {
+  if (items.length === 0) {
+    return (
+      <p className="text-center py-4 text-muted-foreground text-sm">
+        Sin items de {TIPO_LABELS[tipo]?.toLowerCase()}
+      </p>
+    );
+  }
+
+  const getMecanicoNombre = (mecanicoId: string | null) => {
+    if (!mecanicoId) return null;
+    const m = mecanicos.find((x) => x.id === mecanicoId);
+    return m ? `${m.nombre} ${m.apellido}` : mecanicoId.slice(0, 8);
+  };
+
+  return (
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="border-b">
+          <th className="text-left py-2 px-2 font-medium text-muted-foreground">Descripcion</th>
+          {tipo === "MANO_OBRA" && (
+            <>
+              <th className="text-left py-2 px-2 font-medium text-muted-foreground">Mecanico</th>
+              <th className="text-center py-2 px-2 font-medium text-muted-foreground">Min.</th>
+            </>
+          )}
+          <th className="text-center py-2 px-2 font-medium text-muted-foreground">Cant.</th>
+          <th className="text-right py-2 px-2 font-medium text-muted-foreground">P. Unit.</th>
+          <th className="text-right py-2 px-2 font-medium text-muted-foreground">Subtotal</th>
+          {isEditable && <th className="py-2 px-2"></th>}
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((item) => (
+          <tr key={item.id} className="border-b">
+            <td className="py-2 px-2">
+              {item.descripcion}
+              {item.codigoOEM && (
+                <span className="text-xs text-muted-foreground ml-1">({item.codigoOEM})</span>
+              )}
+            </td>
+            {tipo === "MANO_OBRA" && (
+              <>
+                <td className="py-2 px-2 text-xs">
+                  {getMecanicoNombre(item.mecanicoId) ?? <span className="text-muted-foreground">-</span>}
+                </td>
+                <td className="py-2 px-2 text-center font-mono tabular-nums">
+                  {item.tiempoMinutos ?? <span className="text-muted-foreground">-</span>}
+                </td>
+              </>
+            )}
+            <td className="py-2 px-2 text-center font-mono tabular-nums">{item.cantidad}</td>
+            <td className="py-2 px-2 text-right font-mono tabular-nums">{formatMoney(Number(item.precioUnitario))}</td>
+            <td className="py-2 px-2 text-right font-mono tabular-nums font-medium">{formatMoney(Number(item.subtotal))}</td>
+            {isEditable && (
+              <td className="py-2 px-2 text-right">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-negative h-7 w-7 p-0"
+                  onClick={() => onDelete(item.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </td>
+            )}
+          </tr>
+        ))}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colSpan={tipo === "MANO_OBRA" ? 5 : 3} className="py-2 px-2 text-right font-medium text-sm">
+            Subtotal {TIPO_LABELS[tipo]}:
+          </td>
+          <td className="py-2 px-2 text-right font-mono tabular-nums font-bold">
+            {formatMoney(items.reduce((s, i) => s + Number(i.subtotal), 0))}
+          </td>
+          {isEditable && <td></td>}
+        </tr>
+      </tfoot>
+    </table>
   );
 }

@@ -465,26 +465,115 @@ export async function handleImportReception(event: BusinessEventData) {
 export async function handleWorkorderComplete(event: BusinessEventData) {
   try {
     const meta = event.payload as Record<string, unknown> | undefined;
-    const monto = Number(meta?.costoTotal || 0);
-    if (monto <= 0) return;
+    const costoTotal = Number(meta?.costoTotal || 0);
+    if (costoTotal <= 0) return;
+
+    // Intentar desglose detallado desde ItemOT
+    const items = await prisma.itemOT.findMany({
+      where: { ordenTrabajoId: event.entityId },
+    });
 
     const ctaMant = await getCuentaPorCodigo(CUENTAS.GASTOS_MANTENIMIENTO);
-    const ctaCaja = await getCuentaPorCodigo(CUENTAS.CAJA);
 
-    await crearAsiento({
+    const lineas: Array<{ cuentaId: string; debe: number; haber: number; descripcion?: string }> = [];
+
+    if (items.length > 0) {
+      // Desglose detallado por tipo de item
+      const costoManoObra = items
+        .filter((i) => i.tipo === "MANO_OBRA")
+        .reduce((sum, i) => sum + Number(i.subtotal), 0);
+      const costoRepuestos = items
+        .filter((i) => i.tipo === "REPUESTO")
+        .reduce((sum, i) => sum + Number(i.subtotal), 0);
+      const costoInsumos = items
+        .filter((i) => i.tipo === "INSUMO")
+        .reduce((sum, i) => sum + Number(i.subtotal), 0);
+
+      const total = costoManoObra + costoRepuestos + costoInsumos;
+      if (total <= 0) return;
+
+      // DEBE: Gastos de Mantenimiento por cada componente
+      if (costoManoObra > 0) {
+        lineas.push({
+          cuentaId: ctaMant.id,
+          debe: costoManoObra,
+          haber: 0,
+          descripcion: "Mano de obra — OT",
+        });
+      }
+      if (costoRepuestos > 0) {
+        lineas.push({
+          cuentaId: ctaMant.id,
+          debe: costoRepuestos,
+          haber: 0,
+          descripcion: "Repuestos — OT",
+        });
+      }
+      if (costoInsumos > 0) {
+        lineas.push({
+          cuentaId: ctaMant.id,
+          debe: costoInsumos,
+          haber: 0,
+          descripcion: "Insumos — OT",
+        });
+      }
+
+      // HABER: Repuestos desde inventario, el resto desde caja/proveedores
+      if (costoRepuestos > 0) {
+        const ctaInvRepuestos = await getCuentaPorCodigo(CUENTAS.INVENTARIO_REPUESTOS);
+        lineas.push({
+          cuentaId: ctaInvRepuestos.id,
+          debe: 0,
+          haber: costoRepuestos,
+          descripcion: "Baja stock repuestos",
+        });
+      }
+      const costoNonRepuesto = costoManoObra + costoInsumos;
+      if (costoNonRepuesto > 0) {
+        const ctaCaja = await getCuentaPorCodigo(CUENTAS.CAJA);
+        lineas.push({
+          cuentaId: ctaCaja.id,
+          debe: 0,
+          haber: costoNonRepuesto,
+          descripcion: "Pago mano de obra + insumos",
+        });
+      }
+    } else {
+      // Legacy: sin ItemOT, asiento simple
+      const ctaCaja = await getCuentaPorCodigo(CUENTAS.CAJA);
+      lineas.push({
+        cuentaId: ctaMant.id,
+        debe: costoTotal,
+        haber: 0,
+        descripcion: "Costo mantenimiento",
+      });
+      lineas.push({
+        cuentaId: ctaCaja.id,
+        debe: 0,
+        haber: costoTotal,
+        descripcion: "Pago mantenimiento",
+      });
+    }
+
+    if (lineas.length < 2) return;
+
+    const asiento = await crearAsiento({
       fecha: new Date(),
       tipo: "GASTO",
       descripcion: `Mantenimiento completado — OT ${event.entityId}`,
-      lineas: [
-        { cuentaId: ctaMant.id, debe: monto, haber: 0, descripcion: "Costo mantenimiento" },
-        { cuentaId: ctaCaja.id, debe: 0, haber: monto, descripcion: "Pago mantenimiento" },
-      ],
+      lineas,
       origenTipo: "OrdenTrabajo",
       origenId: event.entityId,
-      userId: "system",
+      userId: event.userId ?? "system",
     });
 
-    console.log(`[Contabilidad] Asiento MANTENIMIENTO creado — $${monto}`);
+    // Vincular asiento a la OT
+    await prisma.ordenTrabajo.update({
+      where: { id: event.entityId },
+      data: { asientoId: asiento.id.toString() },
+    });
+
+    console.log(`[Contabilidad] Asiento MANTENIMIENTO creado — $${costoTotal} (${items.length} items)`);
   } catch (error) {
     console.error("[Contabilidad] Error handler workorder.complete:", error);
   }

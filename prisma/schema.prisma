@@ -742,13 +742,24 @@ model TarifaAlquiler {
   plan            PlanDuracion
   frecuencia      FrecuenciaPago
 
-  // ── Precio ──
+  // ── Precio final ──
   precio          Decimal         @db.Decimal(12, 2)
+
+  // ── Componentes de costo (mensual, para desglose) ──
+  costoAmortizacion  Decimal?     @db.Decimal(12, 2)
+  costoMantenimiento Decimal?     @db.Decimal(12, 2)
+  costoSeguro        Decimal?     @db.Decimal(12, 2)
+  costoPatente       Decimal?     @db.Decimal(12, 2)
+  costoOperativo     Decimal?     @db.Decimal(12, 2)
+  margenPct          Float?       @default(0.15) // 15%
 
   // ── Validez ──
   activo          Boolean         @default(true)
   vigenciaDesde   DateTime        @default(now())
   vigenciaHasta   DateTime?
+
+  // ── Relaciones ──
+  historial       HistorialTarifa[]
 
   // ── Metadata ──
   creadoPor       String?
@@ -1456,6 +1467,12 @@ enum ResultadoTarea {
   NO_APLICA
 }
 
+enum TipoItemOT {
+  MANO_OBRA
+  REPUESTO
+  INSUMO
+}
+
 model OrdenTrabajo {
   id                  String        @id @default(cuid())
 
@@ -1515,6 +1532,7 @@ model OrdenTrabajo {
   // ── Relaciones ──
   tareas              TareaOrdenTrabajo[]
   repuestos           RepuestoOrdenTrabajo[]
+  items               ItemOT[]
   fotos               FotoInspeccion[]
   historial           HistorialOT[]
 
@@ -1561,6 +1579,32 @@ model RepuestoOrdenTrabajo {
 
   @@index([ordenTrabajoId])
   @@map("repuestos_orden_trabajo")
+}
+
+model ItemOT {
+  id                String          @id @default(cuid())
+  ordenTrabajoId    String
+  ordenTrabajo      OrdenTrabajo    @relation(fields: [ordenTrabajoId], references: [id], onDelete: Cascade)
+
+  tipo              TipoItemOT
+  descripcion       String
+  cantidad          Int             @default(1)
+  precioUnitario    Decimal         @db.Decimal(12, 2)
+  subtotal          Decimal         @db.Decimal(12, 2)
+
+  // ── Mano de obra ──
+  mecanicoId        String?
+  tiempoMinutos     Int?
+
+  // ── Repuesto / Insumo ──
+  repuestoId        String?
+  codigoOEM         String?
+
+  createdAt         DateTime        @default(now())
+
+  @@index([ordenTrabajoId])
+  @@index([tipo])
+  @@map("items_ot")
 }
 
 model FotoInspeccion {
@@ -1739,10 +1783,14 @@ model Mecanico {
   telefono        String?
   email           String?
   especialidad    String?
+  tarifaHora      Float?      // $/hora para mecánicos externos
   activo          Boolean     @default(true)
 
   tallerId        String
   taller          Taller      @relation(fields: [tallerId], references: [id])
+
+  empleadoId      String?     @unique
+  empleado        Empleado?   @relation(fields: [empleadoId], references: [id])
 
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
@@ -1750,6 +1798,34 @@ model Mecanico {
   @@index([tallerId])
   @@index([activo])
   @@map("mecanicos")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HISTORIAL DE TARIFAS
+// ═══════════════════════════════════════════════════════════════
+
+enum TipoAjuste {
+  INCREMENTO
+  DECREMENTO
+  NUEVO
+}
+
+model HistorialTarifa {
+  id                  String          @id @default(cuid())
+  tarifaAlquilerId    String
+  tarifaAlquiler      TarifaAlquiler  @relation(fields: [tarifaAlquilerId], references: [id], onDelete: Cascade)
+
+  campo               String          // ej: "precio", "costoSeguro"
+  valorAnterior       String?
+  valorNuevo          String
+  tipoAjuste          TipoAjuste
+  motivo              String?
+  userId              String?
+
+  createdAt           DateTime        @default(now())
+
+  @@index([tarifaAlquilerId])
+  @@map("historial_tarifas")
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2587,6 +2663,7 @@ model Empleado {
   ausencias          Ausencia[]
   recibos            ReciboSueldo[]
   documentos         DocumentoEmpleado[]
+  mecanico           Mecanico?
 
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
@@ -23,10 +23,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/format";
 import {
   ChevronLeft,
+  ChevronDown,
+  ChevronRight,
   Plus,
   Trash2,
   Search,
@@ -39,6 +42,7 @@ import {
   Package,
   Wrench,
   X,
+  BookOpen,
 } from "lucide-react";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -62,6 +66,19 @@ const ACCIONES = [
   { value: "CHECK_AND_ADJUST", label: "Check & Ajuste" },
   { value: "ADJUST", label: "Ajuste" },
 ];
+
+const CATEGORY_ICONS: Record<string, string> = {
+  MOTOR: "M",
+  FRENOS: "F",
+  SUSPENSION: "S",
+  ELECTRICA: "E",
+  CARROCERIA: "C",
+  NEUMATICOS: "N",
+  TRANSMISION: "T",
+  LUBRICACION: "L",
+  INSPECCION: "I",
+  OTRO: "O",
+};
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -169,6 +186,114 @@ function deriveNameFromKm(km: number): string {
   return `Service ${km.toLocaleString("es-AR")} km`;
 }
 
+// ── Inline Autocomplete Component ──────────────────────────────────────────────
+
+function InlineAutocomplete<T extends { id: string }>({
+  placeholder,
+  onSearch,
+  onSelect,
+  renderItem,
+  isAdded,
+  icon: Icon,
+}: {
+  placeholder: string;
+  onSearch: (query: string) => Promise<T[]>;
+  onSelect: (item: T) => void;
+  renderItem: (item: T, added: boolean) => React.ReactNode;
+  isAdded: (item: T) => boolean;
+  icon: React.ElementType;
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<T[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (query.length < 2) {
+      setResults([]);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const data = await onSearch(query);
+        setResults(data);
+        setOpen(true);
+      } catch {
+        setResults([]);
+      }
+      setSearching(false);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [query, onSearch]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="flex items-center gap-2 px-4 py-2 bg-muted/10">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              if (e.target.value.length >= 2) setOpen(true);
+            }}
+            onFocus={() => {
+              if (results.length > 0) setOpen(true);
+            }}
+            placeholder={placeholder}
+            className="h-8 pl-8 text-xs"
+          />
+          {searching && (
+            <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-muted-foreground" />
+          )}
+        </div>
+      </div>
+      {open && results.length > 0 && (
+        <div className="absolute left-4 right-4 z-20 mt-0.5 rounded-md border bg-popover shadow-lg max-h-48 overflow-y-auto">
+          {results.map((item) => {
+            const added = isAdded(item);
+            return (
+              <button
+                key={item.id}
+                type="button"
+                disabled={added}
+                onClick={() => {
+                  onSelect(item);
+                  setQuery("");
+                  setResults([]);
+                  setOpen(false);
+                }}
+                className={cn(
+                  "w-full text-left px-3 py-2 hover:bg-accent transition-colors border-b last:border-b-0 text-xs",
+                  added && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {renderItem(item, added)}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function PlanBuilderPage() {
@@ -223,6 +348,19 @@ export default function PlanBuilderPage() {
   >([]);
   const [repuestoSearching, setRepuestoSearching] = useState(false);
 
+  // ── Catalog sidebar state (Task 1) ──
+  const [catalogItems, setCatalogItems] = useState<ItemServiceResult[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const [catalogCollapsed, setCatalogCollapsed] = useState<
+    Record<string, boolean>
+  >({});
+
+  // ── Category grouping collapsed state (Task 4) ──
+  const [categoryCollapsed, setCategoryCollapsed] = useState<
+    Record<string, boolean>
+  >({});
+
   // ── Fetch marcas/modelos ──
   useEffect(() => {
     fetch("/api/motos/marcas-modelos")
@@ -242,6 +380,38 @@ export default function PlanBuilderPage() {
       })
       .catch(() => {});
   }, []);
+
+  // ── Pre-load catalog items when marca/modelo selected (Task 1) ──
+  useEffect(() => {
+    if (!marca || !modelo) {
+      setCatalogItems([]);
+      return;
+    }
+    setCatalogLoading(true);
+    fetch("/api/items-service")
+      .then((r) => r.json())
+      .then((d) => {
+        const items: ItemServiceResult[] = (d.data ?? []).map(
+          (item: {
+            id: string;
+            nombre: string;
+            categoria: string;
+            accion: string;
+            tiempoEstimado: number | null;
+          }) => ({
+            id: item.id,
+            nombre: item.nombre,
+            categoria: item.categoria,
+            accion: item.accion,
+            tiempoEstimado: item.tiempoEstimado,
+          })
+        );
+        setCatalogItems(items);
+        setCatalogOpen(true);
+      })
+      .catch(() => {})
+      .finally(() => setCatalogLoading(false));
+  }, [marca, modelo]);
 
   // ── Check existing plans when modelo changes ──
   useEffect(() => {
@@ -344,12 +514,53 @@ export default function PlanBuilderPage() {
 
   const sortedMilestones = [...milestones].sort((a, b) => a.km - b.km);
 
+  // ── Group catalog items by category (Task 1) ──
+  const catalogByCategory = useMemo(() => {
+    const grouped: Record<string, ItemServiceResult[]> = {};
+    for (const item of catalogItems) {
+      if (!grouped[item.categoria]) grouped[item.categoria] = [];
+      grouped[item.categoria]!.push(item);
+    }
+    return grouped;
+  }, [catalogItems]);
+
+  // ── Group tarea items by category (Task 4) ──
+  const tareasByCategory = useMemo(() => {
+    const grouped: { category: string; items: { item: TareaItem; originalIndex: number }[] }[] = [];
+    const categoryMap = new Map<string, { item: TareaItem; originalIndex: number }[]>();
+
+    tareaItems.forEach((item, idx) => {
+      const cat = item.categoria;
+      if (!categoryMap.has(cat)) {
+        categoryMap.set(cat, []);
+      }
+      categoryMap.get(cat)!.push({ item, originalIndex: idx });
+    });
+
+    // Order by CATEGORIAS constant order
+    for (const cat of CATEGORIAS) {
+      const items = categoryMap.get(cat);
+      if (items && items.length > 0) {
+        grouped.push({ category: cat, items });
+      }
+    }
+    // Also catch any unknown categories
+    for (const [cat, items] of categoryMap) {
+      if (!CATEGORIAS.includes(cat as (typeof CATEGORIAS)[number]) && items.length > 0) {
+        grouped.push({ category: cat, items });
+      }
+    }
+
+    return grouped;
+  }, [tareaItems]);
+
   // ── Computed stats per milestone ──
   const milestoneStats = useCallback(
     (mIdx: number) => {
       let tareasCount = 0;
       let tiempoTotal = 0;
       let costoRepuestos = 0;
+      let repuestosCount = 0;
 
       tareaItems.forEach((t, tIdx) => {
         const key = assignmentKey("tarea", tIdx, mIdx);
@@ -362,6 +573,7 @@ export default function PlanBuilderPage() {
       repuestoItems.forEach((r, rIdx) => {
         const key = assignmentKey("repuesto", rIdx, mIdx);
         if (assignments[key]) {
+          repuestosCount++;
           const qty =
             repuestoCantidades[cantidadKey(rIdx, mIdx)] ?? r.cantidadDefault;
           costoRepuestos += (r.precioUnitario ?? 0) * qty;
@@ -373,6 +585,7 @@ export default function PlanBuilderPage() {
 
       return {
         tareasCount,
+        repuestosCount,
         tiempoTotal,
         costoRepuestos,
         costoManoObra,
@@ -674,6 +887,37 @@ export default function PlanBuilderPage() {
       return next;
     });
   }
+
+  // ── Inline search callbacks (Task 2) ──
+  const searchTareasInline = useCallback(async (query: string) => {
+    const res = await fetch(
+      `/api/items-service/search?q=${encodeURIComponent(query)}`
+    );
+    const json = await res.json();
+    return (json.data ?? []) as ItemServiceResult[];
+  }, []);
+
+  const searchRepuestosInline = useCallback(async (query: string) => {
+    const res = await fetch(
+      `/api/repuestos/search?q=${encodeURIComponent(query)}`
+    );
+    const json = await res.json();
+    return (json.data ?? []) as RepuestoSearchResult[];
+  }, []);
+
+  const isTareaAdded = useCallback(
+    (item: ItemServiceResult) =>
+      tareaItems.some(
+        (t) => t.descripcion === item.nombre && t.categoria === item.categoria
+      ),
+    [tareaItems]
+  );
+
+  const isRepuestoAdded = useCallback(
+    (item: RepuestoSearchResult) =>
+      repuestoItems.some((r) => r.nombre === item.nombre),
+    [repuestoItems]
+  );
 
   // ── Load existing plans into matrix ──
   function loadExistingPlans() {
@@ -1063,364 +1307,750 @@ export default function PlanBuilderPage() {
             )}
           </div>
 
-          {/* ── Items & Matrix ── */}
-          <div className="rounded-lg border bg-card">
-            {/* ── Add Items Toolbar ── */}
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-semibold">
-                Matriz de Asignacion
-              </h2>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setTareaQuery("");
-                    setTareaResults([]);
-                    setTareaSearchOpen(true);
-                  }}
-                >
-                  <Wrench className="h-3.5 w-3.5 mr-1.5" />
-                  Agregar Tarea
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setRepuestoQuery("");
-                    setRepuestoResults([]);
-                    setRepuestoSearchOpen(true);
-                  }}
-                >
-                  <Package className="h-3.5 w-3.5 mr-1.5" />
-                  Agregar Repuesto
-                </Button>
-              </div>
-            </div>
-
-            {/* ── Matrix Grid ── */}
-            {tareaItems.length === 0 && repuestoItems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <Grid3X3 className="h-12 w-12 text-muted-foreground/40 mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-1">
-                  Sin items
-                </h3>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  Agrega tareas y repuestos para construir la matriz de
-                  asignacion.
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/30">
-                      {/* Sticky item name column header */}
-                      <th className="sticky left-0 z-10 bg-muted/30 px-4 py-3 text-left font-medium text-muted-foreground min-w-[280px]">
-                        Item
-                      </th>
-                      {/* Row-all toggle header */}
-                      <th className="px-2 py-3 text-center font-medium text-muted-foreground text-xs w-10">
-                        All
-                      </th>
-                      {/* Milestone columns */}
-                      {sortedMilestones.map((m, _sortedIdx) => {
-                        const origIdx = milestones.indexOf(m);
+          {/* ── Main Layout: Catalog Sidebar + Matrix ── */}
+          <div className="flex gap-4">
+            {/* ── Catalog Sidebar (Task 1) ── */}
+            {catalogOpen && catalogItems.length > 0 && (
+              <div className="w-72 shrink-0 rounded-lg border bg-card overflow-hidden">
+                <div className="flex items-center justify-between p-3 border-b bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold">Catalogo</h3>
+                    <Badge variant="outline" className="text-[10px] font-mono">
+                      {catalogItems.length}
+                    </Badge>
+                  </div>
+                  <button
+                    onClick={() => setCatalogOpen(false)}
+                    className="p-1 rounded hover:bg-muted transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                </div>
+                <ScrollArea className="h-[calc(100vh-420px)] max-h-[600px]">
+                  <div className="p-1">
+                    {Object.entries(catalogByCategory).map(
+                      ([category, items]) => {
+                        const isCollapsed = catalogCollapsed[category];
+                        const addedCount = items.filter((item) =>
+                          tareaItems.some(
+                            (t) =>
+                              t.descripcion === item.nombre &&
+                              t.categoria === item.categoria
+                          )
+                        ).length;
                         return (
-                          <th
-                            key={origIdx}
-                            className="px-3 py-3 text-center font-medium min-w-[100px]"
-                          >
-                            <div className="space-y-1">
-                              <div className="font-mono tabular-nums text-xs font-semibold">
-                                {m.km.toLocaleString("es-AR")} km
-                              </div>
-                              <div className="text-[10px] text-muted-foreground font-normal">
-                                {m.nombre}
-                              </div>
-                              {/* Column toggle-all */}
-                              <div className="pt-1">
-                                <Checkbox
-                                  checked={isColumnAllChecked(origIdx)}
-                                  onCheckedChange={() =>
-                                    toggleColumnAll(origIdx)
-                                  }
-                                  className="mx-auto"
-                                />
-                              </div>
-                            </div>
-                          </th>
-                        );
-                      })}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* ── TAREAS Section ── */}
-                    {tareaItems.length > 0 && (
-                      <tr className="bg-muted/10">
-                        <td
-                          colSpan={milestones.length + 2}
-                          className="sticky left-0 z-10 bg-muted/10 px-4 py-2"
-                        >
-                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            <Wrench className="h-3.5 w-3.5" />
-                            Tareas ({tareaItems.length})
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                    {tareaItems.map((tarea, tIdx) => (
-                      <tr
-                        key={`tarea-${tIdx}`}
-                        className="group border-b border-border/50 hover:bg-muted/20 transition-colors"
-                      >
-                        {/* Sticky item name */}
-                        <td className="sticky left-0 z-10 bg-card group-hover:bg-muted/20 px-4 py-2.5 transition-colors">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px] px-1.5 py-0 shrink-0"
-                                >
-                                  {tarea.categoria}
-                                </Badge>
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px] px-1.5 py-0 shrink-0 bg-primary/5 text-primary border-primary/20"
-                                >
-                                  {ACCIONES.find(
-                                    (a) => a.value === tarea.accion
-                                  )?.label ?? tarea.accion}
-                                </Badge>
-                              </div>
-                              <p className="text-sm mt-0.5 truncate">
-                                {tarea.descripcion}
-                              </p>
-                              {tarea.tiempoEstimado != null && (
-                                <p className="text-[10px] font-mono tabular-nums text-muted-foreground mt-0.5">
-                                  {tarea.tiempoEstimado} min
-                                </p>
-                              )}
-                            </div>
+                          <div key={category} className="mb-0.5">
                             <button
-                              onClick={() => removeTarea(tIdx)}
-                              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 hover:text-destructive transition-all shrink-0"
+                              onClick={() =>
+                                setCatalogCollapsed((prev) => ({
+                                  ...prev,
+                                  [category]: !prev[category],
+                                }))
+                              }
+                              className="w-full flex items-center justify-between px-2.5 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:bg-muted/50 rounded transition-colors"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <div className="flex items-center gap-1.5">
+                                {isCollapsed ? (
+                                  <ChevronRight className="h-3 w-3" />
+                                ) : (
+                                  <ChevronDown className="h-3 w-3" />
+                                )}
+                                <span>{category}</span>
+                                <span className="font-mono text-[10px]">
+                                  ({items.length})
+                                </span>
+                              </div>
+                              {addedCount > 0 && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-[9px] px-1 py-0 bg-primary/10 text-primary border-primary/20"
+                                >
+                                  {addedCount} agregado{addedCount !== 1 ? "s" : ""}
+                                </Badge>
+                              )}
                             </button>
+                            {!isCollapsed && (
+                              <div className="space-y-0.5 pb-1">
+                                {items.map((item) => {
+                                  const alreadyAdded = tareaItems.some(
+                                    (t) =>
+                                      t.descripcion === item.nombre &&
+                                      t.categoria === item.categoria
+                                  );
+                                  return (
+                                    <button
+                                      key={item.id}
+                                      onClick={() => {
+                                        if (!alreadyAdded)
+                                          addTareaFromCatalog(item);
+                                      }}
+                                      disabled={alreadyAdded}
+                                      className={cn(
+                                        "w-full text-left px-3 py-1.5 rounded text-xs transition-colors",
+                                        alreadyAdded
+                                          ? "opacity-50 cursor-not-allowed bg-muted/30"
+                                          : "hover:bg-accent cursor-pointer"
+                                      )}
+                                    >
+                                      <div className="flex items-center justify-between gap-1">
+                                        <span className="truncate">
+                                          {item.nombre}
+                                        </span>
+                                        {alreadyAdded ? (
+                                          <Check className="h-3 w-3 text-primary shrink-0" />
+                                        ) : (
+                                          <Plus className="h-3 w-3 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100" />
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground">
+                                        <span>
+                                          {ACCIONES.find(
+                                            (a) => a.value === item.accion
+                                          )?.label ?? item.accion}
+                                        </span>
+                                        {item.tiempoEstimado != null && (
+                                          <span className="font-mono tabular-nums">
+                                            {item.tiempoEstimado} min
+                                          </span>
+                                        )}
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
-                        </td>
-                        {/* Row toggle-all */}
-                        <td className="px-2 py-2.5 text-center">
-                          <Checkbox
-                            checked={isRowAllChecked("tarea", tIdx)}
-                            onCheckedChange={() =>
-                              toggleRowAll("tarea", tIdx)
-                            }
-                          />
-                        </td>
-                        {/* Milestone checkboxes */}
+                        );
+                      }
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+
+            {/* ── Items & Matrix ── */}
+            <div className="flex-1 min-w-0 rounded-lg border bg-card">
+              {/* ── Add Items Toolbar ── */}
+              <div className="flex items-center justify-between p-4 border-b">
+                <h2 className="text-lg font-semibold">
+                  Matriz de Asignacion
+                </h2>
+                <div className="flex gap-2">
+                  {!catalogOpen && catalogItems.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setCatalogOpen(true)}
+                    >
+                      <BookOpen className="h-3.5 w-3.5 mr-1.5" />
+                      Catalogo
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setTareaQuery("");
+                      setTareaResults([]);
+                      setTareaSearchOpen(true);
+                    }}
+                  >
+                    <Wrench className="h-3.5 w-3.5 mr-1.5" />
+                    Agregar Tarea
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setRepuestoQuery("");
+                      setRepuestoResults([]);
+                      setRepuestoSearchOpen(true);
+                    }}
+                  >
+                    <Package className="h-3.5 w-3.5 mr-1.5" />
+                    Agregar Repuesto
+                  </Button>
+                </div>
+              </div>
+
+              {/* ── Matrix Grid ── */}
+              {tareaItems.length === 0 && repuestoItems.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Grid3X3 className="h-12 w-12 text-muted-foreground/40 mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-1">
+                    Sin items
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    Agrega tareas y repuestos para construir la matriz de
+                    asignacion.
+                    {catalogItems.length > 0 && (
+                      <span>
+                        {" "}Usa el catalogo a la izquierda para agregar
+                        rapidamente.
+                      </span>
+                    )}
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/30">
+                        {/* Sticky item name column header */}
+                        <th className="sticky left-0 z-10 bg-muted/30 px-4 py-3 text-left font-medium text-muted-foreground min-w-[280px]">
+                          Item
+                        </th>
+                        {/* Row-all toggle header */}
+                        <th className="px-2 py-3 text-center font-medium text-muted-foreground text-xs w-10">
+                          All
+                        </th>
+                        {/* Milestone columns */}
                         {sortedMilestones.map((m) => {
                           const origIdx = milestones.indexOf(m);
-                          const key = assignmentKey(
-                            "tarea",
-                            tIdx,
-                            origIdx
-                          );
                           return (
-                            <td
+                            <th
                               key={origIdx}
-                              className="px-3 py-2.5 text-center"
+                              className="px-3 py-3 text-center font-medium min-w-[100px]"
                             >
-                              <Checkbox
-                                checked={!!assignments[key]}
-                                onCheckedChange={() =>
-                                  toggleAssignment(key)
-                                }
-                              />
-                            </td>
+                              <div className="space-y-1">
+                                <div className="font-mono tabular-nums text-xs font-semibold">
+                                  {m.km.toLocaleString("es-AR")} km
+                                </div>
+                                <div className="text-[10px] text-muted-foreground font-normal">
+                                  {m.nombre}
+                                </div>
+                                {/* Column toggle-all */}
+                                <div className="pt-1">
+                                  <Checkbox
+                                    checked={isColumnAllChecked(origIdx)}
+                                    onCheckedChange={() =>
+                                      toggleColumnAll(origIdx)
+                                    }
+                                    className="mx-auto"
+                                  />
+                                </div>
+                              </div>
+                            </th>
                           );
                         })}
                       </tr>
-                    ))}
-
-                    {/* ── Divider ── */}
-                    {tareaItems.length > 0 &&
-                      repuestoItems.length > 0 && (
-                        <tr>
+                    </thead>
+                    <tbody>
+                      {/* ── TAREAS Section — Grouped by Category (Task 4) ── */}
+                      {tareaItems.length > 0 && (
+                        <tr className="bg-muted/10">
                           <td
                             colSpan={milestones.length + 2}
-                            className="sticky left-0 z-10 bg-card"
+                            className="sticky left-0 z-10 bg-muted/10 px-4 py-2"
                           >
-                            <div className="border-t-2 border-dashed border-border/60" />
+                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                              <Wrench className="h-3.5 w-3.5" />
+                              Tareas ({tareaItems.length})
+                            </div>
                           </td>
                         </tr>
                       )}
 
-                    {/* ── REPUESTOS Section ── */}
-                    {repuestoItems.length > 0 && (
-                      <tr className="bg-muted/10">
-                        <td
-                          colSpan={milestones.length + 2}
-                          className="sticky left-0 z-10 bg-muted/10 px-4 py-2"
-                        >
-                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            <Package className="h-3.5 w-3.5" />
-                            Repuestos ({repuestoItems.length})
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                    {repuestoItems.map((repuesto, rIdx) => (
-                      <tr
-                        key={`repuesto-${rIdx}`}
-                        className="group border-b border-border/50 hover:bg-muted/20 transition-colors"
-                      >
-                        {/* Sticky item name */}
-                        <td className="sticky left-0 z-10 bg-card group-hover:bg-muted/20 px-4 py-2.5 transition-colors">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">
-                                {repuesto.nombre}
-                              </p>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                {repuesto.codigoOEM && (
-                                  <span className="text-[10px] font-mono text-muted-foreground">
-                                    {repuesto.codigoOEM}
-                                  </span>
-                                )}
-                                {repuesto.precioUnitario != null && (
-                                  <span className="text-[10px] font-mono tabular-nums text-muted-foreground">
-                                    {formatMoney(repuesto.precioUnitario)}
-                                    /u
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => removeRepuesto(rIdx)}
-                              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 hover:text-destructive transition-all shrink-0"
+                      {tareasByCategory.map(({ category, items: catItems }) => (
+                        <>
+                          {/* Category header row (Task 4) */}
+                          {tareasByCategory.length > 1 && (
+                            <tr
+                              key={`cat-header-${category}`}
+                              className="bg-muted/5"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                        {/* Row toggle-all */}
-                        <td className="px-2 py-2.5 text-center">
-                          <Checkbox
-                            checked={isRowAllChecked("repuesto", rIdx)}
-                            onCheckedChange={() =>
-                              toggleRowAll("repuesto", rIdx)
-                            }
-                          />
-                        </td>
-                        {/* Milestone checkboxes + quantity */}
-                        {sortedMilestones.map((m) => {
-                          const origIdx = milestones.indexOf(m);
-                          const aKey = assignmentKey(
-                            "repuesto",
-                            rIdx,
-                            origIdx
-                          );
-                          const cKey = cantidadKey(rIdx, origIdx);
-                          const isChecked = !!assignments[aKey];
-                          const qty =
-                            repuestoCantidades[cKey] ??
-                            repuesto.cantidadDefault;
-                          return (
-                            <td
-                              key={origIdx}
-                              className="px-3 py-2.5 text-center"
-                            >
-                              <div className="flex flex-col items-center gap-1">
-                                <Checkbox
-                                  checked={isChecked}
-                                  onCheckedChange={() =>
-                                    toggleAssignment(aKey)
+                              <td
+                                colSpan={milestones.length + 2}
+                                className="sticky left-0 z-10 bg-muted/5"
+                              >
+                                <button
+                                  onClick={() =>
+                                    setCategoryCollapsed((prev) => ({
+                                      ...prev,
+                                      [category]: !prev[category],
+                                    }))
                                   }
-                                />
-                                {isChecked && (
-                                  <Input
-                                    type="number"
-                                    min={1}
-                                    value={qty}
-                                    onChange={(e) => {
-                                      const val =
-                                        parseInt(e.target.value) || 1;
-                                      setRepuestoCantidades(
-                                        (prev) => ({
-                                          ...prev,
-                                          [cKey]: val,
-                                        })
-                                      );
-                                    }}
-                                    className="h-6 w-14 text-center text-xs font-mono tabular-nums px-1"
-                                  />
-                                )}
-                              </div>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
+                                  className="flex items-center gap-2 px-4 py-1.5 w-full text-left hover:bg-muted/20 transition-colors"
+                                >
+                                  {categoryCollapsed[category] ? (
+                                    <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                                  ) : (
+                                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                                  )}
+                                  <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-primary/10 text-primary">
+                                    {CATEGORY_ICONS[category] ?? "?"}
+                                  </span>
+                                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                    {category}
+                                  </span>
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[10px] px-1.5 py-0 font-mono"
+                                  >
+                                    {catItems.length}
+                                  </Badge>
+                                </button>
+                              </td>
+                            </tr>
+                          )}
 
-                  {/* ── Summary Footer ── */}
-                  {milestones.length > 0 &&
-                    (tareaItems.length > 0 ||
-                      repuestoItems.length > 0) && (
-                      <tfoot>
-                        <tr className="border-t-2 bg-muted/20">
-                          <td className="sticky left-0 z-10 bg-muted/20 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Resumen
+                          {/* Category items */}
+                          {!categoryCollapsed[category] &&
+                            catItems.map(({ item: tarea, originalIndex: tIdx }) => (
+                              <tr
+                                key={`tarea-${tIdx}`}
+                                className="group border-b border-border/50 hover:bg-muted/20 transition-colors"
+                              >
+                                {/* Sticky item name */}
+                                <td className="sticky left-0 z-10 bg-card group-hover:bg-muted/20 px-4 py-2.5 transition-colors">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-1.5">
+                                        <Badge
+                                          variant="outline"
+                                          className="text-[10px] px-1.5 py-0 shrink-0"
+                                        >
+                                          {tarea.categoria}
+                                        </Badge>
+                                        <Badge
+                                          variant="outline"
+                                          className="text-[10px] px-1.5 py-0 shrink-0 bg-primary/5 text-primary border-primary/20"
+                                        >
+                                          {ACCIONES.find(
+                                            (a) => a.value === tarea.accion
+                                          )?.label ?? tarea.accion}
+                                        </Badge>
+                                      </div>
+                                      <p className="text-sm mt-0.5 truncate">
+                                        {tarea.descripcion}
+                                      </p>
+                                      {tarea.tiempoEstimado != null && (
+                                        <p className="text-[10px] font-mono tabular-nums text-muted-foreground mt-0.5">
+                                          {tarea.tiempoEstimado} min
+                                        </p>
+                                      )}
+                                    </div>
+                                    <button
+                                      onClick={() => removeTarea(tIdx)}
+                                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 hover:text-destructive transition-all shrink-0"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                </td>
+                                {/* Row toggle-all */}
+                                <td className="px-2 py-2.5 text-center">
+                                  <Checkbox
+                                    checked={isRowAllChecked("tarea", tIdx)}
+                                    onCheckedChange={() =>
+                                      toggleRowAll("tarea", tIdx)
+                                    }
+                                  />
+                                </td>
+                                {/* Milestone checkboxes */}
+                                {sortedMilestones.map((m) => {
+                                  const origIdx = milestones.indexOf(m);
+                                  const key = assignmentKey(
+                                    "tarea",
+                                    tIdx,
+                                    origIdx
+                                  );
+                                  return (
+                                    <td
+                                      key={origIdx}
+                                      className="px-3 py-2.5 text-center"
+                                    >
+                                      <Checkbox
+                                        checked={!!assignments[key]}
+                                        onCheckedChange={() =>
+                                          toggleAssignment(key)
+                                        }
+                                      />
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                        </>
+                      ))}
+
+                      {/* ── Inline quick-add for tareas (Task 2) ── */}
+                      {tareaItems.length > 0 && (
+                        <tr>
+                          <td
+                            colSpan={milestones.length + 2}
+                            className="sticky left-0 z-10 bg-card p-0"
+                          >
+                            <InlineAutocomplete<ItemServiceResult>
+                              placeholder="Buscar tarea para agregar..."
+                              onSearch={searchTareasInline}
+                              onSelect={addTareaFromCatalog}
+                              isAdded={isTareaAdded}
+                              icon={Plus}
+                              renderItem={(item, added) => (
+                                <div>
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-medium">
+                                      {item.nombre}
+                                    </span>
+                                    {added && (
+                                      <Check className="h-3 w-3 text-primary shrink-0 ml-1" />
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground">
+                                    <span className="px-1 py-0.5 rounded bg-muted uppercase tracking-wider font-medium">
+                                      {item.categoria}
+                                    </span>
+                                    <span>
+                                      {ACCIONES.find(
+                                        (a) => a.value === item.accion
+                                      )?.label ?? item.accion}
+                                    </span>
+                                    {item.tiempoEstimado != null && (
+                                      <span className="font-mono tabular-nums">
+                                        {item.tiempoEstimado} min
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            />
                           </td>
-                          <td />
+                        </tr>
+                      )}
+
+                      {/* ── Divider ── */}
+                      {tareaItems.length > 0 &&
+                        repuestoItems.length > 0 && (
+                          <tr>
+                            <td
+                              colSpan={milestones.length + 2}
+                              className="sticky left-0 z-10 bg-card"
+                            >
+                              <div className="border-t-2 border-dashed border-border/60" />
+                            </td>
+                          </tr>
+                        )}
+
+                      {/* ── REPUESTOS Section ── */}
+                      {repuestoItems.length > 0 && (
+                        <tr className="bg-muted/10">
+                          <td
+                            colSpan={milestones.length + 2}
+                            className="sticky left-0 z-10 bg-muted/10 px-4 py-2"
+                          >
+                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                              <Package className="h-3.5 w-3.5" />
+                              Repuestos ({repuestoItems.length})
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      {repuestoItems.map((repuesto, rIdx) => (
+                        <tr
+                          key={`repuesto-${rIdx}`}
+                          className="group border-b border-border/50 hover:bg-muted/20 transition-colors"
+                        >
+                          {/* Sticky item name */}
+                          <td className="sticky left-0 z-10 bg-card group-hover:bg-muted/20 px-4 py-2.5 transition-colors">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">
+                                  {repuesto.nombre}
+                                </p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  {repuesto.codigoOEM && (
+                                    <span className="text-[10px] font-mono text-muted-foreground">
+                                      {repuesto.codigoOEM}
+                                    </span>
+                                  )}
+                                  {repuesto.precioUnitario != null && (
+                                    <span className="text-[10px] font-mono tabular-nums text-muted-foreground">
+                                      {formatMoney(repuesto.precioUnitario)}
+                                      /u
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => removeRepuesto(rIdx)}
+                                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 hover:text-destructive transition-all shrink-0"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                          {/* Row toggle-all */}
+                          <td className="px-2 py-2.5 text-center">
+                            <Checkbox
+                              checked={isRowAllChecked("repuesto", rIdx)}
+                              onCheckedChange={() =>
+                                toggleRowAll("repuesto", rIdx)
+                              }
+                            />
+                          </td>
+                          {/* Milestone checkboxes + quantity */}
                           {sortedMilestones.map((m) => {
                             const origIdx = milestones.indexOf(m);
-                            const stats = milestoneStats(origIdx);
+                            const aKey = assignmentKey(
+                              "repuesto",
+                              rIdx,
+                              origIdx
+                            );
+                            const cKey = cantidadKey(rIdx, origIdx);
+                            const isChecked = !!assignments[aKey];
+                            const qty =
+                              repuestoCantidades[cKey] ??
+                              repuesto.cantidadDefault;
                             return (
                               <td
                                 key={origIdx}
-                                className="px-3 py-3 text-center"
+                                className="px-3 py-2.5 text-center"
                               >
-                                <div className="space-y-1">
-                                  <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
-                                    <Wrench className="h-3 w-3" />
-                                    <span className="font-mono tabular-nums">
-                                      {stats.tareasCount}
-                                    </span>
-                                  </div>
-                                  {stats.tiempoTotal > 0 && (
-                                    <div className="text-[10px] font-mono tabular-nums text-muted-foreground">
-                                      {stats.tiempoTotal} min
-                                    </div>
-                                  )}
-                                  <div className="text-xs font-mono tabular-nums font-semibold text-foreground">
-                                    {formatMoney(stats.costoTotal)}
-                                  </div>
-                                  {stats.costoManoObra > 0 && (
-                                    <div className="text-[10px] font-mono tabular-nums text-muted-foreground">
-                                      MO:{" "}
-                                      {formatMoney(stats.costoManoObra)}
-                                    </div>
-                                  )}
-                                  {stats.costoRepuestos > 0 && (
-                                    <div className="text-[10px] font-mono tabular-nums text-muted-foreground">
-                                      Rep:{" "}
-                                      {formatMoney(stats.costoRepuestos)}
-                                    </div>
+                                <div className="flex flex-col items-center gap-1">
+                                  <Checkbox
+                                    checked={isChecked}
+                                    onCheckedChange={() =>
+                                      toggleAssignment(aKey)
+                                    }
+                                  />
+                                  {isChecked && (
+                                    <Input
+                                      type="number"
+                                      min={1}
+                                      value={qty}
+                                      onChange={(e) => {
+                                        const val =
+                                          parseInt(e.target.value) || 1;
+                                        setRepuestoCantidades(
+                                          (prev) => ({
+                                            ...prev,
+                                            [cKey]: val,
+                                          })
+                                        );
+                                      }}
+                                      className="h-6 w-14 text-center text-xs font-mono tabular-nums px-1"
+                                    />
                                   )}
                                 </div>
                               </td>
                             );
                           })}
                         </tr>
-                      </tfoot>
-                    )}
-                </table>
-              </div>
-            )}
+                      ))}
+
+                      {/* ── Inline quick-add for repuestos (Task 2) ── */}
+                      {repuestoItems.length > 0 && (
+                        <tr>
+                          <td
+                            colSpan={milestones.length + 2}
+                            className="sticky left-0 z-10 bg-card p-0"
+                          >
+                            <InlineAutocomplete<RepuestoSearchResult>
+                              placeholder="Buscar repuesto para agregar..."
+                              onSearch={searchRepuestosInline}
+                              onSelect={addRepuestoFromInventory}
+                              isAdded={isRepuestoAdded}
+                              icon={Plus}
+                              renderItem={(item, added) => (
+                                <div>
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-medium truncate">
+                                      {item.nombre}
+                                    </span>
+                                    <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                                      {added && (
+                                        <Check className="h-3 w-3 text-primary" />
+                                      )}
+                                      {!added &&
+                                        item.precioCompra != null && (
+                                          <span className="font-mono tabular-nums text-primary">
+                                            {formatMoney(
+                                              Number(item.precioCompra)
+                                            )}
+                                          </span>
+                                        )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
+                                    {item.codigo && (
+                                      <span className="font-mono">
+                                        {item.codigo}
+                                      </span>
+                                    )}
+                                    {item.stock != null && (
+                                      <span
+                                        className={cn(
+                                          "font-mono tabular-nums",
+                                          item.stock > 0
+                                            ? "text-green-600"
+                                            : "text-red-500"
+                                        )}
+                                      >
+                                        Stock: {item.stock}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            />
+                          </td>
+                        </tr>
+                      )}
+
+                      {/* ── Inline quick-add when sections are empty (Task 2) ── */}
+                      {tareaItems.length === 0 &&
+                        repuestoItems.length > 0 && (
+                          <tr>
+                            <td
+                              colSpan={milestones.length + 2}
+                              className="sticky left-0 z-10 bg-card p-0"
+                            >
+                              <InlineAutocomplete<ItemServiceResult>
+                                placeholder="Buscar tarea para agregar..."
+                                onSearch={searchTareasInline}
+                                onSelect={addTareaFromCatalog}
+                                isAdded={isTareaAdded}
+                                icon={Plus}
+                                renderItem={(item, added) => (
+                                  <div>
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-medium">
+                                        {item.nombre}
+                                      </span>
+                                      {added && (
+                                        <Check className="h-3 w-3 text-primary shrink-0 ml-1" />
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground">
+                                      <span className="px-1 py-0.5 rounded bg-muted uppercase tracking-wider font-medium">
+                                        {item.categoria}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              />
+                            </td>
+                          </tr>
+                        )}
+                    </tbody>
+
+                    {/* ── Improved Summary Footer (Task 3) ── */}
+                    {milestones.length > 0 &&
+                      (tareaItems.length > 0 ||
+                        repuestoItems.length > 0) && (
+                        <tfoot>
+                          {/* Repuestos cost row */}
+                          <tr className="border-t-2 bg-muted/10">
+                            <td className="sticky left-0 z-10 bg-muted/10 px-4 py-2 text-[11px] font-medium text-muted-foreground">
+                              <div className="flex items-center gap-1.5">
+                                <Package className="h-3 w-3" />
+                                Costo Repuestos
+                              </div>
+                            </td>
+                            <td />
+                            {sortedMilestones.map((m) => {
+                              const origIdx = milestones.indexOf(m);
+                              const stats = milestoneStats(origIdx);
+                              return (
+                                <td
+                                  key={origIdx}
+                                  className="px-3 py-2 text-center"
+                                >
+                                  <span className="text-[11px] font-mono tabular-nums text-muted-foreground">
+                                    {stats.costoRepuestos > 0
+                                      ? formatMoney(stats.costoRepuestos)
+                                      : "—"}
+                                  </span>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                          {/* Mano de obra cost row */}
+                          <tr className="bg-muted/10">
+                            <td className="sticky left-0 z-10 bg-muted/10 px-4 py-2 text-[11px] font-medium text-muted-foreground">
+                              <div className="flex items-center gap-1.5">
+                                <Wrench className="h-3 w-3" />
+                                Mano de Obra
+                                {tarifaHora != null && (
+                                  <span className="font-mono tabular-nums text-[10px]">
+                                    ({formatMoney(tarifaHora)}/h)
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td />
+                            {sortedMilestones.map((m) => {
+                              const origIdx = milestones.indexOf(m);
+                              const stats = milestoneStats(origIdx);
+                              return (
+                                <td
+                                  key={origIdx}
+                                  className="px-3 py-2 text-center"
+                                >
+                                  <div className="space-y-0.5">
+                                    <div className="text-[11px] font-mono tabular-nums text-muted-foreground">
+                                      {stats.costoManoObra > 0
+                                        ? formatMoney(stats.costoManoObra)
+                                        : "—"}
+                                    </div>
+                                    {stats.tiempoTotal > 0 && (
+                                      <div className="text-[10px] font-mono tabular-nums text-muted-foreground/70">
+                                        {stats.tiempoTotal} min
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                          {/* Total cost row */}
+                          <tr className="bg-muted/20 border-t">
+                            <td className="sticky left-0 z-10 bg-muted/20 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-foreground">
+                              <div className="flex items-center gap-1.5">
+                                <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                                Costo Total
+                              </div>
+                            </td>
+                            <td />
+                            {sortedMilestones.map((m) => {
+                              const origIdx = milestones.indexOf(m);
+                              const stats = milestoneStats(origIdx);
+                              return (
+                                <td
+                                  key={origIdx}
+                                  className="px-3 py-3 text-center"
+                                >
+                                  <div className="space-y-0.5">
+                                    <div className="text-sm font-mono tabular-nums font-semibold text-foreground">
+                                      {formatMoney(stats.costoTotal)}
+                                    </div>
+                                    <div className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground">
+                                      <span className="flex items-center gap-0.5">
+                                        <Wrench className="h-2.5 w-2.5" />
+                                        <span className="font-mono tabular-nums">
+                                          {stats.tareasCount}
+                                        </span>
+                                      </span>
+                                      <span className="flex items-center gap-0.5">
+                                        <Package className="h-2.5 w-2.5" />
+                                        <span className="font-mono tabular-nums">
+                                          {stats.repuestosCount}
+                                        </span>
+                                      </span>
+                                    </div>
+                                  </div>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        </tfoot>
+                      )}
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ── Action Buttons ── */}

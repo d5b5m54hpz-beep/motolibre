@@ -39,6 +39,27 @@ export const repuestoOTCreateSchema = z.object({
   repuestoId: z.string().optional().nullable(),
 });
 
+export const itemOTCreateSchema = z.object({
+  tipo: z.enum(["MANO_OBRA", "REPUESTO", "INSUMO"]),
+  descripcion: z.string().min(1, "Descripción requerida"),
+  cantidad: z.number().int().positive().default(1),
+  precioUnitario: z.number().min(0),
+  mecanicoId: z.string().optional().nullable(),
+  tiempoMinutos: z.number().int().positive().optional().nullable(),
+  repuestoId: z.string().optional().nullable(),
+  codigoOEM: z.string().optional().nullable(),
+});
+
+export const itemOTUpdateSchema = z.object({
+  descripcion: z.string().min(1).optional(),
+  cantidad: z.number().int().positive().optional(),
+  precioUnitario: z.number().min(0).optional(),
+  mecanicoId: z.string().optional().nullable(),
+  tiempoMinutos: z.number().int().positive().optional().nullable(),
+  repuestoId: z.string().optional().nullable(),
+  codigoOEM: z.string().optional().nullable(),
+});
+
 export const planMantenimientoSchema = z.object({
   nombre: z.string().min(1),
   tipoService: z.enum(["SERVICE_5000KM", "SERVICE_10000KM", "SERVICE_15000KM", "SERVICE_20000KM", "SERVICE_GENERAL", "REPARACION", "INSPECCION", "OTRO"]),

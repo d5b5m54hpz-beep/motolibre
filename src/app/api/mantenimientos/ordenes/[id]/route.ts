@@ -22,6 +22,7 @@ export async function GET(
     include: {
       tareas: { orderBy: { orden: "asc" } },
       repuestos: { orderBy: { createdAt: "asc" } },
+      items: { orderBy: [{ tipo: "asc" }, { createdAt: "asc" }] },
       fotos: { orderBy: { createdAt: "asc" } },
       historial: { orderBy: { createdAt: "desc" } },
     },
