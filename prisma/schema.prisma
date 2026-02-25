@@ -1782,6 +1782,30 @@ enum TipoTaller {
   EXTERNO
 }
 
+enum EstadoSolicitudTaller {
+  BORRADOR
+  RECIBIDA
+  INCOMPLETA
+  EN_EVALUACION
+  APROBADA
+  RECHAZADA
+  EN_ESPERA
+  CONVENIO_ENVIADO
+  CONVENIO_FIRMADO
+  ONBOARDING
+  ACTIVO
+}
+
+enum CategoriaEvaluacion {
+  INFRAESTRUCTURA
+  EQUIPAMIENTO
+  PERSONAL
+  DOCUMENTACION
+  UBICACION
+  EXPERIENCIA
+  REFERENCIAS
+}
+
 model Taller {
   id              String      @id @default(cuid())
   nombre          String
@@ -1796,6 +1820,17 @@ model Taller {
   tarifaHora      Float?      // $/hora para cálculo de costos
 
   mecanicos       Mecanico[]
+
+  // Red de Talleres
+  solicitud         SolicitudTaller?
+  codigoRed         String?     @unique  // "ML-CABA-001"
+  capacidadOTMes    Int?
+  horariosAtencion  String?
+  latitud           Float?
+  longitud          Float?
+  scoreCalidad      Float?
+  otCompletadas     Int         @default(0)
+  tiempoPromedioOT  Int?        // minutos
 
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
@@ -3428,4 +3463,120 @@ model ReglaAutonomia {
   updatedAt       DateTime    @updatedAt
 
   @@map("reglas_autonomia")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RED DE TALLERES — SOLICITUDES, EVALUACIONES, CONVENIOS
+// ═══════════════════════════════════════════════════════════════
+
+model SolicitudTaller {
+  id                    String   @id @default(cuid())
+  estado                EstadoSolicitudTaller @default(BORRADOR)
+
+  // Datos del negocio
+  nombreTaller          String
+  razonSocial           String?
+  cuit                  String?
+  direccion             String
+  ciudad                String
+  provincia             String
+  codigoPostal          String?
+  telefono              String
+  email                 String
+  sitioWeb              String?
+
+  // Contacto principal
+  contactoNombre        String
+  contactoCargo         String?
+  contactoCelular       String?
+
+  // Capacidad
+  cantidadMecanicos     Int       @default(1)
+  especialidades        String[]  @default([])
+  marcasExperiencia     String[]  @default([])
+  capacidadOTMes        Int?
+  horariosAtencion      String?
+
+  // Infraestructura
+  superficieM2          Int?
+  cantidadElevadores    Int?      @default(0)
+  tieneDeposito         Boolean   @default(false)
+  tieneEstacionamiento  Boolean   @default(false)
+
+  // Documentos (URLs Supabase)
+  docCuit               String?
+  docHabilitacion       String?
+  docSeguro             String?
+  docFotos              String[]  @default([])
+  docOtros              String[]  @default([])
+
+  // Geo
+  latitud               Float?
+  longitud              Float?
+
+  // Evaluación
+  scoreTotal            Float?
+  evaluaciones          EvaluacionSolicitud[]
+  notasInternas         String?
+
+  // Token público para seguimiento
+  tokenPublico          String    @unique @default(cuid())
+
+  // Convenio
+  convenioId            String?   @unique
+  convenio              ConvenioTaller? @relation(fields: [convenioId], references: [id])
+
+  // Taller creado al activar
+  tallerId              String?   @unique
+  taller                Taller?   @relation(fields: [tallerId], references: [id])
+
+  // Metadata
+  motivoRechazo         String?
+  fechaRecepcion        DateTime?
+  fechaEvaluacion       DateTime?
+  fechaAprobacion       DateTime?
+  creadoPor             String?
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([estado])
+  @@index([provincia])
+  @@map("solicitudes_taller")
+}
+
+model EvaluacionSolicitud {
+  id              String   @id @default(cuid())
+  solicitudId     String
+  solicitud       SolicitudTaller @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
+  categoria       CategoriaEvaluacion
+  puntaje         Int      // 0-10
+  peso            Float    @default(1.0)
+  observaciones   String?
+  evaluadorId     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([solicitudId, categoria])
+  @@map("evaluaciones_solicitud")
+}
+
+model ConvenioTaller {
+  id                String   @id @default(cuid())
+  tarifaHoraBase    Decimal  @db.Decimal(12,2)
+  margenRepuestos   Decimal? @db.Decimal(5,2)
+  plazoFacturaDias  Int      @default(30)
+  fechaInicio       DateTime
+  fechaFin          DateTime?
+  renovacionAuto    Boolean  @default(true)
+  zonaCobertura     String?
+  otMaxMes          Int?
+  documentoUrl      String?
+  firmadoDigital    Boolean  @default(false)
+  fechaFirma        DateTime?
+  solicitud         SolicitudTaller?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("convenios_taller")
 }

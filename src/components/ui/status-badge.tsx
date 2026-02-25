@@ -130,6 +130,14 @@ const statusToVariant: Record<string, StatusVariant> = {
   PUBLICADO: "success",
   ARCHIVADO: "neutral",
 
+  // Red de Talleres
+  RECIBIDA: "info",
+  INCOMPLETA: "warning",
+  RECHAZADA: "danger",
+  CONVENIO_ENVIADO: "info",
+  CONVENIO_FIRMADO: "success",
+  ONBOARDING: "warning",
+
   // Genéricos
   BORRADOR: "neutral",
   ENVIADO: "info",

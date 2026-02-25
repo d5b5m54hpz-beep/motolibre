@@ -40,7 +40,15 @@ export const navigation: NavGroup[] = [
       { title: "Mantenimientos", href: "/admin/mantenimientos", icon: Wrench },
       { title: "Órdenes de Trabajo", href: "/admin/mantenimientos/ordenes", icon: ClipboardList },
       { title: "Planes Service", href: "/admin/mantenimientos/planes", icon: ListChecks },
-      { title: "Talleres", href: "/admin/talleres", icon: Building2 },
+      {
+        title: "Talleres",
+        href: "/admin/talleres",
+        icon: Building2,
+        children: [
+          { title: "Red de Talleres", href: "/admin/talleres", icon: Building2 },
+          { title: "Solicitudes", href: "/admin/talleres/solicitudes", icon: ClipboardList },
+        ],
+      },
     ],
   },
   {

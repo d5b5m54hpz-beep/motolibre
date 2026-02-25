@@ -246,6 +246,21 @@ export const OPERATIONS = {
     toolCall: "ai.toolCall",
   },
 
+  // ── Red de Talleres ──
+  network: {
+    application: {
+      create: "network.application.create",
+      update: "network.application.update",
+      evaluate: "network.application.evaluate",
+      changeState: "network.application.changeState",
+      activate: "network.application.activate",
+    },
+    agreement: {
+      create: "network.agreement.create",
+      update: "network.agreement.update",
+    },
+  },
+
   // ── Comunicación ──
   communication: {
     message: {
