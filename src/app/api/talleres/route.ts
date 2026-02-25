@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { tallerCreateSchema } from "@/lib/validations/taller";
 import { apiSetup } from "@/lib/api-helpers";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   apiSetup();
   const { error } = await requirePermission(
     OPERATIONS.maintenance.workshop.create,
@@ -14,7 +14,13 @@ export async function GET() {
   );
   if (error) return error;
 
+  const tipo = req.nextUrl.searchParams.get("tipo");
+
   const talleres = await prisma.taller.findMany({
+    where: {
+      ...(tipo === "EXTERNO" || tipo === "INTERNO" ? { tipo } : {}),
+      activo: true,
+    },
     include: {
       mecanicos: { where: { activo: true }, orderBy: { nombre: "asc" } },
       _count: { select: { mecanicos: true } },

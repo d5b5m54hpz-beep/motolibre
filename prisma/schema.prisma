@@ -20,6 +20,7 @@ enum Role {
   RRHH_MANAGER
   COMERCIAL
   VIEWER
+  TALLER_EXTERNO
 }
 
 model User {
@@ -1824,6 +1825,7 @@ model Taller {
   // Red de Talleres
   solicitud         SolicitudTaller?
   codigoRed         String?     @unique  // "ML-CABA-001"
+  userId            String?     @unique  // User del portal taller
   capacidadOTMes    Int?
   horariosAtencion  String?
   latitud           Float?
@@ -1831,6 +1833,7 @@ model Taller {
   scoreCalidad      Float?
   otCompletadas     Int         @default(0)
   tiempoPromedioOT  Int?        // minutos
+  asignaciones      AsignacionOT[]
 
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
@@ -3579,4 +3582,42 @@ model ConvenioTaller {
   updatedAt         DateTime @updatedAt
 
   @@map("convenios_taller")
+}
+
+enum EstadoAsignacion {
+  PENDIENTE
+  ACEPTADA
+  RECHAZADA
+  EXPIRADA
+  CANCELADA
+}
+
+model AsignacionOT {
+  id              String      @id @default(cuid())
+  ordenTrabajoId  String
+  tallerId        String
+  taller          Taller      @relation(fields: [tallerId], references: [id])
+  estado          EstadoAsignacion @default(PENDIENTE)
+
+  // SLA
+  fechaLimite     DateTime    // Deadline para aceptar/rechazar
+  fechaRespuesta  DateTime?   // Cuando respondió
+
+  // Respuesta del taller
+  motivoRechazo   String?
+  precioEstimado  Decimal?    @db.Decimal(12,2)
+  tiempoEstimado  Int?        // minutos
+  notasTaller     String?
+  confirmRepuestos Boolean?   // Taller confirma que tiene los repuestos
+
+  // Metadata
+  asignadoPor     String?     // userId del admin que asignó
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([ordenTrabajoId])
+  @@index([tallerId])
+  @@index([estado])
+  @@map("asignaciones_ot")
 }

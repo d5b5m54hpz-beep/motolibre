@@ -34,9 +34,10 @@ export default auth((req) => {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
     // Páginas redirigen a login
-    const loginUrl = pathname.startsWith("/admin")
-      ? "/login-admin"
-      : "/login";
+    const loginUrl =
+      pathname.startsWith("/admin") || pathname.startsWith("/portal-taller")
+        ? "/login-admin"
+        : "/login";
     return NextResponse.redirect(new URL(loginUrl, req.url));
   }
 

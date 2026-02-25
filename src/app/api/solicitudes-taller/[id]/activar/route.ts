@@ -3,12 +3,13 @@ import { requirePermission } from "@/lib/permissions";
 import { OPERATIONS, withEvent } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
 import { apiSetup } from "@/lib/api-helpers";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 /**
- * Generates a network code like "ML-CABA-001" based on the city.
+ * Generates a network code like "ML-CABA-001" based on the province.
  */
 async function generarCodigoRed(provincia: string): Promise<string> {
-  // Abbreviate province to 4 chars uppercase
   const abrev = provincia
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -65,11 +66,26 @@ export async function POST(
 
   const codigoRed = await generarCodigoRed(solicitud.provincia);
 
+  // Generate temporary password for the taller portal user
+  const tempPassword = crypto.randomBytes(6).toString("hex"); // 12 chars
+  const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
   const taller = await withEvent(
     OPERATIONS.network.application.activate,
     "SolicitudTaller",
     () =>
       prisma.$transaction(async (tx) => {
+        // Create portal user for the taller
+        const tallerUser = await tx.user.create({
+          data: {
+            email: solicitud.email.toLowerCase(),
+            name: solicitud.contactoNombre,
+            password: hashedPassword,
+            provider: "credentials",
+            role: "TALLER_EXTERNO",
+          },
+        });
+
         const nuevoTaller = await tx.taller.create({
           data: {
             nombre: solicitud.nombreTaller,
@@ -84,6 +100,7 @@ export async function POST(
               ? Number(solicitud.convenio.tarifaHoraBase)
               : null,
             codigoRed,
+            userId: tallerUser.id,
             capacidadOTMes: solicitud.capacidadOTMes,
             horariosAtencion: solicitud.horariosAtencion,
             latitud: solicitud.latitud,
@@ -104,5 +121,15 @@ export async function POST(
     userId
   );
 
-  return NextResponse.json({ data: taller }, { status: 201 });
+  return NextResponse.json(
+    {
+      data: taller,
+      credentials: {
+        email: solicitud.email.toLowerCase(),
+        tempPassword,
+        message: "Enviá estas credenciales al taller para que acceda al portal",
+      },
+    },
+    { status: 201 }
+  );
 }

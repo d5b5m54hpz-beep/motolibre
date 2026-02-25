@@ -40,6 +40,8 @@ import {
   Sparkles,
   Loader2,
   ThumbsDown,
+  Building2,
+  Send,
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
@@ -1536,6 +1538,11 @@ export default function OTDetallePage() {
         </CardContent>
       </Card>
 
+      {/* Asignar a Taller Externo */}
+      {isEditable && ["APROBADA", "PROGRAMADA"].includes(ot.estado) && (
+        <AsignarTallerCard otId={ot.id} />
+      )}
+
       {/* Historial */}
       <Card>
         <CardHeader>
@@ -1694,5 +1701,175 @@ function ItemsTable({
         </tr>
       </tfoot>
     </table>
+  );
+}
+
+// ── Asignar a Taller Externo ────────────────────────────────
+
+interface Asignacion {
+  id: string;
+  estado: string;
+  fechaLimite: string;
+  fechaRespuesta: string | null;
+  motivoRechazo: string | null;
+  createdAt: string;
+  taller: { id: string; nombre: string; codigoRed: string | null };
+}
+
+function AsignarTallerCard({ otId }: { otId: string }) {
+  const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
+  const [talleresExternos, setTalleresExternos] = useState<
+    Array<{ id: string; nombre: string; codigoRed: string | null }>
+  >([]);
+  const [selectedTaller, setSelectedTaller] = useState("");
+  const [horasLimite, setHorasLimite] = useState(24);
+  const [sending, setSending] = useState(false);
+  const [loadingAsig, setLoadingAsig] = useState(true);
+
+  const fetchAsignaciones = useCallback(async () => {
+    const res = await fetch(`/api/mantenimientos/ordenes/${otId}/asignar-taller`);
+    if (res.ok) {
+      const j = await res.json();
+      setAsignaciones(j.data);
+    }
+    setLoadingAsig(false);
+  }, [otId]);
+
+  useEffect(() => {
+    void fetchAsignaciones();
+    // Fetch external talleres
+    void fetch("/api/talleres?tipo=EXTERNO").then(async (r) => {
+      if (r.ok) {
+        const j = await r.json();
+        setTalleresExternos(
+          j.data.map((t: { id: string; nombre: string; codigoRed?: string | null }) => ({
+            id: t.id,
+            nombre: t.nombre,
+            codigoRed: t.codigoRed ?? null,
+          }))
+        );
+      }
+    });
+  }, [fetchAsignaciones]);
+
+  const handleAsignar = async () => {
+    if (!selectedTaller) return;
+    setSending(true);
+    try {
+      const res = await fetch(`/api/mantenimientos/ordenes/${otId}/asignar-taller`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tallerId: selectedTaller, horasLimite }),
+      });
+      if (res.ok) {
+        setSelectedTaller("");
+        setHorasLimite(24);
+        await fetchAsignaciones();
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const estadoColor: Record<string, string> = {
+    PENDIENTE: "bg-yellow-100 text-yellow-800",
+    ACEPTADA: "bg-green-100 text-green-800",
+    RECHAZADA: "bg-red-100 text-red-800",
+    EXPIRADA: "bg-gray-100 text-gray-800",
+    CANCELADA: "bg-gray-100 text-gray-800",
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <Building2 className="h-4 w-4" />
+          Asignar a Taller Externo
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Existing assignments */}
+        {loadingAsig ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
+        ) : asignaciones.length > 0 ? (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground font-medium">Asignaciones enviadas</p>
+            {asignaciones.map((a) => (
+              <div key={a.id} className="flex items-center justify-between p-2 rounded border text-sm">
+                <div>
+                  <span className="font-medium">{a.taller.nombre}</span>
+                  {a.taller.codigoRed && (
+                    <span className="text-xs text-muted-foreground ml-1">({a.taller.codigoRed})</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className={`text-xs ${estadoColor[a.estado] ?? ""}`}>
+                    {a.estado}
+                  </Badge>
+                  {a.estado === "PENDIENTE" && (
+                    <span className="text-xs text-muted-foreground font-mono">
+                      <Clock className="h-3 w-3 inline mr-0.5" />
+                      {new Date(a.fechaLimite) > new Date()
+                        ? `${Math.ceil((new Date(a.fechaLimite).getTime() - Date.now()) / 3600000)}h`
+                        : "Expirado"}
+                    </span>
+                  )}
+                  {a.motivoRechazo && (
+                    <span className="text-xs text-muted-foreground" title={a.motivoRechazo}>
+                      <ThumbsDown className="h-3 w-3 inline" />
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {/* Assign form */}
+        <div className="space-y-3 pt-2 border-t">
+          <div className="grid grid-cols-[1fr_100px] gap-2">
+            <Select value={selectedTaller} onValueChange={setSelectedTaller}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar taller externo..." />
+              </SelectTrigger>
+              <SelectContent>
+                {talleresExternos.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.nombre} {t.codigoRed ? `(${t.codigoRed})` : ""}
+                  </SelectItem>
+                ))}
+                {talleresExternos.length === 0 && (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    No hay talleres externos activos
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
+            <div>
+              <Input
+                type="number"
+                min={1}
+                max={168}
+                value={horasLimite}
+                onChange={(e) => setHorasLimite(Number(e.target.value))}
+                className="text-center"
+              />
+              <p className="text-[10px] text-muted-foreground text-center mt-0.5">SLA (horas)</p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={handleAsignar}
+            disabled={!selectedTaller || sending}
+            className="w-full"
+          >
+            {sending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
+            Enviar Asignación
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
