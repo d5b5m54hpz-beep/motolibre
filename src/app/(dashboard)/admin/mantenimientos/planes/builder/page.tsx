@@ -498,6 +498,56 @@ export default function PlanBuilderPage() {
     }
   }, [marca, modelo]);
 
+  // ── Auto-save draft (debounced 2s) ──
+  useEffect(() => {
+    if (!marca || !modelo) return;
+    if (
+      milestones.length === 0 &&
+      tareaItems.length === 0 &&
+      repuestoItems.length === 0
+    )
+      return;
+
+    const timeout = setTimeout(() => {
+      const key = `builder-${marca}-${modelo}`;
+      const state: BuilderState = {
+        marca,
+        modelo,
+        milestones,
+        tareaItems,
+        repuestoItems,
+        assignments,
+        repuestoCantidades,
+      };
+      localStorage.setItem(key, JSON.stringify(state));
+    }, 2000);
+
+    return () => clearTimeout(timeout);
+  }, [
+    marca,
+    modelo,
+    milestones,
+    tareaItems,
+    repuestoItems,
+    assignments,
+    repuestoCantidades,
+  ]);
+
+  // ── Warn before navigating away ──
+  useEffect(() => {
+    const hasData =
+      milestones.length > 0 ||
+      tareaItems.length > 0 ||
+      repuestoItems.length > 0;
+    if (!hasData) return;
+
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [milestones, tareaItems, repuestoItems]);
+
   // ── Debounced tarea search ──
   useEffect(() => {
     if (tareaQuery.length < 2) {
@@ -1499,12 +1549,14 @@ export default function PlanBuilderPage() {
                 <span>
                   Tarifa hora no configurada — costos de mano de obra
                   mostrarán $0.{" "}
-                  <Link
+                  <a
                     href="/admin/configuracion/empresa"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="underline font-medium hover:text-amber-800 dark:hover:text-amber-300"
                   >
                     Configurar
-                  </Link>
+                  </a>
                 </span>
               </div>
             )}
@@ -1514,7 +1566,7 @@ export default function PlanBuilderPage() {
           <div className="flex gap-4">
             {/* ── Catalog Sidebar (Task 1) ── */}
             {catalogOpen && catalogItems.length > 0 && (
-              <div className="w-72 shrink-0 rounded-lg border bg-card overflow-hidden sticky top-4 self-start">
+              <div className="w-72 shrink-0 rounded-lg border bg-card overflow-hidden">
                 <div className="flex items-center justify-between p-3 border-b bg-muted/30">
                   <div className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4 text-primary" />
@@ -1530,7 +1582,7 @@ export default function PlanBuilderPage() {
                     <X className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                 </div>
-                <ScrollArea className="h-[calc(100vh-340px)]">
+                <ScrollArea className="h-[calc(100vh-400px)]">
                   <div className="p-1">
                     {Object.entries(catalogByCategory).map(
                       ([category, items]) => {

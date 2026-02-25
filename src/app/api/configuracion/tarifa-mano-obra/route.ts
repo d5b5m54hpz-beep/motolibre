@@ -61,7 +61,40 @@ export async function GET() {
     });
   }
 
-  // 4. No config available
+  // 4. Calculate from average mechanic salary
+  const mecanicosSalaries = await prisma.mecanico.findMany({
+    where: {
+      activo: true,
+      empleado: { estado: "ACTIVO" },
+    },
+    select: {
+      empleado: {
+        select: { sueldoBasico: true },
+      },
+    },
+  });
+
+  if (mecanicosSalaries.length > 0) {
+    const sueldos = mecanicosSalaries
+      .map((m) => m.empleado?.sueldoBasico)
+      .filter((s): s is NonNullable<typeof s> => s != null)
+      .map((s) => Number(s));
+
+    if (sueldos.length > 0) {
+      const promedio = sueldos.reduce((a, b) => a + b, 0) / sueldos.length;
+      const cargas = 0.43;
+      const horas = 176;
+      const costo = (promedio * (1 + cargas)) / horas;
+      return NextResponse.json({
+        data: {
+          tarifaHora: Math.round(costo),
+          fuente: `Promedio de ${sueldos.length} mecánico(s)`,
+        },
+      });
+    }
+  }
+
+  // 5. No config available
   return NextResponse.json({
     data: { tarifaHora: null, fuente: null },
   });
