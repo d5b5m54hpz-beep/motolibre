@@ -12,10 +12,11 @@ import { motosColumns, defaultHiddenColumns, type MotoRow } from "./motos-column
 import { formatMoney, formatDate } from "@/lib/format";
 import {
   Bike, Download, QrCode, ExternalLink, Plus,
-  Clock, FileText, Upload,
+  Clock, FileText, Upload, ImageIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { ImageBuilderDialog } from "./image-builder-dialog";
 
 // ── Estado options for filter ──
 const ESTADO_OPTIONS = [
@@ -331,6 +332,21 @@ function MotoSheet({
           onClick: () => window.open(`/api/motos/${moto.id}/qr`, "_blank"),
         },
       ]}
+      headerExtra={
+        <ImageBuilderDialog
+          motoId={moto.id}
+          marca={moto.marca}
+          modelo={moto.modelo}
+          currentImageUrl={moto.imagenUrl}
+          onSuccess={() => router.refresh()}
+          trigger={
+            <Button variant="outline" size="sm">
+              <ImageIcon className="h-4 w-4 mr-1.5" />
+              Cambiar imagen
+            </Button>
+          }
+        />
+      }
     />
   );
 }

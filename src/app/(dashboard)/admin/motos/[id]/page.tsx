@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatMoney, formatDate, formatDateTime } from "@/lib/format";
 import { QRGenerator } from "./_components/qr-generator";
+import { MotoImageActions } from "./_components/moto-image-actions";
 import { cn } from "@/lib/utils";
 import {
   ChevronRight, Clock, FileText, Gauge, TrendingDown, Upload, Pencil,
@@ -60,6 +61,12 @@ export default async function MotoDetallePage({
         </div>
         <div className="flex items-center gap-2">
           <QRGenerator motoId={id} />
+          <MotoImageActions
+            motoId={id}
+            marca={moto.marca}
+            modelo={moto.modelo}
+            currentImageUrl={moto.imagenUrl}
+          />
           <Button variant="outline" size="sm">
             <Pencil className="h-4 w-4 mr-2" />
             Editar
