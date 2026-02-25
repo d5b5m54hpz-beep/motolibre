@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,8 +49,8 @@ const TIPOS_SERVICE = [
   { value: "SERVICE_15000KM", label: "Service 15.000 km" },
   { value: "SERVICE_20000KM", label: "Service 20.000 km" },
   { value: "SERVICE_GENERAL", label: "Service General" },
-  { value: "REPARACION", label: "Reparación" },
-  { value: "INSPECCION", label: "Inspección" },
+  { value: "REPARACION", label: "Reparacion" },
+  { value: "INSPECCION", label: "Inspeccion" },
   { value: "OTRO", label: "Otro" },
 ];
 
@@ -125,6 +125,18 @@ interface RepuestoSearchResult {
   stock: number | null;
 }
 
+type InfoState = {
+  nombre: string;
+  tipoService: string;
+  descripcion: string;
+  marcaMoto: string;
+  modeloMoto: string;
+  kmIntervalo: string;
+  diasIntervalo: string;
+  garantiaMeses: string;
+  garantiaKm: string;
+};
+
 // ── Helpers ──
 function formatPriceInput(value: number | null): string {
   if (value === null || value === undefined) return "";
@@ -137,8 +149,14 @@ function parsePriceInput(raw: string): number | null {
   return isNaN(num) ? null : num;
 }
 
-export default function NuevoPlanPage() {
+// ── Main Page ──
+export default function EditarPlanPage() {
   const router = useRouter();
+  const params = useParams();
+  const planId = params.id as string;
+
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
 
@@ -153,7 +171,7 @@ export default function NuevoPlanPage() {
   }, []);
 
   // ── Form state ──
-  const [info, setInfo] = useState({
+  const [info, setInfo] = useState<InfoState>({
     nombre: "",
     tipoService: "SERVICE_GENERAL",
     descripcion: "",
@@ -168,17 +186,94 @@ export default function NuevoPlanPage() {
   const [tareas, setTareas] = useState<Tarea[]>([]);
   const [repuestos, setRepuestos] = useState<Repuesto[]>([]);
 
-  // Template loading
-  const [templateSource, setTemplateSource] = useState<string | null>(null);
-
   // Dialog state for adding items
   const [tareaDialog, setTareaDialog] = useState(false);
   const [repuestoDialog, setRepuestoDialog] = useState(false);
   const [editingTarea, setEditingTarea] = useState<Tarea | null>(null);
   const [editingRepuesto, setEditingRepuesto] = useState<Repuesto | null>(null);
 
+  // ── Load existing plan ──
+  useEffect(() => {
+    async function loadPlan() {
+      try {
+        const res = await fetch(`/api/mantenimientos/planes/${planId}`);
+        if (!res.ok) {
+          setLoadError("No se pudo cargar el plan");
+          return;
+        }
+        const json = await res.json();
+        const plan = json.data;
+
+        setInfo({
+          nombre: plan.nombre ?? "",
+          tipoService: plan.tipoService ?? "SERVICE_GENERAL",
+          descripcion: plan.descripcion ?? "",
+          marcaMoto: plan.marcaMoto ?? "",
+          modeloMoto: plan.modeloMoto ?? "",
+          kmIntervalo: plan.kmIntervalo != null ? String(plan.kmIntervalo) : "",
+          diasIntervalo:
+            plan.diasIntervalo != null ? String(plan.diasIntervalo) : "",
+          garantiaMeses:
+            plan.garantiaMeses != null ? String(plan.garantiaMeses) : "",
+          garantiaKm: plan.garantiaKm != null ? String(plan.garantiaKm) : "",
+        });
+
+        setTareas(
+          (plan.tareas ?? []).map(
+            (t: {
+              categoria: string;
+              descripcion: string;
+              accion?: string;
+              tiempoEstimado?: number | null;
+              itemServiceId?: string | null;
+            }) => ({
+              tempId: crypto.randomUUID(),
+              categoria: t.categoria,
+              descripcion: t.descripcion,
+              accion: t.accion ?? "CHECK",
+              tiempoEstimado: t.tiempoEstimado ?? null,
+              itemServiceId: t.itemServiceId ?? null,
+            })
+          )
+        );
+
+        setRepuestos(
+          (plan.repuestos ?? []).map(
+            (r: {
+              nombre: string;
+              codigoOEM?: string | null;
+              cantidad: number;
+              unidad?: string | null;
+              capacidad?: string | null;
+              precioUnitario?: number | null;
+              repuestoId?: string | null;
+            }) => ({
+              tempId: crypto.randomUUID(),
+              nombre: r.nombre,
+              codigoOEM: r.codigoOEM ?? "",
+              cantidad: r.cantidad,
+              unidad: r.unidad ?? "",
+              capacidad: r.capacidad ?? "",
+              precioUnitario: r.precioUnitario ?? null,
+              repuestoId: r.repuestoId ?? null,
+            })
+          )
+        );
+      } catch {
+        setLoadError("Error al cargar el plan");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadPlan();
+  }, [planId]);
+
   // ── Computed ──
-  const tiempoTotal = tareas.reduce((sum, t) => sum + (t.tiempoEstimado ?? 0), 0);
+  const tiempoTotal = tareas.reduce(
+    (sum, t) => sum + (t.tiempoEstimado ?? 0),
+    0
+  );
   const costoRepuestos = repuestos.reduce(
     (sum, r) => sum + (r.precioUnitario ?? 0) * r.cantidad,
     0
@@ -201,7 +296,7 @@ export default function NuevoPlanPage() {
     setTareas(newTareas);
   }
 
-  // ── Save ──
+  // ── Save (delete old plan + create new) ──
   async function handleSave(estado: "BORRADOR" | "PUBLICADO") {
     setSaving(true);
     try {
@@ -261,13 +356,23 @@ export default function NuevoPlanPage() {
         })),
       };
 
-      const res = await fetch("/api/mantenimientos/planes", {
+      // Step 1: Delete old plan
+      const delRes = await fetch(`/api/mantenimientos/planes/${planId}`, {
+        method: "DELETE",
+      });
+      if (!delRes.ok) {
+        // If delete fails, abort
+        return;
+      }
+
+      // Step 2: Create new plan with all data
+      const createRes = await fetch("/api/mantenimientos/planes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
-      if (res.ok) {
+      if (createRes.ok) {
         router.push("/admin/mantenimientos/planes");
         router.refresh();
       }
@@ -276,11 +381,37 @@ export default function NuevoPlanPage() {
     }
   }
 
+  // ── Loading state ──
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Cargando plan...</p>
+      </div>
+    );
+  }
+
+  // ── Error state ──
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <AlertTriangle className="h-8 w-8 text-destructive" />
+        <p className="text-sm text-destructive">{loadError}</p>
+        <Button
+          variant="outline"
+          onClick={() => router.push("/admin/mantenimientos/planes")}
+        >
+          Volver a Planes
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Nuevo Plan de Mantenimiento"
-        description="Defini las tareas, repuestos y costos del service"
+        title="Editar Plan de Mantenimiento"
+        description="Modifica las tareas, repuestos y costos del plan"
       />
 
       {/* ── Stepper ── */}
@@ -322,41 +453,10 @@ export default function NuevoPlanPage() {
       {/* ── Step Content ── */}
       <div className="rounded-lg border bg-card p-6">
         {step === 1 && (
-          <StepInfoGeneral
+          <EditStepInfoGeneral
             info={info}
             onChange={setInfo}
             marcasModelos={marcasModelos}
-            templateSource={templateSource}
-            onLoadTemplate={(plan) => {
-              setTareas(
-                plan.tareas.map((t: { categoria: string; descripcion: string; accion?: string; tiempoEstimado?: number | null; itemServiceId?: string | null }) => ({
-                  tempId: crypto.randomUUID(),
-                  categoria: t.categoria,
-                  descripcion: t.descripcion,
-                  accion: t.accion ?? "CHECK",
-                  tiempoEstimado: t.tiempoEstimado ?? null,
-                  itemServiceId: t.itemServiceId ?? null,
-                }))
-              );
-              setRepuestos(
-                plan.repuestos.map((r: { nombre: string; codigoOEM?: string | null; cantidad: number; unidad?: string | null; precioUnitario?: number | null; repuestoId?: string | null }) => ({
-                  tempId: crypto.randomUUID(),
-                  nombre: r.nombre,
-                  codigoOEM: r.codigoOEM ?? "",
-                  cantidad: r.cantidad,
-                  unidad: r.unidad ?? "",
-                  capacidad: "",
-                  precioUnitario: r.precioUnitario ?? null,
-                  repuestoId: r.repuestoId ?? null,
-                }))
-              );
-              setTemplateSource(plan.nombre);
-            }}
-            onClearTemplate={() => {
-              setTareas([]);
-              setRepuestos([]);
-              setTemplateSource(null);
-            }}
           />
         )}
 
@@ -388,7 +488,9 @@ export default function NuevoPlanPage() {
               setEditingRepuesto(r);
               setRepuestoDialog(true);
             }}
-            onRemove={(id) => setRepuestos(repuestos.filter((r) => r.tempId !== id))}
+            onRemove={(id) =>
+              setRepuestos(repuestos.filter((r) => r.tempId !== id))
+            }
             costoTotal={costoRepuestos}
           />
         )}
@@ -430,10 +532,7 @@ export default function NuevoPlanPage() {
             </Button>
 
             {step < 4 ? (
-              <Button
-                onClick={() => setStep(step + 1)}
-                disabled={!canProceed()}
-              >
+              <Button onClick={() => setStep(step + 1)} disabled={!canProceed()}>
                 Siguiente
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
@@ -442,7 +541,7 @@ export default function NuevoPlanPage() {
                 onClick={() => handleSave("PUBLICADO")}
                 disabled={saving || !info.nombre}
               >
-                {saving ? "Guardando..." : "Publicar Plan"}
+                {saving ? "Guardando..." : "Guardar y Publicar"}
               </Button>
             )}
           </div>
@@ -456,7 +555,13 @@ export default function NuevoPlanPage() {
         tarea={editingTarea}
         onSave={(t) => {
           if (editingTarea) {
-            setTareas(tareas.map((x) => (x.tempId === editingTarea.tempId ? { ...t, tempId: editingTarea.tempId } : x)));
+            setTareas(
+              tareas.map((x) =>
+                x.tempId === editingTarea.tempId
+                  ? { ...t, tempId: editingTarea.tempId }
+                  : x
+              )
+            );
           } else {
             setTareas([...tareas, { ...t, tempId: crypto.randomUUID() }]);
           }
@@ -471,7 +576,13 @@ export default function NuevoPlanPage() {
         repuesto={editingRepuesto}
         onSave={(r) => {
           if (editingRepuesto) {
-            setRepuestos(repuestos.map((x) => (x.tempId === editingRepuesto.tempId ? { ...r, tempId: editingRepuesto.tempId } : x)));
+            setRepuestos(
+              repuestos.map((x) =>
+                x.tempId === editingRepuesto.tempId
+                  ? { ...r, tempId: editingRepuesto.tempId }
+                  : x
+              )
+            );
           } else {
             setRepuestos([...repuestos, { ...r, tempId: crypto.randomUUID() }]);
           }
@@ -482,78 +593,31 @@ export default function NuevoPlanPage() {
   );
 }
 
-// ── Info type ──
-type InfoState = {
-  nombre: string;
-  tipoService: string;
-  descripcion: string;
-  marcaMoto: string;
-  modeloMoto: string;
-  kmIntervalo: string;
-  diasIntervalo: string;
-  garantiaMeses: string;
-  garantiaKm: string;
-};
-
-// ── Template plan type ──
-interface TemplatePlan {
-  id: string;
-  nombre: string;
-  tipoService: string;
-  tareas: { categoria: string; descripcion: string; accion?: string; tiempoEstimado?: number | null; itemServiceId?: string | null }[];
-  repuestos: { nombre: string; codigoOEM?: string | null; cantidad: number; unidad?: string | null; precioUnitario?: number | null; repuestoId?: string | null }[];
-  _count?: { tareas: number; repuestos: number };
-  kmIntervalo?: number | null;
-  estado?: string;
-}
-
-// ── Step 1: Info General ──
-function StepInfoGeneral({
+// ── Step 1: Info General (edit version, no template loading) ──
+function EditStepInfoGeneral({
   info,
   onChange,
   marcasModelos,
-  templateSource,
-  onLoadTemplate,
-  onClearTemplate,
 }: {
   info: InfoState;
   onChange: (info: InfoState) => void;
   marcasModelos: MarcaModelo[];
-  templateSource: string | null;
-  onLoadTemplate: (plan: TemplatePlan) => void;
-  onClearTemplate: () => void;
 }) {
-  const set = (key: keyof InfoState, value: string) => onChange({ ...info, [key]: value });
+  const set = (key: keyof InfoState, value: string) =>
+    onChange({ ...info, [key]: value });
 
   const [customMarca, setCustomMarca] = useState(false);
   const [customModelo, setCustomModelo] = useState(false);
 
-  // Template search state
-  const [templateSearch, setTemplateSearch] = useState("");
-  const [templateResults, setTemplateResults] = useState<TemplatePlan[]>([]);
-  const [templateSearching, setTemplateSearching] = useState(false);
-
+  // Check if marca exists in marcasModelos, if not show as custom
   useEffect(() => {
-    if (templateSearch.length < 2) {
-      setTemplateResults([]);
-      return;
-    }
-    const timeout = setTimeout(async () => {
-      setTemplateSearching(true);
-      try {
-        const res = await fetch("/api/mantenimientos/planes");
-        const json = await res.json();
-        const planes: TemplatePlan[] = (json.data ?? []).filter((p: TemplatePlan) =>
-          p.nombre.toLowerCase().includes(templateSearch.toLowerCase())
-        );
-        setTemplateResults(planes.slice(0, 8));
-      } catch {
-        setTemplateResults([]);
+    if (info.marcaMoto && marcasModelos.length > 0) {
+      const exists = marcasModelos.some((m) => m.marca === info.marcaMoto);
+      if (!exists && info.marcaMoto !== "") {
+        setCustomMarca(true);
       }
-      setTemplateSearching(false);
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [templateSearch]);
+    }
+  }, [info.marcaMoto, marcasModelos]);
 
   // Get modelos filtered by selected marca
   const modelosDisponibles =
@@ -566,76 +630,6 @@ function StepInfoGeneral({
 
   return (
     <div className="space-y-6">
-      {/* ── Cargar desde plan existente ── */}
-      <div className="rounded-lg border border-dashed p-4 space-y-3">
-        <h3 className="text-sm font-medium">Cargar desde plan existente</h3>
-        {templateSource ? (
-          <div className="flex items-center justify-between rounded-md bg-blue-500/10 px-3 py-2">
-            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-              Cargado desde: {templateSource}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                onClearTemplate();
-                setTemplateSearch("");
-                setTemplateResults([]);
-              }}
-              className="text-xs text-blue-600 dark:text-blue-400 underline hover:no-underline"
-            >
-              Limpiar
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={templateSearch}
-                onChange={(e) => setTemplateSearch(e.target.value)}
-                placeholder="Buscar plan para usar como base..."
-                className="pl-9"
-              />
-              {templateSearching && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-              )}
-            </div>
-            {templateResults.length > 0 && (
-              <div className="rounded-md border max-h-52 overflow-y-auto">
-                {templateResults.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => {
-                      onLoadTemplate(p);
-                      setTemplateSearch("");
-                      setTemplateResults([]);
-                    }}
-                    className="w-full text-left px-3 py-2.5 hover:bg-accent transition-colors border-b last:border-b-0"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{p.nombre}</span>
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0 ml-2">
-                        {p.estado ?? "BORRADOR"}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {p.tareas?.length ?? p._count?.tareas ?? 0} tareas
-                      {" · "}
-                      {p.repuestos?.length ?? p._count?.repuestos ?? 0} repuestos
-                      {p.kmIntervalo ? ` · ${p.kmIntervalo.toLocaleString("es-AR")} km` : ""}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            )}
-            {templateSearch.length >= 2 && !templateSearching && templateResults.length === 0 && (
-              <p className="text-xs text-muted-foreground">No se encontraron planes</p>
-            )}
-          </div>
-        )}
-      </div>
-
       <div className="space-y-1.5">
         <Label>Nombre del Plan *</Label>
         <Input
@@ -649,11 +643,18 @@ function StepInfoGeneral({
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label>Tipo de Service *</Label>
-          <Select value={info.tipoService} onValueChange={(v) => set("tipoService", v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+          <Select
+            value={info.tipoService}
+            onValueChange={(v) => set("tipoService", v)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               {TIPOS_SERVICE.map((t) => (
-                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                <SelectItem key={t.value} value={t.value}>
+                  {t.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -716,7 +717,9 @@ function StepInfoGeneral({
                   }
                 }}
               >
-                <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__TODOS__">Todos</SelectItem>
                   {marcasModelos.map((m) => (
@@ -725,7 +728,9 @@ function StepInfoGeneral({
                     </SelectItem>
                   ))}
                   <SelectItem value="__AGREGAR_OTRO__">
-                    <span className="text-primary font-medium">+ Agregar otro...</span>
+                    <span className="text-primary font-medium">
+                      + Agregar otro...
+                    </span>
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -787,7 +792,9 @@ function StepInfoGeneral({
                   ))}
                   {!modeloDisabled && (
                     <SelectItem value="__AGREGAR_OTRO__">
-                      <span className="text-primary font-medium">+ Agregar otro...</span>
+                      <span className="text-primary font-medium">
+                        + Agregar otro...
+                      </span>
                     </SelectItem>
                   )}
                 </SelectContent>
@@ -877,7 +884,9 @@ function StepTareas({
       {tareas.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed rounded-lg">
           <Wrench className="h-12 w-12 text-muted-foreground/40 mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-1">Sin tareas</h3>
+          <h3 className="text-lg font-medium text-foreground mb-1">
+            Sin tareas
+          </h3>
           <p className="text-sm text-muted-foreground max-w-sm mb-4">
             Agrega las tareas de mantenimiento que componen este plan.
           </p>
@@ -901,21 +910,32 @@ function StepTareas({
               key={t.tempId}
               className="grid grid-cols-[2rem_1fr_6rem_5rem_4rem_4rem] gap-2 items-center px-3 py-2.5 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
             >
-              <span className="text-xs font-mono tabular-nums text-muted-foreground">{i + 1}</span>
+              <span className="text-xs font-mono tabular-nums text-muted-foreground">
+                {i + 1}
+              </span>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] px-1.5 py-0 shrink-0"
+                  >
                     {t.categoria}
                   </Badge>
                   {t.itemServiceId && (
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0 bg-blue-500/10 text-blue-600 border-blue-500/20">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] px-1.5 py-0 shrink-0 bg-blue-500/10 text-blue-600 border-blue-500/20"
+                    >
                       catalogo
                     </Badge>
                   )}
                 </div>
                 <p className="text-sm mt-0.5 truncate">{t.descripcion}</p>
               </div>
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/5 text-primary border-primary/20 justify-center">
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0 bg-primary/5 text-primary border-primary/20 justify-center"
+              >
                 {ACCIONES.find((a) => a.value === t.accion)?.label ?? t.accion}
               </Badge>
               <span className="text-xs font-mono tabular-nums text-muted-foreground text-center">
@@ -957,7 +977,10 @@ function StepTareas({
           ))}
           {tiempoTotal > 0 && (
             <div className="text-right text-sm text-muted-foreground font-mono tabular-nums pt-2">
-              Tiempo total: <span className="font-semibold text-foreground">{tiempoTotal} min</span>
+              Tiempo total:{" "}
+              <span className="font-semibold text-foreground">
+                {tiempoTotal} min
+              </span>
             </div>
           )}
         </div>
@@ -993,7 +1016,9 @@ function StepRepuestos({
       {repuestos.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed rounded-lg">
           <Package className="h-12 w-12 text-muted-foreground/40 mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-1">Sin repuestos</h3>
+          <h3 className="text-lg font-medium text-foreground mb-1">
+            Sin repuestos
+          </h3>
           <p className="text-sm text-muted-foreground max-w-sm mb-4">
             Agrega los repuestos e insumos necesarios para este service.
           </p>
@@ -1020,17 +1045,24 @@ function StepRepuestos({
                 <div className="flex items-center gap-1.5">
                   <p className="text-sm font-medium truncate">{r.nombre}</p>
                   {r.repuestoId && (
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0 bg-green-500/10 text-green-600 border-green-500/20">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] px-1.5 py-0 shrink-0 bg-green-500/10 text-green-600 border-green-500/20"
+                    >
                       inventario
                     </Badge>
                   )}
                 </div>
-                {r.unidad && <p className="text-xs text-muted-foreground">{r.unidad}</p>}
+                {r.unidad && (
+                  <p className="text-xs text-muted-foreground">{r.unidad}</p>
+                )}
               </div>
               <span className="text-xs font-mono text-muted-foreground truncate">
                 {r.codigoOEM || "\u2014"}
               </span>
-              <span className="text-sm font-mono tabular-nums text-center">{r.cantidad}</span>
+              <span className="text-sm font-mono tabular-nums text-center">
+                {r.cantidad}
+              </span>
               <span className="text-sm font-mono tabular-nums text-right">
                 {r.precioUnitario ? formatMoney(r.precioUnitario) : "\u2014"}
               </span>
@@ -1052,7 +1084,10 @@ function StepRepuestos({
           ))}
           {costoTotal > 0 && (
             <div className="text-right text-sm text-muted-foreground font-mono tabular-nums pt-2">
-              Total repuestos: <span className="font-semibold text-foreground">{formatMoney(costoTotal)}</span>
+              Total repuestos:{" "}
+              <span className="font-semibold text-foreground">
+                {formatMoney(costoTotal)}
+              </span>
             </div>
           )}
         </div>
@@ -1097,16 +1132,20 @@ function StepResumen({
   }, []);
 
   const tarifaMinuto = tarifaHora != null ? tarifaHora / 60 : null;
-  const costoManoObra = tarifaMinuto != null ? tiempoTotal * tarifaMinuto : null;
+  const costoManoObra =
+    tarifaMinuto != null ? tiempoTotal * tarifaMinuto : null;
   const costoTotal = (costoManoObra ?? 0) + costoRepuestos;
 
   // Proyeccion mensual
   const kmIntervalo = info.kmIntervalo ? parseInt(info.kmIntervalo) : null;
-  // Assume avg 1500 km/month for a rental moto
   const AVG_KM_MES = 1500;
-  const mesesEntreService = kmIntervalo ? Math.round((kmIntervalo / AVG_KM_MES) * 10) / 10 : null;
+  const mesesEntreService = kmIntervalo
+    ? Math.round((kmIntervalo / AVG_KM_MES) * 10) / 10
+    : null;
   const costoMensualEstimado =
-    mesesEntreService && mesesEntreService > 0 ? costoTotal / mesesEntreService : null;
+    mesesEntreService && mesesEntreService > 0
+      ? costoTotal / mesesEntreService
+      : null;
 
   return (
     <div className="space-y-6">
@@ -1125,12 +1164,16 @@ function StepResumen({
         </div>
         <div className="rounded-lg border p-4 text-center">
           <Wrench className="h-5 w-5 mx-auto text-muted-foreground mb-2" />
-          <p className="text-2xl font-bold font-mono tabular-nums">{tareas.length}</p>
+          <p className="text-2xl font-bold font-mono tabular-nums">
+            {tareas.length}
+          </p>
           <p className="text-xs text-muted-foreground mt-1">tareas</p>
         </div>
         <div className="rounded-lg border p-4 text-center">
           <Package className="h-5 w-5 mx-auto text-muted-foreground mb-2" />
-          <p className="text-2xl font-bold font-mono tabular-nums">{repuestos.length}</p>
+          <p className="text-2xl font-bold font-mono tabular-nums">
+            {repuestos.length}
+          </p>
           <p className="text-xs text-muted-foreground mt-1">repuestos</p>
         </div>
       </div>
@@ -1167,8 +1210,12 @@ function StepResumen({
             ) : tarifaMinuto != null ? (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
-                  <span className="font-mono tabular-nums">{tiempoTotal}</span> min &times;{" "}
-                  <span className="font-mono tabular-nums">{formatMoney(tarifaMinuto)}</span>/min
+                  <span className="font-mono tabular-nums">{tiempoTotal}</span>{" "}
+                  min &times;{" "}
+                  <span className="font-mono tabular-nums">
+                    {formatMoney(tarifaMinuto)}
+                  </span>
+                  /min
                 </span>
                 <span className="font-mono tabular-nums font-medium">
                   {formatMoney(costoManoObra ?? 0)}
@@ -1190,9 +1237,15 @@ function StepResumen({
               {repuestos
                 .filter((r) => r.precioUnitario)
                 .map((r) => (
-                  <div key={r.tempId} className="flex items-center justify-between text-sm">
+                  <div
+                    key={r.tempId}
+                    className="flex items-center justify-between text-sm"
+                  >
                     <span className="text-muted-foreground">
-                      {r.nombre} &times; <span className="font-mono tabular-nums">{r.cantidad}</span>
+                      {r.nombre} &times;{" "}
+                      <span className="font-mono tabular-nums">
+                        {r.cantidad}
+                      </span>
                     </span>
                     <span className="font-mono tabular-nums">
                       {formatMoney((r.precioUnitario ?? 0) * r.cantidad)}
@@ -1242,12 +1295,15 @@ function StepResumen({
                   Cada{" "}
                   <span className="font-mono tabular-nums font-medium text-foreground">
                     {kmIntervalo.toLocaleString("es-AR")} km
-                  </span>
-                  {" "}&rarr; cada{" "}
+                  </span>{" "}
+                  &rarr; cada{" "}
                   <span className="font-mono tabular-nums font-medium text-foreground">
-                    {mesesEntreService === 1 ? "1 mes" : `${mesesEntreService!.toFixed(1).replace(".", ",")} meses`}
-                  </span>
-                  {" "}(basado en {AVG_KM_MES.toLocaleString("es-AR")} km/mes promedio)
+                    {mesesEntreService === 1
+                      ? "1 mes"
+                      : `${mesesEntreService!.toFixed(1).replace(".", ",")} meses`}
+                  </span>{" "}
+                  (basado en {AVG_KM_MES.toLocaleString("es-AR")} km/mes
+                  promedio)
                 </p>
                 {costoMensualEstimado != null && (
                   <p className="font-medium">
@@ -1297,7 +1353,9 @@ function TareaDialog({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ItemServiceResult[]>([]);
   const [searching, setSearching] = useState(false);
-  const [selectedFromCatalog, setSelectedFromCatalog] = useState(!!tarea?.itemServiceId);
+  const [selectedFromCatalog, setSelectedFromCatalog] = useState(
+    !!tarea?.itemServiceId
+  );
 
   // Reset when dialog opens
   const [prevOpen, setPrevOpen] = useState(open);
@@ -1398,14 +1456,21 @@ function TareaDialog({
                       className="w-full text-left px-3 py-2 hover:bg-accent transition-colors border-b last:border-b-0"
                     >
                       <div className="flex flex-col py-0.5">
-                        <span className="text-sm font-medium">{item.nombre}</span>
+                        <span className="text-sm font-medium">
+                          {item.nombre}
+                        </span>
                         <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
                           <span className="px-1.5 py-0.5 rounded bg-muted text-[10px] uppercase tracking-wider font-medium">
                             {item.categoria}
                           </span>
-                          <span>{ACCIONES.find((a) => a.value === item.accion)?.label ?? item.accion}</span>
+                          <span>
+                            {ACCIONES.find((a) => a.value === item.accion)
+                              ?.label ?? item.accion}
+                          </span>
                           {item.tiempoEstimado && (
-                            <span className="font-mono tabular-nums">{item.tiempoEstimado} min</span>
+                            <span className="font-mono tabular-nums">
+                              {item.tiempoEstimado} min
+                            </span>
                           )}
                         </div>
                       </div>
@@ -1414,9 +1479,13 @@ function TareaDialog({
                 </div>
               )}
 
-              {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
-                <p className="text-xs text-muted-foreground">No se encontraron resultados</p>
-              )}
+              {searchQuery.length >= 2 &&
+                !searching &&
+                searchResults.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    No se encontraron resultados
+                  </p>
+                )}
 
               {/* Separator */}
               <div className="relative py-2">
@@ -1450,11 +1519,18 @@ function TareaDialog({
 
           <div className="space-y-1.5">
             <Label>Categoria *</Label>
-            <Select value={form.categoria} onValueChange={(v) => setForm({ ...form, categoria: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select
+              value={form.categoria}
+              onValueChange={(v) => setForm({ ...form, categoria: v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {CATEGORIAS.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1464,7 +1540,9 @@ function TareaDialog({
             <Label>Descripcion *</Label>
             <Input
               value={form.descripcion}
-              onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, descripcion: e.target.value })
+              }
               placeholder="Cambio de aceite motor"
             />
           </div>
@@ -1495,7 +1573,14 @@ function TareaDialog({
             <Input
               type="number"
               value={form.tiempoEstimado ?? ""}
-              onChange={(e) => setForm({ ...form, tiempoEstimado: e.target.value ? parseInt(e.target.value) : null })}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  tiempoEstimado: e.target.value
+                    ? parseInt(e.target.value)
+                    : null,
+                })
+              }
               placeholder="15"
             />
           </div>
@@ -1556,14 +1641,20 @@ function RepuestoDialog({
 
   // Price input display value
   const [precioDisplay, setPrecioDisplay] = useState(
-    repuesto?.precioUnitario != null ? formatPriceInput(repuesto.precioUnitario) : ""
+    repuesto?.precioUnitario != null
+      ? formatPriceInput(repuesto.precioUnitario)
+      : ""
   );
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<RepuestoSearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<RepuestoSearchResult[]>(
+    []
+  );
   const [searching, setSearching] = useState(false);
-  const [selectedFromInventory, setSelectedFromInventory] = useState(!!repuesto?.repuestoId);
+  const [selectedFromInventory, setSelectedFromInventory] = useState(
+    !!repuesto?.repuestoId
+  );
 
   const [prevOpen, setPrevOpen] = useState(open);
   if (open !== prevOpen) {
@@ -1579,7 +1670,9 @@ function RepuestoDialog({
         repuestoId: repuesto?.repuestoId ?? null,
       });
       setPrecioDisplay(
-        repuesto?.precioUnitario != null ? formatPriceInput(repuesto.precioUnitario) : ""
+        repuesto?.precioUnitario != null
+          ? formatPriceInput(repuesto.precioUnitario)
+          : ""
       );
       setSearchQuery("");
       setSearchResults([]);
@@ -1610,7 +1703,8 @@ function RepuestoDialog({
   }, [searchQuery]);
 
   function selectInventoryItem(item: RepuestoSearchResult) {
-    const precio = item.precioCompra != null ? Number(item.precioCompra) : null;
+    const precio =
+      item.precioCompra != null ? Number(item.precioCompra) : null;
     setForm({
       ...form,
       nombre: item.nombre,
@@ -1634,14 +1728,12 @@ function RepuestoDialog({
   }
 
   function handlePrecioChange(raw: string) {
-    // Allow only digits and dots for thousands separator
     const cleaned = raw.replace(/[^\d.]/g, "");
     setPrecioDisplay(cleaned);
     setForm({ ...form, precioUnitario: parsePriceInput(cleaned) });
   }
 
   function handlePrecioBlur() {
-    // Re-format on blur
     if (form.precioUnitario != null) {
       setPrecioDisplay(formatPriceInput(form.precioUnitario));
     }
@@ -1651,7 +1743,9 @@ function RepuestoDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{repuesto ? "Editar Repuesto" : "Agregar Repuesto"}</DialogTitle>
+          <DialogTitle>
+            {repuesto ? "Editar Repuesto" : "Agregar Repuesto"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
           {/* Search from inventory */}
@@ -1682,7 +1776,9 @@ function RepuestoDialog({
                       className="w-full text-left px-3 py-2 hover:bg-accent transition-colors border-b last:border-b-0"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium truncate">{item.nombre}</span>
+                        <span className="text-sm font-medium truncate">
+                          {item.nombre}
+                        </span>
                         {item.precioCompra != null && (
                           <span className="text-sm font-mono tabular-nums text-primary shrink-0 ml-2">
                             {formatMoney(Number(item.precioCompra))}
@@ -1697,7 +1793,9 @@ function RepuestoDialog({
                           <span
                             className={cn(
                               "font-mono tabular-nums",
-                              item.stock > 0 ? "text-green-600" : "text-red-500"
+                              item.stock > 0
+                                ? "text-green-600"
+                                : "text-red-500"
                             )}
                           >
                             Stock: {item.stock}
@@ -1709,9 +1807,13 @@ function RepuestoDialog({
                 </div>
               )}
 
-              {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
-                <p className="text-xs text-muted-foreground">No se encontraron resultados</p>
-              )}
+              {searchQuery.length >= 2 &&
+                !searching &&
+                searchResults.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    No se encontraron resultados
+                  </p>
+                )}
 
               {/* Separator */}
               <div className="relative py-2">
@@ -1767,14 +1869,24 @@ function RepuestoDialog({
               <Input
                 type="number"
                 value={form.cantidad}
-                onChange={(e) => setForm({ ...form, cantidad: parseInt(e.target.value) || 1 })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    cantidad: parseInt(e.target.value) || 1,
+                  })
+                }
                 min={1}
               />
             </div>
             <div className="space-y-1.5">
               <Label>Unidad</Label>
-              <Select value={form.unidad} onValueChange={(v) => setForm({ ...form, unidad: v })}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+              <Select
+                value={form.unidad}
+                onValueChange={(v) => setForm({ ...form, unidad: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unidad">Unidad</SelectItem>
                   <SelectItem value="litro">Litro</SelectItem>

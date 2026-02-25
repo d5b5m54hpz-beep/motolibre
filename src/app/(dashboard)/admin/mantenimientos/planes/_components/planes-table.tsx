@@ -45,6 +45,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Link2,
+  Grid3X3,
 } from "lucide-react";
 
 // ── Types ──
@@ -242,14 +243,25 @@ export function PlanesTable({ data, planes, marcas }: PlanesTableProps) {
         }}
         defaultPageSize={20}
         toolbar={
-          <Button
-            size="sm"
-            className="h-8"
-            onClick={() => router.push("/admin/mantenimientos/planes/nuevo")}
-          >
-            <Plus className="h-4 w-4 mr-1.5" />
-            Nuevo Plan
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={() => router.push("/admin/mantenimientos/planes/nuevo")}
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              Nuevo Plan
+            </Button>
+            <Button
+              size="sm"
+              className="h-8"
+              onClick={() => router.push("/admin/mantenimientos/planes/builder")}
+            >
+              <Grid3X3 className="h-4 w-4 mr-1.5" />
+              Plan Builder
+            </Button>
+          </div>
         }
       />
 
