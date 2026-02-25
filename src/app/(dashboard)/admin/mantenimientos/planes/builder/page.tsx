@@ -2322,7 +2322,7 @@ export default function PlanBuilderPage() {
                         <tfoot>
                           {/* Repuestos cost row */}
                           <tr className="border-t-2 bg-muted/10">
-                            <td className="sticky left-0 z-10 bg-muted/10 px-4 py-2 text-[11px] font-medium text-muted-foreground">
+                            <td className="sticky left-0 z-10 bg-muted/10 px-4 py-2 text-[11px] font-medium text-muted-foreground min-w-[280px]">
                               <div className="flex items-center gap-1.5">
                                 <Package className="h-3 w-3" />
                                 Costo Repuestos
@@ -2348,7 +2348,7 @@ export default function PlanBuilderPage() {
                           </tr>
                           {/* Mano de obra cost row */}
                           <tr className="bg-muted/10">
-                            <td className="sticky left-0 z-10 bg-muted/10 px-4 py-2 text-[11px] font-medium text-muted-foreground">
+                            <td className="sticky left-0 z-10 bg-muted/10 px-4 py-2 text-[11px] font-medium text-muted-foreground min-w-[280px]">
                               <div className="flex items-center gap-1.5">
                                 <Wrench className="h-3 w-3" />
                                 Mano de Obra
@@ -2390,7 +2390,7 @@ export default function PlanBuilderPage() {
                           </tr>
                           {/* Total cost row */}
                           <tr className="bg-muted/20 border-t">
-                            <td className="sticky left-0 z-10 bg-muted/20 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-foreground">
+                            <td className="sticky left-0 z-10 bg-muted/20 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-foreground min-w-[280px]">
                               <div className="flex items-center gap-1.5">
                                 <TrendingUp className="h-3.5 w-3.5 text-primary" />
                                 Costo Total
