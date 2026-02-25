@@ -89,6 +89,11 @@ const CATEGORY_ICONS: Record<string, string> = {
   OTRO: "O",
 };
 
+const MILESTONE_PRESETS = {
+  estandar: { label: "Estándar", desc: "6 hitos típicos", kms: [1000, 2000, 3000, 5000, 7000, 10000] },
+  completo: { label: "Completo", desc: "Ciclo completo", kms: [1000, 2000, 3000, 5000, 7000, 10000, 15000, 20000] },
+} as const;
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 interface MarcaModelo {
@@ -340,6 +345,13 @@ export default function PlanBuilderPage() {
   });
   const [copyFromPrevious, setCopyFromPrevious] = useState(false);
 
+  // ── Quick milestones ──
+  const [quickMilestonesOpen, setQuickMilestonesOpen] = useState(false);
+  const [quickMode, setQuickMode] = useState<"estandar" | "completo" | "custom">("estandar");
+  const [customInterval, setCustomInterval] = useState(1000);
+  const [customMax, setCustomMax] = useState(10000);
+  const [quickSelections, setQuickSelections] = useState<Record<number, boolean>>({});
+
   // ── Confirmation dialog ──
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [publishEstado, setPublishEstado] = useState<
@@ -578,6 +590,12 @@ export default function PlanBuilderPage() {
     return grouped;
   }, [tareaItems]);
 
+  const hasActiveTareas = useMemo(() => {
+    return tareaItems.some((_, tIdx) =>
+      milestones.some((_, mIdx) => assignments[assignmentKey("tarea", tIdx, mIdx)])
+    );
+  }, [tareaItems, milestones, assignments]);
+
   // ── Computed stats per milestone ──
   const milestoneStats = useCallback(
     (mIdx: number) => {
@@ -695,6 +713,61 @@ export default function PlanBuilderPage() {
     return milestones.every((_, mIdx) =>
       assignments[assignmentKey(type, itemIdx, mIdx)]
     );
+  }
+
+  // ── Quick Milestones ──
+  const quickKms = useMemo(() => {
+    if (quickMode === "custom") {
+      const kms: number[] = [];
+      if (customInterval > 0 && customMax > 0) {
+        for (let km = customInterval; km <= customMax && kms.length < 20; km += customInterval) {
+          kms.push(km);
+        }
+      }
+      return kms;
+    }
+    return [...MILESTONE_PRESETS[quickMode].kms];
+  }, [quickMode, customInterval, customMax]);
+
+  function openQuickMilestones() {
+    setQuickMode("estandar");
+    setCustomInterval(1000);
+    setCustomMax(10000);
+    const existingKms = new Set(milestones.map((m) => m.km));
+    const sel: Record<number, boolean> = {};
+    MILESTONE_PRESETS.estandar.kms.forEach((km) => {
+      sel[km] = !existingKms.has(km);
+    });
+    setQuickSelections(sel);
+    setQuickMilestonesOpen(true);
+  }
+
+  function updateQuickSelections(kms: number[]) {
+    const existingKms = new Set(milestones.map((m) => m.km));
+    const sel: Record<number, boolean> = {};
+    kms.forEach((km) => {
+      sel[km] = !existingKms.has(km);
+    });
+    setQuickSelections(sel);
+  }
+
+  function addQuickMilestones() {
+    const selectedKms = Object.entries(quickSelections)
+      .filter(([, selected]) => selected)
+      .map(([km]) => parseInt(km))
+      .sort((a, b) => a - b);
+    if (selectedKms.length === 0) return;
+
+    const existingKms = new Set(milestones.map((m) => m.km));
+    const newMs = selectedKms
+      .filter((km) => !existingKms.has(km))
+      .map((km) => ({ km, nombre: deriveNameFromKm(km) }));
+
+    if (newMs.length > 0) {
+      setMilestones((prev) => [...prev, ...newMs]);
+      toast.success(`${newMs.length} hito(s) agregados`);
+    }
+    setQuickMilestonesOpen(false);
   }
 
   // ── Milestone CRUD ──
@@ -1367,10 +1440,16 @@ export default function PlanBuilderPage() {
                   {milestones.length}
                 </Badge>
               </div>
-              <Button size="sm" onClick={openNewMilestone}>
-                <Plus className="h-4 w-4 mr-1.5" />
-                Agregar Hito
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={openQuickMilestones}>
+                  <Zap className="h-4 w-4 mr-1.5" />
+                  Hitos Rápidos
+                </Button>
+                <Button size="sm" onClick={openNewMilestone}>
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Agregar Hito
+                </Button>
+              </div>
             </div>
             {milestones.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">
@@ -1414,13 +1493,28 @@ export default function PlanBuilderPage() {
                 })}
               </div>
             )}
+            {tarifaHora === null && milestones.length > 0 && (
+              <div className="flex items-center gap-2 mt-3 rounded-md border border-amber-400/30 bg-amber-50/30 dark:bg-amber-950/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                <span>
+                  Tarifa hora no configurada — costos de mano de obra
+                  mostrarán $0.{" "}
+                  <Link
+                    href="/admin/configuracion/empresa"
+                    className="underline font-medium hover:text-amber-800 dark:hover:text-amber-300"
+                  >
+                    Configurar
+                  </Link>
+                </span>
+              </div>
+            )}
           </div>
 
           {/* ── Main Layout: Catalog Sidebar + Matrix ── */}
           <div className="flex gap-4">
             {/* ── Catalog Sidebar (Task 1) ── */}
             {catalogOpen && catalogItems.length > 0 && (
-              <div className="w-72 shrink-0 rounded-lg border bg-card overflow-hidden">
+              <div className="w-72 shrink-0 rounded-lg border bg-card overflow-hidden sticky top-4 self-start">
                 <div className="flex items-center justify-between p-3 border-b bg-muted/30">
                   <div className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4 text-primary" />
@@ -1436,7 +1530,7 @@ export default function PlanBuilderPage() {
                     <X className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                 </div>
-                <ScrollArea className="h-[calc(100vh-420px)] max-h-[600px]">
+                <ScrollArea className="h-[calc(100vh-340px)]">
                   <div className="p-1">
                     {Object.entries(catalogByCategory).map(
                       ([category, items]) => {
@@ -1939,6 +2033,33 @@ export default function PlanBuilderPage() {
                         </>
                       )}
 
+                      {/* ── Sugerencias empty state ── */}
+                      {hasActiveTareas &&
+                        sugerencias.length === 0 &&
+                        !sugerenciasLoading &&
+                        repuestoItems.length === 0 && (
+                          <tr>
+                            <td
+                              colSpan={sortedMilestones.length + 2}
+                              className="sticky left-0 z-10 bg-card px-4 py-3"
+                            >
+                              <div className="flex items-start gap-2 rounded-lg border border-dashed border-amber-300/50 bg-amber-50/30 dark:bg-amber-950/10 p-3">
+                                <Sparkles className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                                <div>
+                                  <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                                    Sin repuestos sugeridos
+                                  </p>
+                                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                                    No hay mapeos de repuestos para estas tareas.
+                                    Agrega repuestos manualmente o configura
+                                    mappings en Items Service.
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+
                       {/* ── REPUESTOS Section ── */}
                       {repuestoItems.length > 0 && (
                         <tr className="bg-muted/10">
@@ -2179,9 +2300,13 @@ export default function PlanBuilderPage() {
                               <div className="flex items-center gap-1.5">
                                 <Wrench className="h-3 w-3" />
                                 Mano de Obra
-                                {tarifaHora != null && (
+                                {tarifaHora != null ? (
                                   <span className="font-mono tabular-nums text-[10px]">
                                     ({formatMoney(tarifaHora)}/h)
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-amber-600 dark:text-amber-400">
+                                    (sin tarifa)
                                   </span>
                                 )}
                               </div>
@@ -2396,6 +2521,147 @@ export default function PlanBuilderPage() {
               className="w-full"
             >
               {editingMilestoneIdx !== null ? "Guardar" : "Agregar Hito"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Quick Milestones Dialog ── */}
+      <Dialog open={quickMilestonesOpen} onOpenChange={setQuickMilestonesOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Hitos Rápidos</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            {/* Mode selector */}
+            <div className="grid grid-cols-3 gap-2">
+              {(["estandar", "completo", "custom"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => {
+                    setQuickMode(mode);
+                    if (mode !== "custom") {
+                      updateQuickSelections(MILESTONE_PRESETS[mode].kms as unknown as number[]);
+                    }
+                  }}
+                  className={cn(
+                    "rounded-lg border px-3 py-2 text-xs font-medium transition-colors text-center",
+                    quickMode === mode
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background hover:bg-accent border-input"
+                  )}
+                >
+                  {mode === "estandar"
+                    ? "Estándar"
+                    : mode === "completo"
+                      ? "Completo"
+                      : "Personalizado"}
+                </button>
+              ))}
+            </div>
+
+            {/* Description */}
+            {quickMode !== "custom" && (
+              <p className="text-xs text-muted-foreground">
+                {MILESTONE_PRESETS[quickMode].desc} —{" "}
+                {MILESTONE_PRESETS[quickMode].kms.length} hitos
+              </p>
+            )}
+
+            {/* Custom inputs */}
+            {quickMode === "custom" && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Cada (km)</Label>
+                  <Input
+                    type="number"
+                    value={customInterval || ""}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value) || 0;
+                      setCustomInterval(v);
+                      if (v > 0 && customMax > 0) {
+                        const kms: number[] = [];
+                        for (let km = v; km <= customMax && kms.length < 20; km += v) kms.push(km);
+                        updateQuickSelections(kms);
+                      }
+                    }}
+                    placeholder="1000"
+                    className="font-mono tabular-nums"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Hasta (km)</Label>
+                  <Input
+                    type="number"
+                    value={customMax || ""}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value) || 0;
+                      setCustomMax(v);
+                      if (customInterval > 0 && v > 0) {
+                        const kms: number[] = [];
+                        for (let km = customInterval; km <= v && kms.length < 20; km += customInterval) kms.push(km);
+                        updateQuickSelections(kms);
+                      }
+                    }}
+                    placeholder="10000"
+                    className="font-mono tabular-nums"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Milestone list */}
+            {quickKms.length > 0 && (
+              <div className="rounded-md border max-h-60 overflow-y-auto divide-y">
+                {quickKms.map((km) => {
+                  const exists = milestones.some((m) => m.km === km);
+                  return (
+                    <div
+                      key={km}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2",
+                        exists && "opacity-50"
+                      )}
+                    >
+                      <Checkbox
+                        checked={!!quickSelections[km]}
+                        disabled={exists}
+                        onCheckedChange={(checked) =>
+                          setQuickSelections((prev) => ({
+                            ...prev,
+                            [km]: checked === true,
+                          }))
+                        }
+                      />
+                      <span className="font-mono tabular-nums text-sm font-semibold">
+                        {km.toLocaleString("es-AR")} km
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {deriveNameFromKm(km)}
+                      </span>
+                      {exists && (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-1.5 py-0 ml-auto"
+                        >
+                          Ya existe
+                        </Badge>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <Button
+              onClick={addQuickMilestones}
+              disabled={
+                !Object.values(quickSelections).some(Boolean)
+              }
+              className="w-full"
+            >
+              Agregar{" "}
+              {Object.values(quickSelections).filter(Boolean).length} hito(s)
             </Button>
           </div>
         </DialogContent>
