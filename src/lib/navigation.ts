@@ -3,7 +3,7 @@ import {
   Wrench, Building2, Package, Truck, Ship, ShoppingCart,
   TrendingUp, PiggyBank, Calculator, BookOpen, FileSpreadsheet,
   BarChart3, UserCog, Shield, Bell, AlertTriangle, Settings,
-  ClipboardList, Gauge, Calendar,
+  ClipboardList, Gauge, Calendar, Cog,
   ArrowUpDown, Target, MapPin, ShoppingBag, Tags, Sparkles, Scale,
   Activity, Radio, Stethoscope, Clock, Upload, MessageCircle,
   Inbox, CheckSquare, BookUser, ListChecks, Wallet, CalendarClock,
@@ -40,6 +40,7 @@ export const navigation: NavGroup[] = [
       { title: "Mantenimientos", href: "/admin/mantenimientos", icon: Wrench },
       { title: "Órdenes de Trabajo", href: "/admin/mantenimientos/ordenes", icon: ClipboardList },
       { title: "Planes Service", href: "/admin/mantenimientos/planes", icon: ListChecks },
+      { title: "Catálogo Servicios", href: "/admin/items-service", icon: Cog },
       {
         title: "Talleres",
         href: "/admin/talleres",

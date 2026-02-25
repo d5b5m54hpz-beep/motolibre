@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatMoney } from "@/lib/format";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { PiggyBank, Plus, Check, X, Clock, AlertTriangle } from "lucide-react";
 
 const CATEGORIAS = [
@@ -58,6 +59,7 @@ export default function GastosPage() {
   const [filtroEstado, setFiltroEstado] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const router = useRouter();
 
   // Form state
   const [form, setForm] = useState({
@@ -265,7 +267,7 @@ export default function GastosPage() {
                 </thead>
                 <tbody>
                   {gastos.map((g) => (
-                    <tr key={g.id} className="border-b border-border hover:bg-bg-card-hover transition-colors">
+                    <tr key={g.id} className="border-b border-border hover:bg-bg-card-hover transition-colors cursor-pointer" onClick={() => router.push(`/admin/gastos/${g.id}`)}>
                       <td className="py-3 px-2 font-mono text-xs">{new Date(g.fecha).toLocaleDateString("es-AR")}</td>
                       <td className="py-3 px-2">
                         <Badge variant="outline">{CATEGORIA_LABELS[g.categoria] || g.categoria}</Badge>

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatMoney } from "@/lib/format";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { FileInput, Plus, DollarSign, Clock, AlertTriangle } from "lucide-react";
 
 const CATEGORIAS = [
@@ -61,6 +62,7 @@ export default function FacturasCompraPage() {
   const [pagoFC, setPagoFC] = useState<FC | null>(null);
   const [pagoMonto, setPagoMonto] = useState("");
   const [pagoMedio, setPagoMedio] = useState("CAJA");
+  const router = useRouter();
 
   const [form, setForm] = useState({
     proveedorNombre: "",
@@ -303,7 +305,7 @@ export default function FacturasCompraPage() {
                 </thead>
                 <tbody>
                   {facturas.map((f) => (
-                    <tr key={f.id} className="border-b border-border hover:bg-bg-card-hover transition-colors">
+                    <tr key={f.id} className="border-b border-border hover:bg-bg-card-hover transition-colors cursor-pointer" onClick={() => router.push(`/admin/facturas-compra/${f.id}`)}>
                       <td className="py-3 px-2 font-mono text-xs">{f.numeroCompleto}</td>
                       <td className="py-3 px-2">{f.proveedorNombre}</td>
                       <td className="py-3 px-2 text-center"><Badge variant="outline">{f.tipo}</Badge></td>

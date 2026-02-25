@@ -25,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Truck, Plus, Building2, Globe2, Package,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Proveedor {
   id: string;
@@ -114,6 +115,8 @@ export default function ProveedoresPage() {
       void fetchProveedores();
     }
   }
+
+  const router = useRouter();
 
   async function handleDesactivar(id: string) {
     await fetch(`/api/proveedores/${id}`, { method: "DELETE" });
@@ -304,7 +307,7 @@ export default function ProveedoresPage() {
                 </thead>
                 <tbody>
                   {proveedores.map((p) => (
-                    <tr key={p.id} className="border-b hover:bg-bg-card-hover transition-colors">
+                    <tr key={p.id} className="border-b hover:bg-bg-card-hover transition-colors cursor-pointer" onClick={() => router.push(`/admin/proveedores/${p.id}`)}>
                       <td className="py-3 px-2">
                         <div>
                           <span className="font-medium">{p.nombre}</span>
