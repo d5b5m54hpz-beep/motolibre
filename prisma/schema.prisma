@@ -1558,6 +1558,10 @@ model TareaOrdenTrabajo {
   observaciones     String?
   orden             Int             @default(0)
 
+  itemServiceId     String?
+  itemService       ItemService?    @relation(fields: [itemServiceId], references: [id])
+  tiempoEstimado    Int?            // minutos, copiado desde ItemService
+
   createdAt         DateTime        @default(now())
 
   @@index([ordenTrabajoId])
@@ -1653,6 +1657,7 @@ model ItemService {
 
   // ── Relaciones ──
   tareasQueLoUsan    TareaPlan[]
+  tareasOT           TareaOrdenTrabajo[]
   repuestosSugeridos ItemServiceRepuesto[]
 
   createdAt       DateTime        @default(now())

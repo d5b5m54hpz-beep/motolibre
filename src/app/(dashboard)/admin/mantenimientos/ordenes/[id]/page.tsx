@@ -37,8 +37,14 @@ import {
   Trash2,
   Search,
   DollarSign,
+  Sparkles,
+  Loader2,
+  ThumbsDown,
 } from "lucide-react";
 import Link from "next/link";
+import { useMemo } from "react";
+import { useRepuestosSugeridosOT } from "@/hooks/use-repuestos-sugeridos-ot";
+import type { RepuestoSugerido } from "@/hooks/use-repuestos-sugeridos";
 
 interface Tarea {
   id: string;
@@ -47,6 +53,8 @@ interface Tarea {
   resultado: string;
   observaciones: string | null;
   orden: number;
+  itemServiceId: string | null;
+  tiempoEstimado: number | null;
 }
 
 interface Repuesto {
@@ -119,6 +127,8 @@ interface OTDetalle {
   costoRepuestos: number | null;
   costoTotal: number | null;
   mantenimientoProgramadoId: string | null;
+  motoMarca: string | null;
+  motoModelo: string | null;
   tareas: Tarea[];
   repuestos: Repuesto[];
   items: ItemCosto[];
@@ -150,6 +160,20 @@ export default function OTDetallePage() {
   const [tareaDialog, setTareaDialog] = useState(false);
   const [repuestoDialog, setRepuestoDialog] = useState(false);
   const [actionDialog, setActionDialog] = useState<string | null>(null);
+
+  // Catalog search for tareas
+  const [catalogSearch, setCatalogSearch] = useState("");
+  const [catalogResults, setCatalogResults] = useState<Array<{
+    id: string; nombre: string; categoria: string; accion: string; tiempoEstimado: number | null;
+  }>>([]);
+  const [searchingCatalog, setSearchingCatalog] = useState(false);
+  const [selectedCatalogItem, setSelectedCatalogItem] = useState<{
+    id: string; nombre: string; categoria: string; tiempoEstimado: number | null;
+  } | null>(null);
+  const [manualTareaMode, setManualTareaMode] = useState(false);
+
+  // Tarifa info for cost estimation
+  const [tarifaInfo, setTarifaInfo] = useState<{ tarifaHora: number | null; fuente: string | null } | null>(null);
 
   // Forms
   const [nuevaTarea, setNuevaTarea] = useState({ categoria: "OTRO", descripcion: "" });
@@ -217,6 +241,47 @@ export default function OTDetallePage() {
     });
   }, []);
 
+  // Fetch tarifa when mechanic is assigned
+  useEffect(() => {
+    if (!ot?.mecanicoId) { setTarifaInfo(null); return; }
+    fetch(`/api/mecanicos/${ot.mecanicoId}/tarifa`)
+      .then((r) => r.json())
+      .then((j) => setTarifaInfo(j.data ?? null))
+      .catch(() => setTarifaInfo(null));
+  }, [ot?.mecanicoId]);
+
+  // Repuesto suggestions based on tareas
+  const sugerenciasParams = useMemo(() => ({
+    tareas: ot?.tareas.map((t) => ({
+      itemServiceId: t.itemServiceId,
+      descripcion: t.descripcion,
+      categoria: t.categoria,
+    })) ?? [],
+    existingRepuestoIds: [
+      ...(ot?.items.filter((i) => i.tipo === "REPUESTO" && i.repuestoId).map((i) => i.repuestoId!) ?? []),
+      ...(ot?.repuestos.filter((r) => r.id).map((r) => r.id) ?? []),
+    ],
+    existingRepuestoNames: [
+      ...(ot?.items.filter((i) => i.tipo === "REPUESTO").map((i) => i.descripcion) ?? []),
+      ...(ot?.repuestos.map((r) => r.nombre) ?? []),
+    ],
+    marcaMoto: ot?.motoMarca ?? undefined,
+    modeloMoto: ot?.motoModelo ?? undefined,
+  }), [ot]);
+
+  const { sugerencias, loading: sugerenciasLoading, dismiss: dismissSugerencia } =
+    useRepuestosSugeridosOT(sugerenciasParams);
+
+  // Estimated labor cost from tareas
+  const estimatedLaborMinutes = useMemo(
+    () => ot?.tareas.reduce((sum, t) => sum + (t.tiempoEstimado ?? 0), 0) ?? 0,
+    [ot?.tareas]
+  );
+  const estimatedLaborCost = useMemo(() => {
+    if (!tarifaInfo?.tarifaHora || !estimatedLaborMinutes) return null;
+    return Math.round((tarifaInfo.tarifaHora / 60) * estimatedLaborMinutes);
+  }, [tarifaInfo, estimatedLaborMinutes]);
+
   async function cambiarEstado(nuevoEstado: string, extras?: Record<string, unknown>) {
     const res = await fetch(`/api/mantenimientos/ordenes/${id}/estado`, {
       method: "POST",
@@ -230,16 +295,52 @@ export default function OTDetallePage() {
     }
   }
 
+  async function buscarCatalogo(query: string) {
+    setCatalogSearch(query);
+    if (query.length < 2) { setCatalogResults([]); return; }
+    setSearchingCatalog(true);
+    try {
+      const r = await fetch(`/api/items-service/search?q=${encodeURIComponent(query)}`);
+      if (r.ok) { const j = await r.json(); setCatalogResults(j.data ?? []); }
+    } finally { setSearchingCatalog(false); }
+  }
+
   async function agregarTarea() {
     if (!nuevaTarea.descripcion) return;
     const res = await fetch(`/api/mantenimientos/ordenes/${id}/tareas`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(nuevaTarea),
+      body: JSON.stringify({
+        ...nuevaTarea,
+        itemServiceId: selectedCatalogItem?.id ?? null,
+        tiempoEstimado: selectedCatalogItem?.tiempoEstimado ?? null,
+      }),
     });
     if (res.ok) {
       setTareaDialog(false);
       setNuevaTarea({ categoria: "OTRO", descripcion: "" });
+      setSelectedCatalogItem(null);
+      setCatalogSearch("");
+      setCatalogResults([]);
+      setManualTareaMode(false);
+      void fetchOT();
+    }
+  }
+
+  async function acceptSugerencia(sug: RepuestoSugerido) {
+    const res = await fetch(`/api/mantenimientos/ordenes/${id}/items`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tipo: "REPUESTO",
+        descripcion: sug.repuestoNombre,
+        cantidad: sug.cantidadDefault,
+        precioUnitario: sug.repuestoPrecio ?? 0,
+        repuestoId: sug.repuestoId,
+        codigoOEM: sug.repuestoCodigo ?? undefined,
+      }),
+    });
+    if (res.ok) {
       void fetchOT();
     }
   }
@@ -698,33 +799,121 @@ export default function OTDetallePage() {
                   <Plus className="h-4 w-4 mr-1" /> Agregar
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                   <DialogTitle>Nueva Tarea</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <div>
-                    <Label>Categoría</Label>
-                    <Select
-                      value={nuevaTarea.categoria}
-                      onValueChange={(v) => setNuevaTarea({ ...nuevaTarea, categoria: v })}
-                    >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {CATEGORIAS.map((c) => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Descripción</Label>
-                    <Input
-                      value={nuevaTarea.descripcion}
-                      onChange={(e) => setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })}
-                    />
-                  </div>
-                  <Button onClick={agregarTarea} className="w-full">Agregar</Button>
+                  {!manualTareaMode && !selectedCatalogItem && (
+                    <div>
+                      <Label>Buscar en catálogo</Label>
+                      <div className="relative mt-1">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          value={catalogSearch}
+                          onChange={(e) => void buscarCatalogo(e.target.value)}
+                          placeholder="Buscar tarea por nombre..."
+                          className="pl-9"
+                        />
+                        {searchingCatalog && (
+                          <Loader2 className="absolute right-2.5 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                      </div>
+                      {catalogResults.length > 0 && (
+                        <div className="mt-2 border rounded-md max-h-48 overflow-y-auto">
+                          {catalogResults.map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              className="w-full text-left px-3 py-2 hover:bg-muted/50 border-b last:border-b-0 flex items-center gap-2"
+                              onClick={() => {
+                                setSelectedCatalogItem(item);
+                                setNuevaTarea({ categoria: item.categoria, descripcion: item.nombre });
+                                setCatalogSearch("");
+                                setCatalogResults([]);
+                              }}
+                            >
+                              <Badge variant="outline" className="text-[10px] shrink-0">{item.categoria}</Badge>
+                              <span className="text-sm truncate">{item.nombre}</span>
+                              {item.tiempoEstimado && (
+                                <span className="text-xs text-muted-foreground ml-auto shrink-0">{item.tiempoEstimado} min</span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        className="text-xs text-muted-foreground underline mt-2"
+                        onClick={() => setManualTareaMode(true)}
+                      >
+                        Escribir manualmente
+                      </button>
+                    </div>
+                  )}
+
+                  {selectedCatalogItem && (
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-[10px]">{selectedCatalogItem.categoria}</Badge>
+                          <span className="text-sm font-medium">{selectedCatalogItem.nombre}</span>
+                          {selectedCatalogItem.tiempoEstimado && (
+                            <span className="text-xs text-muted-foreground">({selectedCatalogItem.tiempoEstimado} min)</span>
+                          )}
+                        </div>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => {
+                          setSelectedCatalogItem(null);
+                          setNuevaTarea({ categoria: "OTRO", descripcion: "" });
+                        }}>
+                          Cambiar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {manualTareaMode && !selectedCatalogItem && (
+                    <>
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <Label>Categoría</Label>
+                          <button
+                            type="button"
+                            className="text-xs text-muted-foreground underline"
+                            onClick={() => setManualTareaMode(false)}
+                          >
+                            Buscar en catálogo
+                          </button>
+                        </div>
+                        <Select
+                          value={nuevaTarea.categoria}
+                          onValueChange={(v) => setNuevaTarea({ ...nuevaTarea, categoria: v })}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {CATEGORIAS.map((c) => (
+                              <SelectItem key={c} value={c}>{c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Descripción</Label>
+                        <Input
+                          value={nuevaTarea.descripcion}
+                          onChange={(e) => setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <Button
+                    onClick={agregarTarea}
+                    className="w-full"
+                    disabled={!nuevaTarea.descripcion}
+                  >
+                    Agregar
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -740,6 +929,7 @@ export default function OTDetallePage() {
                   <th className="text-left py-2 px-2 font-medium text-muted-foreground">#</th>
                   <th className="text-left py-2 px-2 font-medium text-muted-foreground">Categoría</th>
                   <th className="text-left py-2 px-2 font-medium text-muted-foreground">Descripción</th>
+                  <th className="text-center py-2 px-2 font-medium text-muted-foreground">Tiempo</th>
                   <th className="text-center py-2 px-2 font-medium text-muted-foreground">Resultado</th>
                   <th className="text-left py-2 px-2 font-medium text-muted-foreground">Obs.</th>
                 </tr>
@@ -752,6 +942,9 @@ export default function OTDetallePage() {
                       <Badge variant="outline" className="text-xs">{t.categoria}</Badge>
                     </td>
                     <td className="py-2 px-2">{t.descripcion}</td>
+                    <td className="py-2 px-2 text-center text-xs font-mono tabular-nums text-muted-foreground">
+                      {t.tiempoEstimado ? `${t.tiempoEstimado}m` : "—"}
+                    </td>
                     <td className="py-2 px-2 text-center">
                       {isEditable ? (
                         <Select
@@ -781,6 +974,51 @@ export default function OTDetallePage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Repuestos Sugeridos */}
+      {isEditable && sugerencias.length > 0 && (
+        <Card className="border-amber-200/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium text-amber-700">
+              <Sparkles className="h-4 w-4" />
+              Repuestos Sugeridos ({sugerencias.length})
+              {sugerenciasLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {sugerencias.map((sug) => (
+              <div
+                key={sug.repuestoId}
+                className="flex items-center gap-3 p-3 rounded-lg border border-amber-200/50 bg-amber-50/30"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">{sug.repuestoNombre}</p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                    {sug.repuestoCodigo && <span className="font-mono">{sug.repuestoCodigo}</span>}
+                    <span>x{sug.cantidadDefault}</span>
+                    {sug.repuestoPrecio != null && (
+                      <span className="font-mono tabular-nums">{formatMoney(sug.repuestoPrecio)}/u</span>
+                    )}
+                    {sug.itemServiceNombre && (
+                      <span className="text-amber-600">Por: {sug.itemServiceNombre}</span>
+                    )}
+                    {sug.obligatorio && <Badge variant="outline" className="text-[10px] px-1">Obligatorio</Badge>}
+                    {sug.origenIA && <Badge variant="outline" className="text-[10px] px-1">IA</Badge>}
+                  </div>
+                </div>
+                <div className="flex gap-1.5 shrink-0">
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => acceptSugerencia(sug)}>
+                    <Plus className="h-3 w-3 mr-1" /> Agregar
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground" onClick={() => dismissSugerencia(sug.repuestoId)}>
+                    <ThumbsDown className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Repuestos */}
       <Card>
@@ -1204,6 +1442,30 @@ export default function OTDetallePage() {
           <CardTitle className="text-sm font-medium">Costos</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Tarifa info */}
+          {tarifaInfo?.tarifaHora && (
+            <div className="mb-4 p-3 bg-muted/50 rounded-lg text-xs space-y-1">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Tarifa hora</span>
+                <span className="font-mono tabular-nums">{formatMoney(tarifaInfo.tarifaHora)}/h</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Fuente</span>
+                <span>{tarifaInfo.fuente}</span>
+              </div>
+              {estimatedLaborMinutes > 0 && estimatedLaborCost && (
+                <div className="flex justify-between pt-1 border-t">
+                  <span className="text-muted-foreground">
+                    Estimado ({estimatedLaborMinutes} min de tareas)
+                  </span>
+                  <span className="font-mono tabular-nums font-medium">
+                    {formatMoney(estimatedLaborCost)}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="font-mono tabular-nums text-sm space-y-2 max-w-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Mano de Obra</span>
@@ -1220,9 +1482,23 @@ export default function OTDetallePage() {
               </div>
             </div>
           </div>
+
+          {/* Apply estimated cost button */}
+          {isEditable && estimatedLaborCost && Number(ot.costoManoObra ?? 0) === 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => guardarCampo("costoManoObra", estimatedLaborCost)}
+            >
+              Aplicar estimado: {formatMoney(estimatedLaborCost)}
+            </Button>
+          )}
+
+          {/* Manual override */}
           {isEditable && (
             <div className="mt-4 flex items-center gap-2">
-              <Label className="text-xs">Mano de Obra:</Label>
+              <Label className="text-xs text-muted-foreground">Mano de Obra (manual):</Label>
               <Input
                 type="number"
                 className="w-32 h-8"

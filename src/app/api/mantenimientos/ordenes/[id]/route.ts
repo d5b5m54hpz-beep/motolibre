@@ -32,7 +32,20 @@ export async function GET(
     return NextResponse.json({ error: "OT no encontrada" }, { status: 404 });
   }
 
-  return NextResponse.json({ data: ot });
+  const moto = ot.motoId
+    ? await prisma.moto.findUnique({
+        where: { id: ot.motoId },
+        select: { marca: true, modelo: true },
+      })
+    : null;
+
+  return NextResponse.json({
+    data: {
+      ...ot,
+      motoMarca: moto?.marca ?? null,
+      motoModelo: moto?.modelo ?? null,
+    },
+  });
 }
 
 export async function PUT(

@@ -25,6 +25,8 @@ export const otCheckOutSchema = z.object({
 export const tareaCreateSchema = z.object({
   categoria: z.enum(["MOTOR", "FRENOS", "SUSPENSION", "ELECTRICA", "CARROCERIA", "NEUMATICOS", "TRANSMISION", "LUBRICACION", "INSPECCION", "OTRO"]),
   descripcion: z.string().min(1),
+  itemServiceId: z.string().optional().nullable(),
+  tiempoEstimado: z.number().int().positive().optional().nullable(),
 });
 
 export const tareaResultadoSchema = z.object({

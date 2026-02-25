@@ -56,6 +56,8 @@ export async function POST(
       ordenTrabajoId: id,
       categoria: parsed.data.categoria,
       descripcion: parsed.data.descripcion,
+      itemServiceId: parsed.data.itemServiceId ?? undefined,
+      tiempoEstimado: parsed.data.tiempoEstimado ?? undefined,
       orden: (maxOrden._max.orden ?? 0) + 1,
     },
   });
