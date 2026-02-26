@@ -193,3 +193,12 @@ const helpText = {
   fontSize: "13px",
   margin: "0",
 };
+
+BienvenidaTallerEmail.defaultProps = {
+  contactoNombre: "Carlos Méndez",
+  nombreTaller: "Taller Méndez Motos",
+  codigoRed: "TML-0019",
+  email: "carlos@tallermendes.com.ar",
+  tempPassword: "Tmp@2026!",
+  appUrl: "https://motolibre.com.ar",
+} satisfies BienvenidaTallerEmailProps;

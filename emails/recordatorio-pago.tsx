@@ -194,3 +194,14 @@ const footer = {
   fontStyle: "italic" as const,
   margin: "0",
 };
+
+RecordatorioPagoEmail.defaultProps = {
+  clienteNombre: "María González",
+  contratoNumero: "ML-0027",
+  motoModelo: "Honda CB 300R",
+  cuotaNumero: 7,
+  monto: 35000,
+  fechaVencimiento: "5 de marzo de 2026",
+  diasVencida: 3,
+  linkPago: "https://motolibre.com.ar/pagar",
+} satisfies RecordatorioPagoEmailProps;
