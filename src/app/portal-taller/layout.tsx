@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export default async function PortalTallerLayout({
   children,
@@ -30,6 +31,12 @@ export default async function PortalTallerLayout({
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>{session.user.name}</span>
+            <Link
+              href="/portal-taller/perfil"
+              className="text-xs hover:text-foreground transition-colors"
+            >
+              Seguridad
+            </Link>
             <form action="/api/auth/signout" method="POST">
               <button
                 type="submit"

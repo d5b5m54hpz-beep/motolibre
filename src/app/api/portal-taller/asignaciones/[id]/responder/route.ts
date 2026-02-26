@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { apiSetup } from "@/lib/api-helpers";
+import { crearAlerta } from "@/lib/alertas-utils";
 import { z } from "zod";
 
 const responderSchema = z.object({
@@ -115,6 +116,13 @@ export async function POST(
       return asig;
     });
 
+    // Notify admin
+    void notificarAdmin({
+      otId: asignacion.ordenTrabajoId,
+      tallerNombre: taller.nombre,
+      accion: "ACEPTADA",
+    });
+
     return NextResponse.json({ data: updated });
   } else {
     // Reject
@@ -127,6 +135,60 @@ export async function POST(
       },
     });
 
+    // Notify admin
+    void notificarAdmin({
+      otId: asignacion.ordenTrabajoId,
+      tallerNombre: taller.nombre,
+      accion: "RECHAZADA",
+      motivo: motivoRechazo ?? undefined,
+    });
+
     return NextResponse.json({ data: updated });
+  }
+}
+
+async function notificarAdmin({
+  otId,
+  tallerNombre,
+  accion,
+  motivo,
+}: {
+  otId: string;
+  tallerNombre: string;
+  accion: "ACEPTADA" | "RECHAZADA";
+  motivo?: string;
+}) {
+  try {
+    const ot = await prisma.ordenTrabajo.findUnique({
+      where: { id: otId },
+      select: { numero: true },
+    });
+    const admin = await prisma.user.findFirst({
+      where: { role: "ADMIN" },
+      select: { id: true },
+    });
+    if (!admin || !ot) return;
+
+    const esAceptada = accion === "ACEPTADA";
+    await crearAlerta({
+      tipo: esAceptada ? "SISTEMA" : "ANOMALIA_DETECTADA",
+      titulo: esAceptada
+        ? `OT ${ot.numero} aceptada por ${tallerNombre}`
+        : `OT ${ot.numero} rechazada por ${tallerNombre}`,
+      mensaje: motivo
+        ? `Motivo: ${motivo}`
+        : esAceptada
+          ? `El taller confirmó disponibilidad para la OT.`
+          : `El taller no puede tomar la OT.`,
+      prioridad: esAceptada ? "BAJA" : "ALTA",
+      modulo: "mantenimientos",
+      entidadTipo: "OrdenTrabajo",
+      entidadId: otId,
+      usuarioId: admin.id,
+      accionUrl: `/admin/mantenimientos/ordenes/${otId}`,
+      accionLabel: "Ver OT",
+    });
+  } catch (err) {
+    console.error("[responder] Error notificando admin:", err);
   }
 }
