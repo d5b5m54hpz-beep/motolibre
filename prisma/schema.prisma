@@ -627,6 +627,15 @@ enum EstadoCuota {
   CANCELADA
 }
 
+enum MetodoPago {
+  MERCADOPAGO
+  TRANSFERENCIA
+  EFECTIVO
+  CHEQUE
+  AJUSTE
+  OTRO
+}
+
 model Contrato {
   id              String          @id @default(cuid())
 
@@ -704,6 +713,14 @@ model Cuota {
   estado           EstadoCuota @default(PENDIENTE)
   fechaPago        DateTime?
   montoPagado      Decimal?    @db.Decimal(12, 2)
+
+  // Pago manual
+  metodoPago         MetodoPago?
+  referenciaPago     String?       // nro. transferencia, cheque, etc.
+  registradoPor      String?       // userId admin que registró
+
+  // Dunning
+  ultimoRecordatorio DateTime?
 
   notas            String?
   createdAt        DateTime    @default(now())

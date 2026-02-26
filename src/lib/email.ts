@@ -1,4 +1,15 @@
 import { Resend } from "resend";
+import { render } from "@react-email/components";
+import RecordatorioPagoEmail, {
+  type RecordatorioPagoEmailProps,
+} from "../../emails/recordatorio-pago";
+import CuotaVencidaEmail, {
+  type CuotaVencidaEmailProps,
+} from "../../emails/cuota-vencida";
+import BienvenidaTallerEmail, {
+  type BienvenidaTallerEmailProps,
+} from "../../emails/bienvenida-taller";
+import * as React from "react";
 
 let _resend: Resend | null = null;
 
@@ -53,7 +64,7 @@ export async function enviarFacturaEmail(params: {
 }
 
 /**
- * Envía notificación genérica.
+ * Envía notificación genérica (fallback para emails sin template React).
  */
 export async function enviarNotificacionEmail(params: {
   to: string;
@@ -69,6 +80,82 @@ export async function enviarNotificacionEmail(params: {
 
   if (error) {
     console.error("[Email] Error:", error);
+    throw new Error(`Error enviando email: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
+ * Envía recordatorio de pago con template React Email.
+ */
+export async function enviarRecordatorioPago(
+  params: RecordatorioPagoEmailProps & { to: string }
+) {
+  const { to, ...templateProps } = params;
+  const html = await render(React.createElement(RecordatorioPagoEmail, templateProps));
+
+  const subject = params.diasVencida
+    ? `Cuota #${params.cuotaNumero} vencida — $${params.monto.toLocaleString("es-AR")}`
+    : `Recordatorio: tu cuota #${params.cuotaNumero} vence pronto`;
+
+  const { data, error } = await getResend().emails.send({
+    from: `MotoLibre Cobranzas <${FROM}>`,
+    to,
+    subject,
+    html,
+  });
+
+  if (error) {
+    console.error("[Email] Error enviando recordatorio:", error);
+    throw new Error(`Error enviando email: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
+ * Envía email de cuota vencida con mensaje personalizado por IA.
+ */
+export async function enviarCuotaVencida(
+  params: CuotaVencidaEmailProps & { to: string }
+) {
+  const { to, ...templateProps } = params;
+  const html = await render(React.createElement(CuotaVencidaEmail, templateProps));
+
+  const { data, error } = await getResend().emails.send({
+    from: `MotoLibre Cobranzas <${FROM}>`,
+    to,
+    subject: `Acción requerida: cuota vencida en tu contrato ${params.contratoNumero}`,
+    html,
+  });
+
+  if (error) {
+    console.error("[Email] Error enviando cuota vencida:", error);
+    throw new Error(`Error enviando email: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
+ * Envía email de bienvenida al taller con credenciales del portal.
+ */
+export async function enviarBienvenidaTaller(
+  params: BienvenidaTallerEmailProps & { to: string }
+) {
+  const { to, ...templateProps } = params;
+  const html = await render(React.createElement(BienvenidaTallerEmail, templateProps));
+
+  const { data, error } = await getResend().emails.send({
+    from: `MotoLibre Red de Talleres <${FROM}>`,
+    to,
+    subject: `¡Bienvenido a la Red de Talleres MotoLibre! — Tus credenciales de acceso`,
+    html,
+  });
+
+  if (error) {
+    console.error("[Email] Error enviando bienvenida taller:", error);
     throw new Error(`Error enviando email: ${error.message}`);
   }
 

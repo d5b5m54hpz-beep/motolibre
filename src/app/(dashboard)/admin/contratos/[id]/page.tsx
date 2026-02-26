@@ -5,6 +5,7 @@ import Link from "next/link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatMoney, formatDate } from "@/lib/format";
 import { ContratoActions } from "./_components/contrato-actions";
+import { RegistrarPagoButton } from "./_components/registrar-pago-button";
 
 const FRECUENCIA_LABEL: Record<string, string> = {
   SEMANAL: "Semanal",
@@ -252,6 +253,7 @@ export default async function ContratoDetailPage({
                   <th className="text-left p-3 font-medium">Estado</th>
                   <th className="text-left p-3 font-medium">Fecha Pago</th>
                   <th className="text-right p-3 font-medium">Monto Pagado</th>
+                  <th className="p-3" />
                 </tr>
               </thead>
               <tbody>
@@ -281,6 +283,19 @@ export default async function ContratoDetailPage({
                       </td>
                       <td className="p-3 text-right">
                         {cuota.montoPagado ? formatMoney(Number(cuota.montoPagado)) : "—"}
+                      </td>
+                      <td className="p-3 text-right">
+                        {(cuota.estado === "PENDIENTE" ||
+                          cuota.estado === "VENCIDA" ||
+                          cuota.estado === "PARCIAL" ||
+                          isVencida) && (
+                          <RegistrarPagoButton
+                            contratoId={contrato.id}
+                            cuotaId={cuota.id}
+                            cuotaNumero={cuota.numero}
+                            montoCuota={Number(cuota.monto)}
+                          />
+                        )}
                       </td>
                     </tr>
                   );
