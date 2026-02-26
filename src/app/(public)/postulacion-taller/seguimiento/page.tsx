@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,7 +72,7 @@ interface SolicitudData {
   updatedAt: string;
 }
 
-export default function SeguimientoPage() {
+function SeguimientoContent() {
   const searchParams = useSearchParams();
   const initialToken = searchParams.get("token") ?? "";
 
@@ -267,5 +267,13 @@ export default function SeguimientoPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SeguimientoPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20 text-muted-foreground">Cargando...</div>}>
+      <SeguimientoContent />
+    </Suspense>
   );
 }
