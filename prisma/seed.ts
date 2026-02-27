@@ -1158,19 +1158,19 @@ async function main() {
       cantidadElevadores: 3,
       tieneDeposito: true,
       tieneEstacionamiento: true,
-      // Documentos (placeholders)
-      docCuit: "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/cuit-motoexpress.pdf",
-      docHabilitacion: "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/habilitacion-motoexpress.pdf",
-      docSeguro: "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/seguro-motoexpress.pdf",
+      // Documentos — PDFs son placeholders (no existen en Storage), fotos son reales de Unsplash
+      docCuit: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/motos/solicitudes/demo/cuit-motoexpress.pdf`,
+      docHabilitacion: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/motos/solicitudes/demo/habilitacion-motoexpress.pdf`,
+      docSeguro: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/motos/solicitudes/demo/seguro-motoexpress.pdf`,
       docFotos: [
-        "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/foto-frente.jpg",
-        "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/foto-interior-1.jpg",
-        "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/foto-interior-2.jpg",
-        "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/foto-deposito.jpg",
+        "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=800&q=80",
+        "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80",
+        "https://images.unsplash.com/photo-1615887087789-c65488a05049?w=800&q=80",
+        "https://images.unsplash.com/photo-1596638787647-904d822d751e?w=800&q=80",
       ],
       docOtros: [
-        "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/certificado-honda.pdf",
-        "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/referencias-comerciales.pdf",
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/motos/solicitudes/demo/certificado-honda.pdf`,
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/motos/solicitudes/demo/referencias-comerciales.pdf`,
       ],
       // Geo — Av. Santa Fe 4820, Palermo, CABA
       latitud: -34.5875,

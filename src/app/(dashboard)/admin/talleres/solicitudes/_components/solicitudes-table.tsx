@@ -40,6 +40,8 @@ import {
   XCircle,
   Upload,
   Eye,
+  Trash2,
+  ImageOff,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -496,6 +498,12 @@ function SolicitudSheet({
     {
       id: "documentos",
       label: "Documentos",
+      count: (() => {
+        const docs = [detail?.docCuit, detail?.docHabilitacion, detail?.docSeguro].filter(Boolean).length;
+        const fotos = ((detail?.docFotos as string[]) ?? []).length;
+        const otros = ((detail?.docOtros as string[]) ?? []).length;
+        return docs + fotos + otros;
+      })(),
       content: loadingDetail ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -534,18 +542,50 @@ function SolicitudSheet({
 
           {/* Fotos del Taller */}
           <div className="border-t pt-4">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-3">
-              Fotos del Taller
-            </p>
+            <div className="flex items-center gap-2 mb-3">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                Fotos del Taller
+              </p>
+              {((detail?.docFotos as string[]) ?? []).length > 0 && (
+                <span className="text-[10px] bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 font-mono">
+                  {((detail?.docFotos as string[]) ?? []).length}
+                </span>
+              )}
+            </div>
             <PhotoGallery
               photos={(detail?.docFotos as string[]) ?? []}
               emptyMessage="Sin fotos del taller"
+              onDelete={async (index) => {
+                const fotos = (detail?.docFotos as string[]) ?? [];
+                const url = fotos[index];
+                if (!url) return;
+                try {
+                  const res = await fetch(
+                    `/api/solicitudes-taller/${solicitud.id}/delete-doc`,
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ tipo: "fotos", url }),
+                    }
+                  );
+                  if (res.ok) {
+                    toast.success("Foto eliminada");
+                    onRefresh();
+                  } else {
+                    const json = await res.json();
+                    toast.error(json.error || "Error al eliminar");
+                  }
+                } catch {
+                  toast.error("Error de conexión");
+                }
+              }}
             />
             <div className="mt-3">
               <DocUploadZone
                 solicitudId={solicitud.id}
                 tipo="fotos"
                 label="Agregar fotos"
+                hint="JPG, PNG o WebP · máx 10MB"
                 accept="image/*"
                 onUploaded={onRefresh}
               />
@@ -554,9 +594,16 @@ function SolicitudSheet({
 
           {/* Otros Documentos */}
           <div className="border-t pt-4">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-3">
-              Otros Documentos
-            </p>
+            <div className="flex items-center gap-2 mb-3">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                Otros Documentos
+              </p>
+              {((detail?.docOtros as string[]) ?? []).length > 0 && (
+                <span className="text-[10px] bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 font-mono">
+                  {((detail?.docOtros as string[]) ?? []).length}
+                </span>
+              )}
+            </div>
             {((detail?.docOtros as string[]) ?? []).map((url, i) => (
               <div
                 key={i}
@@ -568,20 +615,52 @@ function SolicitudSheet({
                     {url.split("/").pop()?.split("?")[0]}
                   </span>
                 </div>
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary hover:underline shrink-0 ml-2"
-                >
-                  Ver
-                </a>
+                <div className="flex items-center gap-1 shrink-0 ml-2">
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button size="icon" variant="ghost" className="h-7 w-7">
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                  </a>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(
+                          `/api/solicitudes-taller/${solicitud.id}/delete-doc`,
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ tipo: "otros", url }),
+                          }
+                        );
+                        if (res.ok) {
+                          toast.success("Documento eliminado");
+                          onRefresh();
+                        } else {
+                          const json = await res.json();
+                          toast.error(json.error || "Error al eliminar");
+                        }
+                      } catch {
+                        toast.error("Error de conexión");
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             ))}
             <DocUploadZone
               solicitudId={solicitud.id}
               tipo="otros"
               label="Agregar documentos"
+              hint="PDF, JPG, PNG o WebP · máx 10MB"
               accept="image/*,application/pdf"
               onUploaded={onRefresh}
             />
@@ -995,19 +1074,47 @@ function DocCard({
   tipo: string;
   onRefresh: () => void;
 }) {
+  const [imgError, setImgError] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   if (!url) {
     return (
       <DocUploadZone
         solicitudId={solicitudId}
         tipo={tipo}
         label={`Subir ${label}`}
+        hint="PDF, JPG, PNG o WebP · máx 10MB"
         accept="image/*,application/pdf"
         onUploaded={onRefresh}
       />
     );
   }
 
-  const isImage = isImageUrl(url);
+  const isImage = isImageUrl(url) && !imgError;
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const res = await fetch(
+        `/api/solicitudes-taller/${solicitudId}/delete-doc`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tipo }),
+        }
+      );
+      if (res.ok) {
+        toast.success(`${label} eliminado`);
+        onRefresh();
+      } else {
+        const json = await res.json();
+        toast.error(json.error || "Error al eliminar");
+      }
+    } catch {
+      toast.error("Error de conexión");
+    }
+    setDeleting(false);
+  }
 
   return (
     <div className="flex items-center gap-3 p-2.5 rounded-lg border bg-card">
@@ -1018,11 +1125,16 @@ function DocCard({
             src={getTransformedUrl(url, { width: 120, height: 80, quality: 70 })}
             alt={label}
             className="w-full h-full object-cover"
+            onError={() => setImgError(true)}
           />
         </div>
       ) : (
         <div className="w-16 h-11 rounded bg-muted flex items-center justify-center shrink-0">
-          <FileText className="h-5 w-5 text-muted-foreground" />
+          {imgError ? (
+            <ImageOff className="h-4 w-4 text-muted-foreground/50" />
+          ) : (
+            <FileText className="h-5 w-5 text-muted-foreground" />
+          )}
         </div>
       )}
       <div className="flex-1 min-w-0">
@@ -1031,16 +1143,26 @@ function DocCard({
           {url.split("/").pop()?.split("?")[0]}
         </p>
       </div>
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="shrink-0"
-      >
-        <Button size="icon" variant="ghost" className="h-8 w-8">
-          <Eye className="h-4 w-4" />
+      <div className="flex items-center gap-0.5 shrink-0">
+        <a href={url} target="_blank" rel="noopener noreferrer">
+          <Button size="icon" variant="ghost" className="h-8 w-8">
+            <Eye className="h-4 w-4" />
+          </Button>
+        </a>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+          onClick={handleDelete}
+          disabled={deleting}
+        >
+          {deleting ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Trash2 className="h-3.5 w-3.5" />
+          )}
         </Button>
-      </a>
+      </div>
     </div>
   );
 }
@@ -1051,12 +1173,14 @@ function DocUploadZone({
   solicitudId,
   tipo,
   label,
+  hint,
   accept,
   onUploaded,
 }: {
   solicitudId: string;
   tipo: string;
   label: string;
+  hint?: string;
   accept: string;
   onUploaded: () => void;
 }) {
@@ -1103,7 +1227,7 @@ function DocUploadZone({
       }}
       onDragLeave={() => setIsDragging(false)}
       onDrop={handleDrop}
-      className={`flex items-center justify-center gap-2 h-14 rounded-lg border-2 border-dashed cursor-pointer transition-colors ${
+      className={`flex flex-col items-center justify-center gap-1 h-16 rounded-lg border-2 border-dashed cursor-pointer transition-colors ${
         isDragging
           ? "border-primary bg-primary/5"
           : "border-muted-foreground/20 hover:border-primary/40"
@@ -1113,8 +1237,13 @@ function DocUploadZone({
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
       ) : (
         <>
-          <Upload className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">{label}</span>
+          <div className="flex items-center gap-1.5">
+            <Upload className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">{label}</span>
+          </div>
+          {hint && (
+            <span className="text-[10px] text-muted-foreground/60">{hint}</span>
+          )}
         </>
       )}
       <input
