@@ -2,12 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/layout/page-header";
-import dynamic from "next/dynamic";
-
-const NetworkMap = dynamic(
-  () => import("./_components/network-map"),
-  { ssr: false, loading: () => <div className="h-[calc(100vh-200px)] bg-muted/30 rounded-lg animate-pulse" /> }
-);
+import { MapWrapper } from "./_components/map-wrapper";
 
 async function getMapData() {
   const [talleres, solicitudes] = await Promise.all([
@@ -63,7 +58,7 @@ export default async function MapaRedPage() {
         description={`${talleres.filter(t => t.activo).length} talleres activos · ${solicitudes.length} solicitudes con ubicación`}
       />
       <div className="rounded-lg border overflow-hidden" style={{ height: "calc(100vh - 220px)" }}>
-        <NetworkMap talleres={talleres} solicitudes={solicitudes} />
+        <MapWrapper talleres={talleres} solicitudes={solicitudes} />
       </div>
     </div>
   );
