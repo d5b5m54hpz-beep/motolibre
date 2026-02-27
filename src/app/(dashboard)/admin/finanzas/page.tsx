@@ -5,9 +5,10 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatMoney } from "@/lib/format";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import {
   TrendingUp, TrendingDown, DollarSign, Wallet, ArrowUpRight,
-  ArrowDownRight, CreditCard, Receipt, Minus,
+  ArrowDownRight, CreditCard, Receipt, Minus, Sparkles, RefreshCw,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -72,6 +73,8 @@ export default function FinanzasDashboardPage() {
   const [er, setER] = useState<EstadoResultados | null>(null);
   const [flujo, setFlujo] = useState<FlujoCaja | null>(null);
   const [loading, setLoading] = useState(true);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [analyzingAI, setAnalyzingAI] = useState(false);
 
   const fetchAll = useCallback(async () => {
     const [r1, r2, r3, r4] = await Promise.all([
@@ -88,6 +91,25 @@ export default function FinanzasDashboardPage() {
   }, []);
 
   useEffect(() => { void fetchAll(); }, [fetchAll]);
+
+  async function handleAnalyzeAI() {
+    if (!resumen || !indicadores) return;
+    setAnalyzingAI(true);
+    setAiAnalysis(null);
+    try {
+      const res = await fetch("/api/ai/finanzas-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumen, indicadores, er }),
+      });
+      if (res.ok) {
+        const j = await res.json();
+        setAiAnalysis(j.data.analysis);
+      }
+    } finally {
+      setAnalyzingAI(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -125,7 +147,36 @@ export default function FinanzasDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Dashboard Financiero" description="Vista ejecutiva de finanzas — MotoLibre S.A." />
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <PageHeader title="Dashboard Financiero" description="Vista ejecutiva de finanzas — MotoLibre S.A." />
+        <div className="sm:ml-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAnalyzeAI}
+            disabled={analyzingAI || !resumen}
+            className="border-accent-DEFAULT/30 text-accent-DEFAULT hover:bg-accent-DEFAULT/10"
+          >
+            {analyzingAI
+              ? <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1.5" />
+              : <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+            }
+            Analizar con IA
+          </Button>
+        </div>
+      </div>
+
+      {aiAnalysis && (
+        <div className="bg-bg-card rounded-2xl border border-accent-DEFAULT/30 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="h-4 w-4 text-accent-DEFAULT" />
+            <span className="text-sm font-semibold text-accent-DEFAULT">Análisis CFO — MotoLibre</span>
+          </div>
+          <div className="text-sm text-t-secondary whitespace-pre-wrap leading-relaxed">
+            {aiAnalysis}
+          </div>
+        </div>
+      )}
 
       {/* Row 1: Main KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
