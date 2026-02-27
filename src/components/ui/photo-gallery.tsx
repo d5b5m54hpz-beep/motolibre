@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
-import { getTransformedUrl } from "@/lib/supabase";
+import { getTransformedUrl } from "@/lib/supabase-url";
 import { cn } from "@/lib/utils";
 
 interface PhotoGalleryProps {

@@ -27,7 +27,7 @@ import {
   type SolicitudTallerRow,
 } from "./solicitudes-columns";
 import { PhotoGallery } from "@/components/ui/photo-gallery";
-import { getTransformedUrl } from "@/lib/supabase";
+import { getTransformedUrl } from "@/lib/supabase-url";
 import {
   ClipboardList,
   Download,
