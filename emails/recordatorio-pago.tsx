@@ -203,5 +203,5 @@ RecordatorioPagoEmail.defaultProps = {
   monto: 35000,
   fechaVencimiento: "5 de marzo de 2026",
   diasVencida: 3,
-  linkPago: "https://motolibre.com.ar/pagar",
+  linkPago: "http://localhost:3000/mi-cuenta/pagos",
 } satisfies RecordatorioPagoEmailProps;

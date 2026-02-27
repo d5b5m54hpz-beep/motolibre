@@ -86,6 +86,8 @@ export async function enviarNotificacionEmail(params: {
   return data;
 }
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://motolibre.com.ar";
+
 /**
  * Envía recordatorio de pago con template React Email.
  */
@@ -93,11 +95,12 @@ export async function enviarRecordatorioPago(
   params: RecordatorioPagoEmailProps & { to: string }
 ) {
   const { to, ...templateProps } = params;
-  const html = await render(React.createElement(RecordatorioPagoEmail, templateProps));
+  const props = { linkPago: `${APP_URL}/mi-cuenta/pagos`, ...templateProps };
+  const html = await render(React.createElement(RecordatorioPagoEmail, props));
 
-  const subject = params.diasVencida
-    ? `Cuota #${params.cuotaNumero} vencida — $${params.monto.toLocaleString("es-AR")}`
-    : `Recordatorio: tu cuota #${params.cuotaNumero} vence pronto`;
+  const subject = props.diasVencida
+    ? `Cuota #${props.cuotaNumero} vencida — $${props.monto.toLocaleString("es-AR")}`
+    : `Recordatorio: tu cuota #${props.cuotaNumero} vence pronto`;
 
   const { data, error } = await getResend().emails.send({
     from: `MotoLibre Cobranzas <${FROM}>`,
@@ -121,7 +124,8 @@ export async function enviarCuotaVencida(
   params: CuotaVencidaEmailProps & { to: string }
 ) {
   const { to, ...templateProps } = params;
-  const html = await render(React.createElement(CuotaVencidaEmail, templateProps));
+  const props = { linkPago: `${APP_URL}/mi-cuenta/pagos`, ...templateProps };
+  const html = await render(React.createElement(CuotaVencidaEmail, props));
 
   const { data, error } = await getResend().emails.send({
     from: `MotoLibre Cobranzas <${FROM}>`,

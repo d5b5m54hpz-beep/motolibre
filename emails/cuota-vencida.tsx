@@ -206,7 +206,7 @@ CuotaVencidaEmail.defaultProps = {
   cuotaNumero: 4,
   monto: 48500,
   diasVencida: 12,
-  linkPago: "https://motolibre.com.ar/pagar",
+  linkPago: "http://localhost:3000/mi-cuenta/pagos",
   mensajeIA:
     "Hola Juan, queríamos recordarte que tenés una cuota vencida de $48.500 correspondiente a tu Yamaha MT-03. Te pedimos que regularices tu situación a la brevedad para evitar inconvenientes con tu contrato. Cualquier duda estamos a disposición.",
 } satisfies CuotaVencidaEmailProps;
