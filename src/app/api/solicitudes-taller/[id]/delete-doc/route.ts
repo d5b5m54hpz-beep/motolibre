@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { supabaseAdmin, extractSupabasePath } from "@/lib/supabase";
 import { apiSetup } from "@/lib/api-helpers";
+import { eventBus } from "@/lib/events/event-bus";
+import { OPERATIONS } from "@/lib/events/operations";
 
 /**
  * POST /api/solicitudes-taller/[id]/delete-doc
@@ -101,6 +103,13 @@ export async function POST(
       }
     }
   }
+
+  eventBus.emit(
+    OPERATIONS.network.application.update,
+    "solicitudTaller",
+    id,
+    { action: "delete-doc", tipo }
+  ).catch(() => {});
 
   return NextResponse.json({ success: true });
 }

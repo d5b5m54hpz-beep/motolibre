@@ -26,9 +26,11 @@ export type SolicitudTallerRow = {
   marcasExperiencia: string[];
   capacidadOTMes: number | null;
   scoreTotal: number | null;
+  preScore: number | undefined;
   tokenPublico: string;
   fechaRecepcion: string | null;
   fechaAprobacion: string | null;
+  updatedAt: string;
   createdAt: string;
   _count: { evaluaciones: number };
 };
@@ -127,6 +129,29 @@ export const solicitudesColumns: ColumnDef<SolicitudTallerRow>[] = [
         {row.original.cantidadMecanicos}
       </span>
     ),
+  },
+  {
+    accessorKey: "preScore",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Pre-Score" />
+    ),
+    cell: ({ row }) => {
+      const ps = row.original.preScore;
+      if (ps == null) return <span className="text-muted-foreground">—</span>;
+      const color =
+        ps >= 7
+          ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30"
+          : ps >= 4
+          ? "bg-yellow-500/15 text-yellow-500 border-yellow-500/30"
+          : "bg-red-500/15 text-red-500 border-red-500/30";
+      return (
+        <span
+          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-semibold border ${color}`}
+        >
+          {ps.toFixed(1)}
+        </span>
+      );
+    },
   },
   {
     accessorKey: "scoreTotal",

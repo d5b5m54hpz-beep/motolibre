@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { supabaseAdmin } from "@/lib/supabase";
 import { apiSetup } from "@/lib/api-helpers";
+import { eventBus } from "@/lib/events/event-bus";
+import { OPERATIONS } from "@/lib/events/operations";
+import sharp from "sharp";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = [
@@ -10,6 +13,7 @@ const ALLOWED_TYPES = [
   "image/png",
   "application/pdf",
 ];
+const IMAGE_TYPES = ["image/webp", "image/jpeg", "image/png"];
 
 /**
  * POST /api/solicitudes-taller/[id]/upload
@@ -68,15 +72,23 @@ export async function POST(
   }
 
   const timestamp = Date.now();
-  const ext = file.name.split(".").pop() || "bin";
+  const isImage = IMAGE_TYPES.includes(file.type);
+  const ext = isImage ? "webp" : (file.name.split(".").pop() || "bin");
   const path = `solicitudes/${id}/${tipo}/${timestamp}.${ext}`;
 
-  const buffer = Buffer.from(await file.arrayBuffer());
+  let buffer: Buffer = Buffer.from(await file.arrayBuffer());
+  let contentType = file.type;
+
+  // Convert images to WebP for optimization
+  if (isImage) {
+    buffer = Buffer.from(await sharp(buffer).webp({ quality: 80 }).toBuffer());
+    contentType = "image/webp";
+  }
 
   const { error: uploadError } = await supabaseAdmin.storage
     .from("motos")
     .upload(path, buffer, {
-      contentType: file.type,
+      contentType,
       upsert: false,
     });
 
@@ -110,6 +122,14 @@ export async function POST(
       data: { [arrayField]: { push: publicUrl } },
     });
   }
+
+  // Emit event for timeline
+  eventBus.emit(
+    OPERATIONS.network.application.update,
+    "solicitudTaller",
+    id,
+    { action: "upload", tipo, url: publicUrl }
+  ).catch(() => {});
 
   return NextResponse.json({ data: { url: publicUrl, path } });
 }

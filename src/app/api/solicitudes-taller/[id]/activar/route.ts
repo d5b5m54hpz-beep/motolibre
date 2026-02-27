@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiSetup } from "@/lib/api-helpers";
+import { eventBus } from "@/lib/events/event-bus";
+import { OPERATIONS } from "@/lib/events/operations";
 
 /**
  * POST /api/solicitudes-taller/[id]/activar
@@ -67,6 +69,13 @@ export async function POST(
 
     return { taller, solicitud: updated };
   });
+
+  eventBus.emit(
+    OPERATIONS.network.application.activate,
+    "solicitudTaller",
+    id,
+    { tallerId: result.taller.id }
+  ).catch(() => {});
 
   return NextResponse.json({ data: result });
 }

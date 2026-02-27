@@ -9,6 +9,9 @@ import CuotaVencidaEmail, {
 import BienvenidaTallerEmail, {
   type BienvenidaTallerEmailProps,
 } from "../../emails/bienvenida-taller";
+import SolicitudTallerEstadoEmail, {
+  type SolicitudTallerEstadoEmailProps,
+} from "../../emails/solicitud-taller-estado";
 import * as React from "react";
 
 let _resend: Resend | null = null;
@@ -160,6 +163,42 @@ export async function enviarBienvenidaTaller(
 
   if (error) {
     console.error("[Email] Error enviando bienvenida taller:", error);
+    throw new Error(`Error enviando email: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
+ * Envía notificación de cambio de estado de solicitud de taller.
+ */
+export async function enviarNotificacionEstadoSolicitudTaller(
+  params: SolicitudTallerEstadoEmailProps & { to: string }
+) {
+  const { to, ...templateProps } = params;
+  const html = await render(
+    React.createElement(SolicitudTallerEstadoEmail, templateProps)
+  );
+
+  const ESTADO_SUBJECTS: Record<string, string> = {
+    RECIBIDA: "Recibimos tu solicitud",
+    EN_EVALUACION: "Tu solicitud está en evaluación",
+    APROBADA: "¡Tu solicitud fue aprobada!",
+    RECHAZADA: "Resultado de tu solicitud",
+    CONVENIO_ENVIADO: "Convenio comercial disponible",
+  };
+
+  const subject = `MotoLibre — ${ESTADO_SUBJECTS[params.nuevoEstado] ?? `Estado: ${params.estadoLabel}`}`;
+
+  const { data, error } = await getResend().emails.send({
+    from: `MotoLibre Red de Talleres <${FROM}>`,
+    to,
+    subject,
+    html,
+  });
+
+  if (error) {
+    console.error("[Email] Error enviando estado solicitud:", error);
     throw new Error(`Error enviando email: ${error.message}`);
   }
 

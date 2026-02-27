@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiSetup } from "@/lib/api-helpers";
 import { cambiarEstadoSchema } from "@/lib/validations/solicitud-taller";
+import { eventBus } from "@/lib/events/event-bus";
+import { OPERATIONS } from "@/lib/events/operations";
+import { enviarNotificacionEstadoSolicitudTaller } from "@/lib/email";
 
 const TRANSICIONES: Record<string, string[]> = {
   RECIBIDA: ["EN_EVALUACION", "INCOMPLETA"],
@@ -13,6 +16,16 @@ const TRANSICIONES: Record<string, string[]> = {
   CONVENIO_FIRMADO: ["ONBOARDING"],
   ONBOARDING: ["ACTIVO"],
 };
+
+const ESTADO_LABELS: Record<string, string> = {
+  RECIBIDA: "Recibida",
+  EN_EVALUACION: "En Evaluación",
+  APROBADA: "Aprobada",
+  RECHAZADA: "Rechazada",
+  CONVENIO_ENVIADO: "Convenio Enviado",
+};
+
+const NOTIFY_STATES = ["RECIBIDA", "EN_EVALUACION", "APROBADA", "RECHAZADA", "CONVENIO_ENVIADO"];
 
 /**
  * POST /api/solicitudes-taller/[id]/cambiar-estado
@@ -72,6 +85,29 @@ export async function POST(
     where: { id },
     data: updateData,
   });
+
+  // Emit event for timeline
+  eventBus.emit(
+    OPERATIONS.network.application.changeState,
+    "solicitudTaller",
+    id,
+    { estadoAnterior: solicitud.estado, nuevoEstado, motivo }
+  ).catch(() => {});
+
+  // Send email notification (non-blocking)
+  if (NOTIFY_STATES.includes(nuevoEstado)) {
+    enviarNotificacionEstadoSolicitudTaller({
+      to: solicitud.email,
+      contactoNombre: solicitud.contactoNombre,
+      nombreTaller: solicitud.nombreTaller,
+      nuevoEstado,
+      estadoLabel: ESTADO_LABELS[nuevoEstado] ?? nuevoEstado,
+      mensaje: motivo ?? null,
+      tokenPublico: solicitud.tokenPublico,
+    }).catch((err) => {
+      console.error("[cambiar-estado] Email failed:", err);
+    });
+  }
 
   return NextResponse.json({ data: updated });
 }

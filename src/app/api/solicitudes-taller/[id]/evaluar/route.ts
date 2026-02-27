@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiSetup } from "@/lib/api-helpers";
 import { evaluacionSchema } from "@/lib/validations/solicitud-taller";
+import { eventBus } from "@/lib/events/event-bus";
+import { OPERATIONS } from "@/lib/events/operations";
 
 /**
  * POST /api/solicitudes-taller/[id]/evaluar
@@ -35,9 +37,9 @@ export async function POST(
   }
 
   const { evaluaciones } = parsed.data;
+  let scoreTotal = 0;
 
   await prisma.$transaction(async (tx) => {
-    // Upsert each evaluation item
     for (const ev of evaluaciones) {
       await tx.evaluacionSolicitud.upsert({
         where: {
@@ -61,7 +63,6 @@ export async function POST(
       });
     }
 
-    // Calculate weighted score
     const allEvals = await tx.evaluacionSolicitud.findMany({
       where: { solicitudId: id },
     });
@@ -71,13 +72,20 @@ export async function POST(
       (sum, e) => sum + e.puntaje * e.peso,
       0
     );
-    const scoreTotal = totalPeso > 0 ? totalPonderado / totalPeso : 0;
+    scoreTotal = totalPeso > 0 ? totalPonderado / totalPeso : 0;
 
     await tx.solicitudTaller.update({
       where: { id },
       data: { scoreTotal },
     });
   });
+
+  eventBus.emit(
+    OPERATIONS.network.application.evaluate,
+    "solicitudTaller",
+    id,
+    { scoreTotal, evaluaciones: evaluaciones.length }
+  ).catch(() => {});
 
   return NextResponse.json({ success: true });
 }

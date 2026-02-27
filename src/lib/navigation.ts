@@ -48,6 +48,7 @@ export const navigation: NavGroup[] = [
         children: [
           { title: "Red de Talleres", href: "/admin/talleres", icon: Building2 },
           { title: "Solicitudes", href: "/admin/talleres/solicitudes", icon: ClipboardList },
+          { title: "Mapa de Red", href: "/admin/talleres/mapa", icon: MapPin },
         ],
       },
     ],

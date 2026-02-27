@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiSetup } from "@/lib/api-helpers";
 import { convenioCreateSchema } from "@/lib/validations/solicitud-taller";
+import { eventBus } from "@/lib/events/event-bus";
+import { OPERATIONS } from "@/lib/events/operations";
 
 /**
  * POST /api/solicitudes-taller/[id]/generar-convenio
@@ -75,6 +77,13 @@ export async function POST(
 
     return { convenio, solicitud: updated };
   });
+
+  eventBus.emit(
+    OPERATIONS.network.agreement.create,
+    "solicitudTaller",
+    id,
+    { convenioId: result.convenio.id }
+  ).catch(() => {});
 
   return NextResponse.json({ data: result });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/data-table/data-table";
 import type { FilterableColumn } from "@/components/data-table/data-table-filters";
@@ -9,6 +9,7 @@ import {
   SheetDetail,
   DetailField,
   DetailGrid,
+  TimelineItem,
 } from "@/components/ui/sheet-detail";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,7 @@ import {
   defaultHiddenSolicitudColumns,
   type SolicitudTallerRow,
 } from "./solicitudes-columns";
+import { KanbanBoard } from "./kanban-board";
 import { PhotoGallery } from "@/components/ui/photo-gallery";
 import { getTransformedUrl } from "@/lib/supabase-url";
 import {
@@ -42,6 +44,9 @@ import {
   Eye,
   Trash2,
   ImageOff,
+  LayoutList,
+  Columns3,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -101,6 +106,7 @@ export function SolicitudesTable({ solicitudes }: SolicitudesTableProps) {
     null
   );
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
 
   // Derive unique provinces for filter
   const provinciaOptions = useMemo(() => {
@@ -163,25 +169,58 @@ export function SolicitudesTable({ solicitudes }: SolicitudesTableProps) {
     loadDetail(row.id);
   }
 
+  function refreshAll() {
+    if (selected) loadDetail(selected.id);
+    router.refresh();
+  }
+
   return (
     <>
-      <DataTable
-        columns={solicitudesColumns}
-        data={solicitudes}
-        searchableColumns={["nombreTaller", "contactoNombre", "email"]}
-        searchPlaceholder="Buscar por taller, contacto, email..."
-        filterableColumns={filterColumns}
-        bulkActions={bulkActions}
-        onRowClick={handleRowClick}
-        emptyState={{
-          icon: ClipboardList,
-          title: "No hay solicitudes",
-          description:
-            "Las solicitudes de talleres aparecerán aquí cuando se postulen.",
-        }}
-        defaultPageSize={20}
-        defaultColumnVisibility={defaultHiddenSolicitudColumns}
-      />
+      {/* View toggle */}
+      <div className="flex items-center justify-end gap-1 mb-3">
+        <Button
+          size="icon"
+          variant={viewMode === "table" ? "secondary" : "ghost"}
+          className="h-8 w-8"
+          onClick={() => setViewMode("table")}
+        >
+          <LayoutList className="h-4 w-4" />
+        </Button>
+        <Button
+          size="icon"
+          variant={viewMode === "kanban" ? "secondary" : "ghost"}
+          className="h-8 w-8"
+          onClick={() => setViewMode("kanban")}
+        >
+          <Columns3 className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {viewMode === "table" ? (
+        <DataTable
+          columns={solicitudesColumns}
+          data={solicitudes}
+          searchableColumns={["nombreTaller", "contactoNombre", "email"]}
+          searchPlaceholder="Buscar por taller, contacto, email..."
+          filterableColumns={filterColumns}
+          bulkActions={bulkActions}
+          onRowClick={handleRowClick}
+          emptyState={{
+            icon: ClipboardList,
+            title: "No hay solicitudes",
+            description:
+              "Las solicitudes de talleres aparecerán aquí cuando se postulen.",
+          }}
+          defaultPageSize={20}
+          defaultColumnVisibility={defaultHiddenSolicitudColumns}
+        />
+      ) : (
+        <KanbanBoard
+          solicitudes={solicitudes}
+          onCardClick={handleRowClick}
+          onRefresh={() => router.refresh()}
+        />
+      )}
 
       {selected && (
         <SolicitudSheet
@@ -195,10 +234,7 @@ export function SolicitudesTable({ solicitudes }: SolicitudesTableProps) {
               setDetailData(null);
             }
           }}
-          onRefresh={() => {
-            loadDetail(selected.id);
-            router.refresh();
-          }}
+          onRefresh={refreshAll}
         />
       )}
     </>
@@ -400,6 +436,39 @@ function SolicitudSheet({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Scores */}
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-semibold mb-3">Scoring</h4>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Pre-Score</span>
+                {(() => {
+                  const ps = (detail?.preScore as number) ?? solicitud.preScore;
+                  if (ps == null) return <span className="text-sm text-muted-foreground">—</span>;
+                  const color =
+                    ps >= 7
+                      ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30"
+                      : ps >= 4
+                      ? "bg-yellow-500/15 text-yellow-500 border-yellow-500/30"
+                      : "bg-red-500/15 text-red-500 border-red-500/30";
+                  return (
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-semibold border ${color}`}>
+                      {ps.toFixed(1)}/10
+                    </span>
+                  );
+                })()}
+              </div>
+              <div className="flex items-center gap-2">
+                <Star className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Score Manual</span>
+                <span className="font-mono tabular-nums text-sm font-medium">
+                  {solicitud.scoreTotal?.toFixed(1) ?? "—"}/10
+                </span>
+              </div>
+            </div>
           </div>
 
           {!!detail?.notasInternas && (
@@ -680,6 +749,11 @@ function SolicitudSheet({
         />
       ),
     },
+    {
+      id: "actividad",
+      label: "Actividad",
+      content: <ActividadTab solicitudId={solicitud.id} />,
+    },
   ];
 
   const actions = transiciones.length > 0
@@ -908,6 +982,21 @@ function ConvenioTab({
   if (convenio) {
     return (
       <div className="space-y-4">
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              window.open(
+                `/api/solicitudes-taller/${solicitudId}/convenio-pdf`,
+                "_blank"
+              );
+            }}
+          >
+            <Download className="h-4 w-4 mr-1.5" />
+            Descargar PDF
+          </Button>
+        </div>
         <DetailGrid>
           <DetailField
             label="Tarifa Hora"
@@ -1257,5 +1346,106 @@ function DocUploadZone({
         }}
       />
     </label>
+  );
+}
+
+// ── Actividad Tab ──
+
+const EVENT_LABELS: Record<string, (payload: Record<string, unknown>) => string> = {
+  "network.application.changeState": (p) =>
+    `Estado cambiado de ${p.estadoAnterior ?? "?"} a ${p.nuevoEstado ?? "?"}${p.motivo ? ` — ${p.motivo}` : ""}`,
+  "network.application.evaluate": (p) =>
+    `Evaluación registrada (score: ${p.scoreTotal ?? "?"})`,
+  "network.application.update": (p) =>
+    p.action === "upload"
+      ? `Archivo subido: ${p.tipo ?? "documento"}`
+      : p.action === "delete-doc"
+      ? `Documento eliminado: ${p.tipo ?? "documento"}`
+      : "Solicitud actualizada",
+  "network.application.activate": () => "Taller activado",
+  "network.agreement.create": () => "Convenio generado",
+};
+
+function ActividadTab({ solicitudId }: { solicitudId: string }) {
+  const [events, setEvents] = useState<
+    Array<{
+      id: string;
+      operationId: string;
+      payload: Record<string, unknown>;
+      createdAt: string;
+      status: string;
+    }>
+  >([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const res = await fetch(
+          `/api/solicitudes-taller/${solicitudId}/actividad`
+        );
+        if (res.ok) {
+          const json = await res.json();
+          if (!cancelled) setEvents(json.data ?? []);
+        }
+      } catch {
+        /* ignore */
+      }
+      if (!cancelled) setLoading(false);
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [solicitudId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (events.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <ClipboardList className="h-10 w-10 text-muted-foreground/40 mb-3" />
+        <p className="text-sm font-medium">Sin actividad</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Los cambios de estado, evaluaciones y uploads aparecerán aquí
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1">
+      {events.map((ev) => {
+        const labelFn = EVENT_LABELS[ev.operationId];
+        const payload =
+          typeof ev.payload === "object" && ev.payload !== null
+            ? (ev.payload as Record<string, unknown>)
+            : {};
+        const description = labelFn
+          ? labelFn(payload)
+          : ev.operationId.split(".").pop() ?? "Evento";
+
+        return (
+          <TimelineItem
+            key={ev.id}
+            description={description}
+            date={new Date(ev.createdAt).toLocaleString("es-AR", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          />
+        );
+      })}
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiSetup } from "@/lib/api-helpers";
+import { calcularPreScore } from "@/lib/taller-prescore";
 
 /**
  * GET /api/solicitudes-taller/[id]
@@ -30,5 +31,17 @@ export async function GET(
     );
   }
 
-  return NextResponse.json({ data: solicitud });
+  const preScore = calcularPreScore({
+    docCuit: solicitud.docCuit,
+    docHabilitacion: solicitud.docHabilitacion,
+    docSeguro: solicitud.docSeguro,
+    cantidadMecanicos: solicitud.cantidadMecanicos,
+    superficieM2: solicitud.superficieM2,
+    cantidadElevadores: solicitud.cantidadElevadores,
+    docFotos: solicitud.docFotos,
+    tieneDeposito: solicitud.tieneDeposito,
+    tieneEstacionamiento: solicitud.tieneEstacionamiento,
+  });
+
+  return NextResponse.json({ data: { ...solicitud, preScore } });
 }
