@@ -17,6 +17,7 @@ import "@/lib/ai/tools/rrhh";
 import "@/lib/ai/tools/sistema";
 import "@/lib/ai/tools/pricing";
 import "@/lib/ai/tools/supply";
+import "@/lib/ai/tools/comunicacion";
 
 export const maxDuration = 60;
 
