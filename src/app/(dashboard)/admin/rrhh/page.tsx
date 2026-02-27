@@ -10,7 +10,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { formatMoney, formatDate } from "@/lib/format";
 import {
   Users, DollarSign, CalendarOff, Receipt,
-  UserPlus, Calculator, Check, X,
+  UserPlus, Calculator, Check, X, Sparkles, RefreshCw,
 } from "lucide-react";
 
 interface Stats {
@@ -40,6 +40,8 @@ export default function RRHHDashboardPage() {
   const [ausencias, setAusencias] = useState<Ausencia[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [analyzingAI, setAnalyzingAI] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -62,6 +64,25 @@ export default function RRHHDashboardPage() {
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
+
+  async function handleAnalyzeAI() {
+    if (!stats) return;
+    setAnalyzingAI(true);
+    setAiAnalysis(null);
+    try {
+      const res = await fetch("/api/ai/rrhh-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stats, ausenciasPendientes: ausencias }),
+      });
+      if (res.ok) {
+        const j = await res.json();
+        setAiAnalysis(j.data.analysis);
+      }
+    } finally {
+      setAnalyzingAI(false);
+    }
+  }
 
   async function handleAusencia(id: string, estado: "APROBADA" | "RECHAZADA") {
     setProcessingId(id);
@@ -113,7 +134,20 @@ export default function RRHHDashboardPage() {
         title="Recursos Humanos"
         description="Panel de gestión de personal"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAnalyzeAI}
+              disabled={analyzingAI || !stats}
+              className="border-accent-DEFAULT/30 text-accent-DEFAULT hover:bg-accent-DEFAULT/10"
+            >
+              {analyzingAI
+                ? <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                : <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+              }
+              Analizar con IA
+            </Button>
             <Link href="/admin/rrhh/empleados">
               <Button variant="outline">
                 <UserPlus className="h-4 w-4 mr-2" />
@@ -185,6 +219,19 @@ export default function RRHHDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Analysis */}
+      {aiAnalysis && (
+        <div className="bg-bg-card rounded-2xl border border-accent-DEFAULT/30 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="h-4 w-4 text-accent-DEFAULT" />
+            <span className="text-sm font-semibold text-accent-DEFAULT">Análisis RRHH — MotoLibre</span>
+          </div>
+          <div className="text-sm text-t-secondary whitespace-pre-wrap leading-relaxed">
+            {aiAnalysis}
+          </div>
+        </div>
+      )}
 
       {/* Ausencias pendientes */}
       <Card>
