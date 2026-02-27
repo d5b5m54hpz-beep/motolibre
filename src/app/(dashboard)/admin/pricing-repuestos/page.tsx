@@ -17,8 +17,9 @@ import {
 import {
   Tags, RefreshCw, Plus, TrendingUp, TrendingDown,
   Check, X, ChevronDown, ChevronUp, Play, RotateCcw,
-  Users, List, BarChart3, Zap,
+  Users, List, BarChart3, Zap, Search, Trash2, ArrowRight, Calculator,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -392,12 +393,312 @@ function TabMarkup() {
   );
 }
 
+// ── Types extra ───────────────────────────────────────────────────────────────
+
+interface ItemLista {
+  id: string;
+  repuestoId: string;
+  precioUnitario: number;
+  repuesto?: { id: string; codigo: string; nombre: string; categoria: string };
+}
+
+interface RepuestoSearch {
+  id: string;
+  codigo: string;
+  nombre: string;
+  categoria: string;
+  precioCompra: number;
+  precioVenta: number | null;
+}
+
+interface ClienteSearch {
+  id: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+}
+
+interface PrecioResuelto {
+  codigo: string;
+  nombre: string;
+  precioCompra: number;
+  markupCategoria: number;
+  precioConMarkup: number;
+  listaAplicada: string | null;
+  precioLista: number | null;
+  descuentoGrupo: number;
+  grupoCliente: string | null;
+  precioFinal: number;
+  margen: number;
+  margenPorcentaje: number;
+  detalle: string[];
+}
+
+// ── Dialog: Items de una Lista ────────────────────────────────────────────────
+
+function DialogItemsLista({
+  lista,
+  onClose,
+}: {
+  lista: ListaPrecio;
+  onClose: () => void;
+}) {
+  const [items, setItems] = useState<ItemLista[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<RepuestoSearch[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [newPrice, setNewPrice] = useState("");
+  const [selectedRepuesto, setSelectedRepuesto] = useState<RepuestoSearch | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const loadItems = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/pricing-repuestos/listas/${lista.id}/items`);
+      if (res.ok) setItems(await res.json());
+    } finally {
+      setLoading(false);
+    }
+  }, [lista.id]);
+
+  useEffect(() => { loadItems(); }, [loadItems]);
+
+  const handleSearch = useCallback(async (q: string) => {
+    setSearch(q);
+    setSelectedRepuesto(null);
+    if (q.trim().length < 2) { setSearchResults([]); return; }
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/repuestos?search=${encodeURIComponent(q)}&limit=10`);
+      if (res.ok) {
+        const json = await res.json();
+        setSearchResults(json.data ?? json);
+      }
+    } finally {
+      setSearching(false);
+    }
+  }, []);
+
+  const handleAddItem = async () => {
+    if (!selectedRepuesto || !newPrice) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/pricing-repuestos/listas/${lista.id}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ repuestoId: selectedRepuesto.id, precioUnitario: parseFloat(newPrice) }),
+      });
+      if (res.ok) {
+        toast.success(`${selectedRepuesto.nombre} agregado a la lista`);
+        setSelectedRepuesto(null);
+        setSearch("");
+        setSearchResults([]);
+        setNewPrice("");
+        await loadItems();
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteItem = async (itemId: string, nombre: string) => {
+    const res = await fetch(
+      `/api/pricing-repuestos/listas/${lista.id}/items/${itemId}`,
+      { method: "DELETE" }
+    );
+    if (res.ok) {
+      toast.success(`${nombre} eliminado de la lista`);
+      loadItems();
+    }
+  };
+
+  const handleUpdatePrice = async (itemId: string, precio: number) => {
+    const res = await fetch(
+      `/api/pricing-repuestos/listas/${lista.id}/items/${itemId}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ precioUnitario: precio }),
+      }
+    );
+    if (res.ok) {
+      toast.success("Precio actualizado");
+      loadItems();
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <List className="h-4 w-4 text-accent-DEFAULT" />
+            {lista.nombre}
+            <span className="text-xs font-normal text-t-tertiary ml-1">{lista.tipo}</span>
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+          {/* Add item */}
+          <div className="bg-bg-card/50 rounded-xl border border-border p-4 space-y-3">
+            <p className="text-xs font-semibold text-t-tertiary uppercase tracking-wide">Agregar repuesto</p>
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-t-tertiary" />
+              <input
+                className="w-full bg-bg-input border border-border rounded-lg pl-8 pr-3 py-2 text-sm text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent-DEFAULT"
+                placeholder="Buscar repuesto por nombre o código..."
+                value={search}
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+              {searching && (
+                <RefreshCw className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-t-tertiary animate-spin" />
+              )}
+            </div>
+
+            {/* Results */}
+            {searchResults.length > 0 && !selectedRepuesto && (
+              <div className="border border-border rounded-lg divide-y divide-border max-h-36 overflow-y-auto">
+                {searchResults.map((r) => (
+                  <button
+                    key={r.id}
+                    className="w-full text-left px-3 py-2 hover:bg-bg-card transition-colors"
+                    onClick={() => {
+                      setSelectedRepuesto(r);
+                      setSearch(r.nombre);
+                      setSearchResults([]);
+                      setNewPrice(String(r.precioVenta ?? Math.round(Number(r.precioCompra) * 1.3)));
+                    }}
+                  >
+                    <span className="text-sm text-t-primary">{r.nombre}</span>
+                    <span className="text-xs text-t-tertiary ml-2">{r.codigo}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Price + confirm */}
+            {selectedRepuesto && (
+              <div className="flex gap-2 items-center">
+                <div className="flex-1">
+                  <p className="text-xs text-t-tertiary mb-1">Precio en lista (ARS)</p>
+                  <input
+                    type="number"
+                    className="w-full bg-bg-input border border-border rounded-lg px-3 py-2 text-sm text-t-primary focus:outline-none focus:border-accent-DEFAULT"
+                    value={newPrice}
+                    onChange={(e) => setNewPrice(e.target.value)}
+                  />
+                </div>
+                <button
+                  className="mt-5 flex items-center gap-1.5 px-4 py-2 bg-accent-DEFAULT text-bg-base rounded-lg text-sm font-semibold hover:bg-accent-DEFAULT/90 disabled:opacity-50"
+                  onClick={handleAddItem}
+                  disabled={saving || !newPrice}
+                >
+                  {saving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                  Agregar
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Items list */}
+          {loading ? (
+            <div className="flex items-center justify-center h-24 text-t-tertiary text-sm">
+              <RefreshCw className="h-4 w-4 animate-spin mr-2" /> Cargando...
+            </div>
+          ) : items.length === 0 ? (
+            <div className="text-center py-8 text-t-tertiary text-sm">
+              No hay ítems en esta lista. Agregá el primero.
+            </div>
+          ) : (
+            <div className="bg-bg-card rounded-xl border border-border overflow-hidden">
+              <div className="px-4 py-2 border-b border-border bg-bg-card/50">
+                <p className="text-xs text-t-tertiary">{items.length} ítems en la lista</p>
+              </div>
+              <div className="divide-y divide-border max-h-72 overflow-y-auto">
+                {items.map((item) => (
+                  <ItemListaRow
+                    key={item.id}
+                    item={item}
+                    onDelete={() => handleDeleteItem(item.id, item.repuesto?.nombre ?? item.repuestoId)}
+                    onUpdate={(precio) => handleUpdatePrice(item.id, precio)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ItemListaRow({
+  item,
+  onDelete,
+  onUpdate,
+}: {
+  item: ItemLista;
+  onDelete: () => void;
+  onUpdate: (precio: number) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [price, setPrice] = useState(String(item.precioUnitario));
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-bg-card/80 transition-colors">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-t-primary truncate">{item.repuesto?.nombre ?? item.repuestoId}</p>
+        <p className="text-xs text-t-tertiary">{item.repuesto?.codigo} · {item.repuesto?.categoria}</p>
+      </div>
+      {editing ? (
+        <div className="flex items-center gap-1.5">
+          <input
+            type="number"
+            className="w-28 bg-bg-input border border-accent-DEFAULT rounded-lg px-2 py-1 text-sm text-t-primary focus:outline-none"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            autoFocus
+          />
+          <button
+            className="text-positive hover:text-positive/80 p-1"
+            onClick={() => { onUpdate(parseFloat(price)); setEditing(false); }}
+          >
+            <Check className="h-4 w-4" />
+          </button>
+          <button className="text-t-tertiary hover:text-t-secondary p-1" onClick={() => setEditing(false)}>
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <button
+            className="font-mono text-sm text-t-primary hover:text-accent-DEFAULT transition-colors"
+            onClick={() => setEditing(true)}
+          >
+            {fmt(item.precioUnitario)}
+          </button>
+          <button
+            className="text-t-tertiary hover:text-negative/80 p-1 transition-colors"
+            onClick={onDelete}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Tab 3: Listas de Precios ──────────────────────────────────────────────────
 
 function TabListas() {
   const [listas, setListas] = useState<ListaPrecio[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [selectedLista, setSelectedLista] = useState<ListaPrecio | null>(null);
   const [form, setForm] = useState({
     nombre: "", tipo: "RETAIL" as TipoLista, descripcion: "", prioridad: "1",
   });
@@ -564,10 +865,14 @@ function TabListas() {
                 <p className="text-xs text-t-secondary">{lista.descripcion}</p>
               )}
 
-              <div className="mt-auto flex items-center justify-between">
-                <span className="text-xs text-t-tertiary">
+              <div className="mt-auto flex items-center justify-between gap-2">
+                <button
+                  onClick={() => setSelectedLista(lista)}
+                  className="text-xs px-2 py-1 rounded-lg border border-accent-DEFAULT/30 text-accent-DEFAULT hover:bg-accent-DEFAULT/10 transition-colors flex items-center gap-1"
+                >
+                  <List className="h-3 w-3" />
                   {lista._count?.items ?? 0} ítems
-                </span>
+                </button>
                 <button
                   onClick={() => handleToggle(lista.id, !lista.activa)}
                   className={cn(
@@ -584,6 +889,13 @@ function TabListas() {
           ))}
         </div>
       )}
+
+      {selectedLista && (
+        <DialogItemsLista
+          lista={selectedLista}
+          onClose={() => { setSelectedLista(null); load(); }}
+        />
+      )}
     </div>
   );
 }
@@ -597,6 +909,9 @@ function TabGrupos() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ nombre: "", descripcion: "", descuento: "5" });
   const [saving, setSaving] = useState(false);
+  const [memberSearch, setMemberSearch] = useState<Record<string, string>>({});
+  const [memberResults, setMemberResults] = useState<Record<string, ClienteSearch[]>>({});
+  const [memberSearching, setMemberSearching] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -639,6 +954,60 @@ function TabGrupos() {
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  const searchClientes = async (grupoId: string, q: string) => {
+    setMemberSearch((prev) => ({ ...prev, [grupoId]: q }));
+    if (q.trim().length < 2) {
+      setMemberResults((prev) => ({ ...prev, [grupoId]: [] }));
+      return;
+    }
+    setMemberSearching((prev) => ({ ...prev, [grupoId]: true }));
+    try {
+      const res = await fetch(`/api/clientes?search=${encodeURIComponent(q)}&limit=8`);
+      if (res.ok) {
+        const json = await res.json();
+        setMemberResults((prev) => ({ ...prev, [grupoId]: json.data ?? json }));
+      }
+    } finally {
+      setMemberSearching((prev) => ({ ...prev, [grupoId]: false }));
+    }
+  };
+
+  const addMember = async (grupoId: string, cliente: ClienteSearch) => {
+    const res = await fetch(`/api/pricing-repuestos/grupos/${grupoId}/miembros`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clienteId: cliente.id }),
+    });
+    if (res.ok) {
+      toast.success(`${cliente.nombre} ${cliente.apellido} agregado al grupo`);
+      setMemberSearch((prev) => ({ ...prev, [grupoId]: "" }));
+      setMemberResults((prev) => ({ ...prev, [grupoId]: [] }));
+      const detail = await fetch(`/api/pricing-repuestos/grupos/${grupoId}`);
+      if (detail.ok) {
+        const g: GrupoCliente = await detail.json();
+        setGrupos((prev) => prev.map((x) => (x.id === grupoId ? g : x)));
+      }
+    }
+  };
+
+  const removeMember = async (grupoId: string, clienteId: string, nombre: string) => {
+    const res = await fetch(`/api/pricing-repuestos/grupos/${grupoId}/miembros`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clienteId }),
+    });
+    if (res.ok) {
+      toast.success(`${nombre} removido del grupo`);
+      setGrupos((prev) =>
+        prev.map((g) =>
+          g.id === grupoId
+            ? { ...g, miembros: g.miembros?.filter((m) => m.clienteId !== clienteId) }
+            : g
+        )
+      );
     }
   };
 
@@ -758,19 +1127,53 @@ function TabGrupos() {
                       }
                     </td>
                   </tr>
-                  {expanded === g.id && g.miembros && (
+                  {expanded === g.id && (
                     <tr key={`${g.id}-detail`}>
-                      <td colSpan={5} className="bg-bg-card/40 px-6 py-4">
-                        {g.miembros.length === 0 ? (
+                      <td colSpan={5} className="bg-bg-card/40 px-6 py-4 space-y-3">
+                        {/* Search + add */}
+                        <div className="relative max-w-sm">
+                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-t-tertiary" />
+                          <input
+                            className="w-full bg-bg-input border border-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent-DEFAULT"
+                            placeholder="Buscar cliente para agregar..."
+                            value={memberSearch[g.id] ?? ""}
+                            onChange={(e) => searchClientes(g.id, e.target.value)}
+                          />
+                          {memberSearching[g.id] && (
+                            <RefreshCw className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-t-tertiary animate-spin" />
+                          )}
+                        </div>
+                        {(memberResults[g.id] ?? []).length > 0 && (
+                          <div className="border border-border rounded-lg divide-y divide-border max-w-sm max-h-32 overflow-y-auto">
+                            {(memberResults[g.id] ?? []).map((c) => (
+                              <button
+                                key={c.id}
+                                className="w-full text-left px-3 py-1.5 hover:bg-bg-card transition-colors flex items-center justify-between gap-2"
+                                onClick={() => addMember(g.id, c)}
+                              >
+                                <span className="text-xs text-t-primary">{c.nombre} {c.apellido}</span>
+                                <Plus className="h-3 w-3 text-accent-DEFAULT shrink-0" />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {/* Members */}
+                        {!g.miembros || g.miembros.length === 0 ? (
                           <p className="text-xs text-t-tertiary">Sin miembros asignados.</p>
                         ) : (
                           <div className="flex flex-wrap gap-2">
                             {g.miembros.map((m) => (
                               <span
                                 key={m.clienteId}
-                                className="text-xs bg-bg-card border border-border rounded-lg px-2 py-1 text-t-secondary"
+                                className="text-xs bg-bg-card border border-border rounded-lg px-2 py-1 text-t-secondary flex items-center gap-1.5"
                               >
                                 {m.cliente?.nombre ?? m.clienteId}
+                                <button
+                                  className="text-t-tertiary hover:text-negative/80 transition-colors"
+                                  onClick={() => removeMember(g.id, m.clienteId, m.cliente?.nombre ?? m.clienteId)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
                               </span>
                             ))}
                           </div>
@@ -788,7 +1191,200 @@ function TabGrupos() {
   );
 }
 
-// ── Tab 5: Cambios Masivos ────────────────────────────────────────────────────
+// ── Tab 5: Price Resolver ─────────────────────────────────────────────────────
+
+function TabResolver() {
+  const [repSearch, setRepSearch] = useState("");
+  const [repResults, setRepResults] = useState<RepuestoSearch[]>([]);
+  const [repSearching, setRepSearching] = useState(false);
+  const [selectedRep, setSelectedRep] = useState<RepuestoSearch | null>(null);
+  const [clientes, setClientes] = useState<ClienteSearch[]>([]);
+  const [clienteId, setClienteId] = useState("");
+  const [listas, setListas] = useState<ListaPrecio[]>([]);
+  const [listaId, setListaId] = useState("");
+  const [resultado, setResultado] = useState<PrecioResuelto | null>(null);
+  const [resolving, setResolving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/pricing-repuestos/listas")
+      .then((r) => r.ok ? r.json() : [])
+      .then((d) => setListas(Array.isArray(d) ? d : (d.data ?? [])));
+    fetch("/api/clientes?limit=100")
+      .then((r) => r.ok ? r.json() : { data: [] })
+      .then((d) => setClientes(Array.isArray(d) ? d : (d.data ?? [])));
+  }, []);
+
+  const searchRepuesto = useCallback(async (q: string) => {
+    setRepSearch(q);
+    setSelectedRep(null);
+    setResultado(null);
+    if (q.trim().length < 2) { setRepResults([]); return; }
+    setRepSearching(true);
+    try {
+      const res = await fetch(`/api/repuestos?search=${encodeURIComponent(q)}&limit=8`);
+      if (res.ok) {
+        const json = await res.json();
+        setRepResults(json.data ?? json);
+      }
+    } finally {
+      setRepSearching(false);
+    }
+  }, []);
+
+  const handleResolver = async () => {
+    if (!selectedRep) return;
+    setResolving(true);
+    try {
+      const res = await fetch("/api/pricing-repuestos/resolver", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          repuestoId: selectedRep.id,
+          clienteId: clienteId || null,
+          listaPrecioId: listaId || null,
+        }),
+      });
+      if (res.ok) setResultado(await res.json());
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <p className="text-sm text-t-secondary">
+        Calculá el precio final de un repuesto para un cliente y lista específicos, viendo el detalle de cada paso.
+      </p>
+
+      {/* Inputs */}
+      <div className="bg-bg-card rounded-2xl border border-border p-5 space-y-4">
+        {/* Repuesto search */}
+        <div className="space-y-1.5">
+          <Label>Repuesto</Label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-t-tertiary" />
+            <input
+              className="w-full bg-bg-input border border-border rounded-lg pl-8 pr-3 py-2 text-sm text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent-DEFAULT"
+              placeholder="Buscar repuesto..."
+              value={repSearch}
+              onChange={(e) => searchRepuesto(e.target.value)}
+            />
+            {repSearching && <RefreshCw className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-t-tertiary animate-spin" />}
+          </div>
+          {repResults.length > 0 && !selectedRep && (
+            <div className="border border-border rounded-lg divide-y divide-border max-h-40 overflow-y-auto">
+              {repResults.map((r) => (
+                <button
+                  key={r.id}
+                  className="w-full text-left px-3 py-2 hover:bg-bg-card transition-colors"
+                  onClick={() => { setSelectedRep(r); setRepSearch(r.nombre); setRepResults([]); }}
+                >
+                  <span className="text-sm text-t-primary">{r.nombre}</span>
+                  <span className="text-xs text-t-tertiary ml-2">{r.codigo}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {selectedRep && (
+            <p className="text-xs text-accent-DEFAULT flex items-center gap-1">
+              <Check className="h-3 w-3" /> {selectedRep.nombre} — compra: {fmt(selectedRep.precioCompra)}
+            </p>
+          )}
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          {/* Cliente (opcional) */}
+          <div className="space-y-1.5">
+            <Label>Cliente <span className="text-t-tertiary font-normal">(opcional)</span></Label>
+            <Select value={clienteId} onValueChange={setClienteId}>
+              <SelectTrigger><SelectValue placeholder="Sin cliente específico" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Sin cliente</SelectItem>
+                {clientes.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.nombre} {c.apellido}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Lista (opcional) */}
+          <div className="space-y-1.5">
+            <Label>Lista de precios <span className="text-t-tertiary font-normal">(opcional)</span></Label>
+            <Select value={listaId} onValueChange={setListaId}>
+              <SelectTrigger><SelectValue placeholder="Sin lista específica" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Sin lista</SelectItem>
+                {listas.filter((l) => l.activa).map((l) => (
+                  <SelectItem key={l.id} value={l.id}>{l.nombre}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Button onClick={handleResolver} disabled={!selectedRep || resolving}>
+          {resolving
+            ? <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+            : <Calculator className="h-4 w-4 mr-2" />
+          }
+          Resolver precio
+        </Button>
+      </div>
+
+      {/* Resultado */}
+      {resultado && (
+        <div className="bg-bg-card rounded-2xl border border-border p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-t-primary">{resultado.nombre}</h3>
+            <span className="text-xs text-t-tertiary">{resultado.codigo}</span>
+          </div>
+
+          {/* Steps */}
+          <div className="space-y-2">
+            {resultado.detalle.map((paso, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm">
+                <span className={cn(
+                  "w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
+                  i === resultado.detalle.length - 1
+                    ? "bg-accent-DEFAULT/20 text-accent-DEFAULT"
+                    : "bg-border text-t-tertiary"
+                )}>
+                  {i + 1}
+                </span>
+                <span className="text-t-secondary">{paso}</span>
+                {i < resultado.detalle.length - 1 && (
+                  <ArrowRight className="h-3 w-3 text-t-tertiary ml-auto shrink-0" />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Final summary */}
+          <div className="border-t border-border pt-4 grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-xs text-t-tertiary">Precio compra</p>
+              <p className="font-mono font-bold text-t-primary">{fmt(resultado.precioCompra)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-t-tertiary">Margen</p>
+              <p className={cn(
+                "font-mono font-bold",
+                resultado.margenPorcentaje >= 20 ? "text-positive" : resultado.margenPorcentaje >= 10 ? "text-warning" : "text-negative"
+              )}>
+                {resultado.margenPorcentaje}% ({fmt(resultado.margen)})
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-t-tertiary">Precio final</p>
+              <p className="font-mono font-bold text-xl text-accent-DEFAULT">{fmt(resultado.precioFinal)}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Tab 6: Cambios Masivos ────────────────────────────────────────────────────
 
 function TabCambiosMasivos() {
   const [form, setForm] = useState({
@@ -1100,6 +1696,9 @@ export default function PricingRepuestosPage() {
           <TabsTrigger value="grupos" className="flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5" /> Grupos
           </TabsTrigger>
+          <TabsTrigger value="resolver" className="flex items-center gap-1.5">
+            <Calculator className="h-3.5 w-3.5" /> Resolver
+          </TabsTrigger>
           <TabsTrigger value="masivos" className="flex items-center gap-1.5">
             <Zap className="h-3.5 w-3.5" /> Cambios Masivos
           </TabsTrigger>
@@ -1109,6 +1708,7 @@ export default function PricingRepuestosPage() {
         <TabsContent value="markup"><TabMarkup /></TabsContent>
         <TabsContent value="listas"><TabListas /></TabsContent>
         <TabsContent value="grupos"><TabGrupos /></TabsContent>
+        <TabsContent value="resolver"><TabResolver /></TabsContent>
         <TabsContent value="masivos"><TabCambiosMasivos /></TabsContent>
       </Tabs>
     </div>
