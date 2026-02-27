@@ -110,6 +110,9 @@ type FormData = {
   cantidadElevadores: string;
   tieneDeposito: boolean;
   tieneEstacionamiento: boolean;
+  // Geo (auto)
+  latitud: number | null;
+  longitud: number | null;
 };
 
 const INITIAL_FORM: FormData = {
@@ -135,6 +138,8 @@ const INITIAL_FORM: FormData = {
   cantidadElevadores: "",
   tieneDeposito: false,
   tieneEstacionamiento: false,
+  latitud: null,
+  longitud: null,
 };
 
 const STEPS = [
@@ -164,6 +169,26 @@ export default function PostulacionTallerPage() {
         ? p[key].filter((v) => v !== value)
         : [...p[key], value],
     }));
+  }
+
+  async function geocodeAddress() {
+    if (!form.direccion || !form.ciudad || !form.provincia) return;
+    try {
+      const q = encodeURIComponent(`${form.direccion}, ${form.ciudad}, ${form.provincia}, Argentina`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
+        headers: { "Accept-Language": "es" },
+      });
+      const data = await res.json();
+      if (data?.[0]) {
+        setForm((p) => ({
+          ...p,
+          latitud: parseFloat(data[0].lat),
+          longitud: parseFloat(data[0].lon),
+        }));
+      }
+    } catch {
+      // Geocoding is best-effort, don't block the form
+    }
   }
 
   function canAdvance(): boolean {
@@ -236,6 +261,8 @@ export default function PostulacionTallerPage() {
             : null,
           tieneDeposito: form.tieneDeposito,
           tieneEstacionamiento: form.tieneEstacionamiento,
+          latitud: form.latitud,
+          longitud: form.longitud,
         }),
       });
 
@@ -705,7 +732,10 @@ export default function PostulacionTallerPage() {
 
           {step < 3 ? (
             <Button
-              onClick={() => setStep((s) => s + 1)}
+              onClick={() => {
+                if (step === 0) geocodeAddress();
+                setStep((s) => s + 1);
+              }}
               disabled={!canAdvance()}
             >
               Siguiente

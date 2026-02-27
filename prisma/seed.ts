@@ -1120,6 +1120,68 @@ async function main() {
   }
 
   console.log("  ✅ Comunicación: 4 contactos + 3 plantillas");
+
+  // ═══════════════════════════════════════════════════════════
+  // SOLICITUD TALLER — Demo completa
+  // ═══════════════════════════════════════════════════════════
+  console.log("Seeding solicitud taller demo...");
+
+  await prisma.solicitudTaller.upsert({
+    where: { id: "seed-solicitud-taller-1" },
+    update: {},
+    create: {
+      id: "seed-solicitud-taller-1",
+      estado: "RECIBIDA",
+      // Datos del negocio
+      nombreTaller: "Taller Moto Express Palermo",
+      razonSocial: "Moto Express S.R.L.",
+      cuit: "30-71234567-9",
+      direccion: "Av. Santa Fe 4820",
+      ciudad: "CABA",
+      provincia: "CABA",
+      codigoPostal: "C1425",
+      telefono: "+54 11 4832-5500",
+      email: "contacto@motoexpresspalermo.com.ar",
+      sitioWeb: "https://motoexpresspalermo.com.ar",
+      // Contacto principal
+      contactoNombre: "Martín Rodríguez",
+      contactoCargo: "Dueño",
+      contactoCelular: "+54 11 6234-8899",
+      // Capacidad
+      cantidadMecanicos: 4,
+      especialidades: ["Motor", "Frenos", "Suspensión", "Eléctrica", "Service General", "Diagnóstico"],
+      marcasExperiencia: ["Honda", "Yamaha", "Suzuki", "Kawasaki", "Bajaj", "KTM"],
+      capacidadOTMes: 80,
+      horariosAtencion: "Lun-Vie 8:00-18:00, Sáb 8:00-13:00",
+      // Infraestructura
+      superficieM2: 220,
+      cantidadElevadores: 3,
+      tieneDeposito: true,
+      tieneEstacionamiento: true,
+      // Documentos (placeholders)
+      docCuit: "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/cuit-motoexpress.pdf",
+      docHabilitacion: "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/habilitacion-motoexpress.pdf",
+      docSeguro: "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/seguro-motoexpress.pdf",
+      docFotos: [
+        "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/foto-frente.jpg",
+        "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/foto-interior-1.jpg",
+        "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/foto-interior-2.jpg",
+        "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/foto-deposito.jpg",
+      ],
+      docOtros: [
+        "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/certificado-honda.pdf",
+        "https://xazyqwgkwejhrbmfdlte.supabase.co/storage/v1/object/public/talleres/demo/referencias-comerciales.pdf",
+      ],
+      // Geo — Av. Santa Fe 4820, Palermo, CABA
+      latitud: -34.5875,
+      longitud: -58.4295,
+      // Metadata
+      fechaRecepcion: new Date(),
+      notasInternas: "Taller demo para pruebas. Excelente ubicación en Palermo, zona de alto tránsito de motos. Tiene certificación Honda oficial.",
+    },
+  });
+
+  console.log("  ✅ Solicitud Taller: 1 solicitud demo completa");
   console.log("✅ Seed completado");
 }
 

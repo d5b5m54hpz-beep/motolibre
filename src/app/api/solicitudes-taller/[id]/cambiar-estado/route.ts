@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requirePermission } from "@/lib/permissions";
-import { OPERATIONS, withEvent } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
-import { cambiarEstadoSchema } from "@/lib/validations/solicitud-taller";
 import { apiSetup } from "@/lib/api-helpers";
+import { cambiarEstadoSchema } from "@/lib/validations/solicitud-taller";
 
 const TRANSICIONES: Record<string, string[]> = {
   RECIBIDA: ["EN_EVALUACION", "INCOMPLETA"],
@@ -16,20 +14,20 @@ const TRANSICIONES: Record<string, string[]> = {
   ONBOARDING: ["ACTIVO"],
 };
 
+/**
+ * POST /api/solicitudes-taller/[id]/cambiar-estado
+ */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   apiSetup();
-  const { error, userId } = await requirePermission(
-    OPERATIONS.network.application.changeState,
-    "canExecute",
-    ["ADMIN"]
-  );
-  if (error) return error;
-
   const { id } = await params;
-  const solicitud = await prisma.solicitudTaller.findUnique({ where: { id } });
+
+  const solicitud = await prisma.solicitudTaller.findUnique({
+    where: { id },
+  });
+
   if (!solicitud) {
     return NextResponse.json(
       { error: "Solicitud no encontrada" },
@@ -47,39 +45,33 @@ export async function POST(
   }
 
   const { nuevoEstado, motivo } = parsed.data;
-  const transicionesValidas = TRANSICIONES[solicitud.estado] ?? [];
+  const permitidos = TRANSICIONES[solicitud.estado] ?? [];
 
-  if (!transicionesValidas.includes(nuevoEstado)) {
+  if (!permitidos.includes(nuevoEstado)) {
     return NextResponse.json(
       {
-        error: `Transición ${solicitud.estado} → ${nuevoEstado} no permitida. Válidas: ${transicionesValidas.join(", ") || "ninguna"}`,
+        error: `No se puede cambiar de ${solicitud.estado} a ${nuevoEstado}`,
       },
       { status: 400 }
     );
   }
 
-  const dataUpdate: Record<string, unknown> = { estado: nuevoEstado };
+  const updateData: Record<string, unknown> = { estado: nuevoEstado };
 
   if (nuevoEstado === "RECHAZADA" && motivo) {
-    dataUpdate.motivoRechazo = motivo;
+    updateData.motivoRechazo = motivo;
+  }
+  if (nuevoEstado === "EN_EVALUACION" && !solicitud.fechaEvaluacion) {
+    updateData.fechaEvaluacion = new Date();
   }
   if (nuevoEstado === "APROBADA") {
-    dataUpdate.fechaAprobacion = new Date();
-  }
-  if (nuevoEstado === "RECIBIDA" && !solicitud.fechaRecepcion) {
-    dataUpdate.fechaRecepcion = new Date();
+    updateData.fechaAprobacion = new Date();
   }
 
-  const updated = await withEvent(
-    OPERATIONS.network.application.changeState,
-    "SolicitudTaller",
-    () =>
-      prisma.solicitudTaller.update({
-        where: { id },
-        data: dataUpdate,
-      }),
-    userId
-  );
+  const updated = await prisma.solicitudTaller.update({
+    where: { id },
+    data: updateData,
+  });
 
   return NextResponse.json({ data: updated });
 }

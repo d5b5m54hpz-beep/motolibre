@@ -1,24 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requirePermission } from "@/lib/permissions";
-import { OPERATIONS, withEvent } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
-import { convenioCreateSchema } from "@/lib/validations/solicitud-taller";
 import { apiSetup } from "@/lib/api-helpers";
+import { convenioCreateSchema } from "@/lib/validations/solicitud-taller";
 
+/**
+ * POST /api/solicitudes-taller/[id]/generar-convenio
+ * Crea un convenio comercial vinculado a la solicitud.
+ */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   apiSetup();
-  const { error, userId } = await requirePermission(
-    OPERATIONS.network.agreement.create,
-    "canExecute",
-    ["ADMIN"]
-  );
-  if (error) return error;
-
   const { id } = await params;
-  const solicitud = await prisma.solicitudTaller.findUnique({ where: { id } });
+
+  const solicitud = await prisma.solicitudTaller.findUnique({
+    where: { id },
+    include: { convenio: true },
+  });
+
   if (!solicitud) {
     return NextResponse.json(
       { error: "Solicitud no encontrada" },
@@ -28,12 +28,12 @@ export async function POST(
 
   if (!["APROBADA", "CONVENIO_ENVIADO"].includes(solicitud.estado)) {
     return NextResponse.json(
-      { error: "Solo se puede generar convenio para solicitudes aprobadas" },
+      { error: "La solicitud debe estar APROBADA para generar convenio" },
       { status: 400 }
     );
   }
 
-  if (solicitud.convenioId) {
+  if (solicitud.convenio) {
     return NextResponse.json(
       { error: "Ya existe un convenio para esta solicitud" },
       { status: 400 }
@@ -49,38 +49,32 @@ export async function POST(
     );
   }
 
-  const convenio = await withEvent(
-    OPERATIONS.network.agreement.create,
-    "ConvenioTaller",
-    () =>
-      prisma.$transaction(async (tx) => {
-        const conv = await tx.convenioTaller.create({
-          data: {
-            tarifaHoraBase: parsed.data.tarifaHoraBase,
-            margenRepuestos: parsed.data.margenRepuestos,
-            plazoFacturaDias: parsed.data.plazoFacturaDias,
-            fechaInicio: new Date(parsed.data.fechaInicio),
-            fechaFin: parsed.data.fechaFin
-              ? new Date(parsed.data.fechaFin)
-              : null,
-            renovacionAuto: parsed.data.renovacionAuto,
-            zonaCobertura: parsed.data.zonaCobertura,
-            otMaxMes: parsed.data.otMaxMes,
-          },
-        });
+  const result = await prisma.$transaction(async (tx) => {
+    const convenio = await tx.convenioTaller.create({
+      data: {
+        tarifaHoraBase: parsed.data.tarifaHoraBase,
+        margenRepuestos: parsed.data.margenRepuestos ?? null,
+        plazoFacturaDias: parsed.data.plazoFacturaDias,
+        fechaInicio: new Date(parsed.data.fechaInicio),
+        fechaFin: parsed.data.fechaFin
+          ? new Date(parsed.data.fechaFin)
+          : null,
+        renovacionAuto: parsed.data.renovacionAuto,
+        zonaCobertura: parsed.data.zonaCobertura ?? null,
+        otMaxMes: parsed.data.otMaxMes ?? null,
+      },
+    });
 
-        await tx.solicitudTaller.update({
-          where: { id },
-          data: {
-            convenioId: conv.id,
-            estado: "CONVENIO_ENVIADO",
-          },
-        });
+    const updated = await tx.solicitudTaller.update({
+      where: { id },
+      data: {
+        convenioId: convenio.id,
+        estado: "CONVENIO_ENVIADO",
+      },
+    });
 
-        return conv;
-      }),
-    userId
-  );
+    return { convenio, solicitud: updated };
+  });
 
-  return NextResponse.json({ data: convenio }, { status: 201 });
+  return NextResponse.json({ data: result });
 }

@@ -26,6 +26,8 @@ import {
   defaultHiddenSolicitudColumns,
   type SolicitudTallerRow,
 } from "./solicitudes-columns";
+import { PhotoGallery } from "@/components/ui/photo-gallery";
+import { getTransformedUrl } from "@/lib/supabase";
 import {
   ClipboardList,
   Download,
@@ -36,8 +38,15 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  Upload,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
+
+function isImageUrl(url: string): boolean {
+  const ext = url.split(".").pop()?.split("?")[0]?.toLowerCase() ?? "";
+  return ["jpg", "jpeg", "png", "webp"].includes(ext);
+}
 
 const ESTADO_LABELS: Record<string, string> = {
   BORRADOR: "Borrador",
@@ -300,6 +309,24 @@ function SolicitudSheet({
             />
           </DetailGrid>
 
+          {detail?.latitud != null && detail?.longitud != null && (
+            <div className="mt-4">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2">
+                Ubicación
+              </p>
+              <div className="rounded-lg overflow-hidden border">
+                <iframe
+                  title="Ubicación del taller"
+                  width="100%"
+                  height="250"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${Number(detail.longitud) - 0.005}%2C${Number(detail.latitud) - 0.003}%2C${Number(detail.longitud) + 0.005}%2C${Number(detail.latitud) + 0.003}&layer=mapnik&marker=${detail.latitud}%2C${detail.longitud}`}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="border-t pt-4">
             <h4 className="text-sm font-semibold mb-3">Contacto Principal</h4>
             <DetailGrid>
@@ -474,25 +501,91 @@ function SolicitudSheet({
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="space-y-4">
-          <DocField label="CUIT" url={detail?.docCuit as string} />
-          <DocField
-            label="Habilitación"
-            url={detail?.docHabilitacion as string}
-          />
-          <DocField label="Seguro" url={detail?.docSeguro as string} />
-          <DocList label="Fotos" urls={detail?.docFotos as string[]} />
-          <DocList label="Otros" urls={detail?.docOtros as string[]} />
-          {!detail?.docCuit &&
-            !detail?.docHabilitacion &&
-            !detail?.docSeguro &&
-            !(detail?.docFotos as string[])?.length &&
-            !(detail?.docOtros as string[])?.length && (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <FileText className="h-10 w-10 text-muted-foreground/40 mb-3" />
-                <p className="text-sm font-medium">Sin documentos</p>
+        <div className="space-y-6">
+          {/* Documentos Requeridos */}
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-3">
+              Documentos Requeridos
+            </p>
+            <div className="space-y-2">
+              <DocCard
+                label="CUIT"
+                url={detail?.docCuit as string}
+                solicitudId={solicitud.id}
+                tipo="cuit"
+                onRefresh={onRefresh}
+              />
+              <DocCard
+                label="Habilitación"
+                url={detail?.docHabilitacion as string}
+                solicitudId={solicitud.id}
+                tipo="habilitacion"
+                onRefresh={onRefresh}
+              />
+              <DocCard
+                label="Seguro"
+                url={detail?.docSeguro as string}
+                solicitudId={solicitud.id}
+                tipo="seguro"
+                onRefresh={onRefresh}
+              />
+            </div>
+          </div>
+
+          {/* Fotos del Taller */}
+          <div className="border-t pt-4">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-3">
+              Fotos del Taller
+            </p>
+            <PhotoGallery
+              photos={(detail?.docFotos as string[]) ?? []}
+              emptyMessage="Sin fotos del taller"
+            />
+            <div className="mt-3">
+              <DocUploadZone
+                solicitudId={solicitud.id}
+                tipo="fotos"
+                label="Agregar fotos"
+                accept="image/*"
+                onUploaded={onRefresh}
+              />
+            </div>
+          </div>
+
+          {/* Otros Documentos */}
+          <div className="border-t pt-4">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-3">
+              Otros Documentos
+            </p>
+            {((detail?.docOtros as string[]) ?? []).map((url, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-2.5 rounded-lg border bg-card mb-2"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-xs truncate">
+                    {url.split("/").pop()?.split("?")[0]}
+                  </span>
+                </div>
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline shrink-0 ml-2"
+                >
+                  Ver
+                </a>
               </div>
-            )}
+            ))}
+            <DocUploadZone
+              solicitudId={solicitud.id}
+              tipo="otros"
+              label="Agregar documentos"
+              accept="image/*,application/pdf"
+              onUploaded={onRefresh}
+            />
+          </div>
         </div>
       ),
     },
@@ -887,51 +980,153 @@ function ConvenioTab({
   );
 }
 
-// ── Doc Helpers ──
+// ── Doc Card ──
 
-function DocField({ label, url }: { label: string; url?: string | null }) {
-  if (!url) return null;
+function DocCard({
+  label,
+  url,
+  solicitudId,
+  tipo,
+  onRefresh,
+}: {
+  label: string;
+  url?: string | null;
+  solicitudId: string;
+  tipo: string;
+  onRefresh: () => void;
+}) {
+  if (!url) {
+    return (
+      <DocUploadZone
+        solicitudId={solicitudId}
+        tipo={tipo}
+        label={`Subir ${label}`}
+        accept="image/*,application/pdf"
+        onUploaded={onRefresh}
+      />
+    );
+  }
+
+  const isImage = isImageUrl(url);
+
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg border bg-card">
-      <div className="flex items-center gap-2">
-        <FileText className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">{label}</span>
+    <div className="flex items-center gap-3 p-2.5 rounded-lg border bg-card">
+      {isImage ? (
+        <div className="w-16 h-11 rounded overflow-hidden bg-muted shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={getTransformedUrl(url, { width: 120, height: 80, quality: 70 })}
+            alt={label}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ) : (
+        <div className="w-16 h-11 rounded bg-muted flex items-center justify-center shrink-0">
+          <FileText className="h-5 w-5 text-muted-foreground" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium">{label}</p>
+        <p className="text-[10px] text-muted-foreground truncate">
+          {url.split("/").pop()?.split("?")[0]}
+        </p>
       </div>
       <a
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-xs text-primary hover:underline"
+        className="shrink-0"
       >
-        Ver documento
+        <Button size="icon" variant="ghost" className="h-8 w-8">
+          <Eye className="h-4 w-4" />
+        </Button>
       </a>
     </div>
   );
 }
 
-function DocList({ label, urls }: { label: string; urls?: string[] | null }) {
-  if (!urls?.length) return null;
+// ── Upload Drop Zone ──
+
+function DocUploadZone({
+  solicitudId,
+  tipo,
+  label,
+  accept,
+  onUploaded,
+}: {
+  solicitudId: string;
+  tipo: string;
+  label: string;
+  accept: string;
+  onUploaded: () => void;
+}) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  async function uploadFile(file: File) {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("tipo", tipo);
+
+      const res = await fetch(
+        `/api/solicitudes-taller/${solicitudId}/upload`,
+        { method: "POST", body: formData }
+      );
+
+      if (res.ok) {
+        toast.success("Archivo subido");
+        onUploaded();
+      } else {
+        const json = await res.json();
+        toast.error(json.error || "Error al subir");
+      }
+    } catch {
+      toast.error("Error de conexión");
+    }
+    setIsUploading(false);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+  }
+
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-        {label} ({urls.length})
-      </p>
-      {urls.map((url, i) => (
-        <div
-          key={i}
-          className="flex items-center justify-between p-2 rounded border bg-card"
-        >
-          <span className="text-xs truncate max-w-[300px]">{url.split("/").pop()}</span>
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-primary hover:underline shrink-0 ml-2"
-          >
-            Ver
-          </a>
-        </div>
-      ))}
-    </div>
+    <label
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsDragging(true);
+      }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={handleDrop}
+      className={`flex items-center justify-center gap-2 h-14 rounded-lg border-2 border-dashed cursor-pointer transition-colors ${
+        isDragging
+          ? "border-primary bg-primary/5"
+          : "border-muted-foreground/20 hover:border-primary/40"
+      }`}
+    >
+      {isUploading ? (
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      ) : (
+        <>
+          <Upload className="h-4 w-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">{label}</span>
+        </>
+      )}
+      <input
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) uploadFile(file);
+          e.target.value = "";
+        }}
+      />
+    </label>
   );
 }
