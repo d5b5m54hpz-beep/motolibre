@@ -17,16 +17,14 @@ import {
   CommandGroup,
   CommandItem,
 } from "@/components/ui/command";
-import { LogOut, Settings, Bell, Search } from "lucide-react";
+import {
+  LogOut, Settings, Bell, Search, AlertTriangle, Sparkles,
+  MessageCircle, Calculator, Tags, ClipboardList, ListChecks,
+  FileText, ShoppingBag,
+} from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { navigation } from "@/lib/navigation";
 import Link from "next/link";
-
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Buenos dias";
-  if (hour < 19) return "Buenas tardes";
-  return "Buenas noches";
-}
 
 export function AppHeader() {
   const { data: session } = useSession();
@@ -51,7 +49,6 @@ export function AppHeader() {
     return () => clearInterval(interval);
   }, [fetchAlertCount]);
 
-  // Cmd+K shortcut
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -73,12 +70,11 @@ export function AppHeader() {
     : "?";
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/80 backdrop-blur-sm px-4">
-      {/* Greeting */}
+    <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background/95 backdrop-blur-sm px-4">
       <div className="hidden md:block">
-        <span className="text-sm text-t-secondary">
-          {getGreeting()}, <span className="text-t-primary font-medium">{firstName}</span>
-        </span>
+        {firstName && (
+          <span className="text-sm text-t-secondary">{firstName}</span>
+        )}
       </div>
 
       <div className="flex-1" />
@@ -87,55 +83,90 @@ export function AppHeader() {
       <Button
         variant="outline"
         size="sm"
-        className="hidden sm:flex items-center gap-2 text-muted-foreground h-8 w-56 justify-start"
+        className="hidden sm:flex items-center gap-2 text-t-tertiary h-7 w-52 justify-start border-border"
         onClick={() => setCmdOpen(true)}
       >
         <Search className="h-3.5 w-3.5" />
         <span className="text-xs">Buscar...</span>
-        <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-          <span className="text-xs">⌘</span>K
+        <kbd className="ml-auto pointer-events-none inline-flex h-4 select-none items-center gap-0.5 rounded border bg-bg-input px-1 font-mono text-[10px] text-t-tertiary">
+          <span className="text-[10px]">&#x2318;</span>K
         </kbd>
       </Button>
 
       {/* Command Palette */}
-      <CommandDialog open={cmdOpen} onOpenChange={setCmdOpen} title="Búsqueda global" description="Buscar motos, contratos, riders, órdenes de trabajo...">
-        <CommandInput placeholder="Buscar motos, contratos, riders..." />
+      <CommandDialog open={cmdOpen} onOpenChange={setCmdOpen} title="Búsqueda global" description="Buscar páginas y acciones">
+        <CommandInput placeholder="Buscar páginas, acciones..." />
         <CommandList>
           <CommandEmpty>No se encontraron resultados.</CommandEmpty>
-          <CommandGroup heading="Navegación rápida">
-            <CommandItem onSelect={() => { router.push("/admin/motos"); setCmdOpen(false); }}>
-              Motos
+          {navigation.map((group) => (
+            <CommandGroup key={group.title} heading={group.title}>
+              {group.items.map((item) => (
+                <CommandItem
+                  key={item.href}
+                  onSelect={() => { router.push(item.href); setCmdOpen(false); }}
+                >
+                  <item.icon className="mr-2 h-4 w-4 text-t-tertiary" />
+                  {item.title}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ))}
+          <CommandGroup heading="Acceso rápido">
+            <CommandItem onSelect={() => { router.push("/admin/alertas"); setCmdOpen(false); }}>
+              <AlertTriangle className="mr-2 h-4 w-4 text-t-tertiary" />
+              Alertas
             </CommandItem>
-            <CommandItem onSelect={() => { router.push("/admin/mantenimientos"); setCmdOpen(false); }}>
-              Mantenimientos
+            <CommandItem onSelect={() => { router.push("/admin/anomalias"); setCmdOpen(false); }}>
+              <AlertTriangle className="mr-2 h-4 w-4 text-t-tertiary" />
+              Anomalías
+            </CommandItem>
+            <CommandItem onSelect={() => { router.push("/admin/asistente"); setCmdOpen(false); }}>
+              <Sparkles className="mr-2 h-4 w-4 text-t-tertiary" />
+              Asistente Eve
+            </CommandItem>
+            <CommandItem onSelect={() => { router.push("/admin/chat"); setCmdOpen(false); }}>
+              <MessageCircle className="mr-2 h-4 w-4 text-t-tertiary" />
+              Conversaciones
+            </CommandItem>
+            <CommandItem onSelect={() => { router.push("/admin/pricing"); setCmdOpen(false); }}>
+              <Calculator className="mr-2 h-4 w-4 text-t-tertiary" />
+              Pricing Alquiler
+            </CommandItem>
+            <CommandItem onSelect={() => { router.push("/admin/pricing-repuestos"); setCmdOpen(false); }}>
+              <Tags className="mr-2 h-4 w-4 text-t-tertiary" />
+              Pricing Repuestos
             </CommandItem>
             <CommandItem onSelect={() => { router.push("/admin/mantenimientos/ordenes"); setCmdOpen(false); }}>
+              <ClipboardList className="mr-2 h-4 w-4 text-t-tertiary" />
               Órdenes de Trabajo
             </CommandItem>
-            <CommandItem onSelect={() => { router.push("/admin/clientes"); setCmdOpen(false); }}>
-              Clientes
+            <CommandItem onSelect={() => { router.push("/admin/mantenimientos/planes"); setCmdOpen(false); }}>
+              <ListChecks className="mr-2 h-4 w-4 text-t-tertiary" />
+              Planes Service
             </CommandItem>
-            <CommandItem onSelect={() => { router.push("/admin/contratos"); setCmdOpen(false); }}>
-              Contratos
+            <CommandItem onSelect={() => { router.push("/admin/notas-credito"); setCmdOpen(false); }}>
+              <FileText className="mr-2 h-4 w-4 text-t-tertiary" />
+              Notas de Crédito
             </CommandItem>
-            <CommandItem onSelect={() => { router.push("/admin/repuestos"); setCmdOpen(false); }}>
-              Inventario
+            <CommandItem onSelect={() => { router.push("/admin/ventas-repuestos"); setCmdOpen(false); }}>
+              <ShoppingBag className="mr-2 h-4 w-4 text-t-tertiary" />
+              Ventas Repuestos
             </CommandItem>
           </CommandGroup>
         </CommandList>
       </CommandDialog>
 
-      {/* Right side: Theme + Bell + Avatar */}
-      <div className="flex items-center gap-2">
+      {/* Right side */}
+      <div className="flex items-center gap-1">
         <ThemeToggle />
 
         <Link
           href="/admin/alertas"
-          className="relative p-2 rounded-xl bg-bg-input border border-border hover:border-border-hover transition-all duration-200"
+          className="relative p-1.5 rounded-md text-t-tertiary hover:text-t-secondary hover:bg-bg-card-hover transition-colors"
         >
-          <Bell className="h-4 w-4 text-t-secondary" />
+          <Bell className="h-4 w-4" />
           {alertCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white animate-pulse">
+            <span className="absolute -top-0.5 -right-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-negative px-0.5 text-[9px] font-bold text-white">
               {alertCount}
             </span>
           )}
@@ -144,21 +175,20 @@ export function AppHeader() {
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
+              <Button variant="ghost" className="relative h-7 w-7 rounded-full">
+                <Avatar className="h-7 w-7">
                   <AvatarImage src={user.image ?? ""} alt={user.name ?? ""} />
-                  <AvatarFallback className="bg-accent-DEFAULT text-white text-xs font-bold">
+                  <AvatarFallback className="bg-bg-card-hover text-t-secondary text-[10px] font-medium">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuContent className="w-52" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{user.name}</p>
-                  <p className="text-xs text-muted-foreground">{user.email}</p>
-                  <p className="text-xs text-muted-foreground">Rol: {user.role}</p>
+                  <p className="text-sm font-medium text-t-primary">{user.name}</p>
+                  <p className="text-xs text-t-tertiary">{user.email}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -174,7 +204,7 @@ export function AppHeader() {
                 className="text-negative focus:text-negative"
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                Cerrar sesion
+                Cerrar sesión
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

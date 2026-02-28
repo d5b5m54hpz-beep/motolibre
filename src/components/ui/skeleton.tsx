@@ -5,7 +5,7 @@ function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="skeleton"
       className={cn(
-        "rounded-2xl animate-shimmer bg-gradient-to-r from-bg-card via-bg-card-hover to-bg-card bg-[length:200%_100%]",
+        "rounded-md animate-pulse bg-bg-card-hover",
         className
       )}
       {...props}

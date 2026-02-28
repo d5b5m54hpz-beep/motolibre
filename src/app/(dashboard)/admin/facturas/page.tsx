@@ -5,6 +5,8 @@ import { FacturasTable } from "./_components/facturas-table";
 import { formatMoney } from "@/lib/format";
 import { Receipt, TrendingUp, Clock, ShieldCheck, ShieldAlert } from "lucide-react";
 import { getAfipEntorno } from "@/lib/services/afip-service";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default async function FacturasPage() {
   const hoy = new Date();
@@ -68,15 +70,23 @@ export default async function FacturasPage() {
         title="Facturas"
         description="Comprobantes emitidos automáticamente al confirmar pagos"
         actions={
-          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-            entorno === "produccion"
-              ? "bg-positive-bg text-positive"
-              : entorno === "homologacion"
-              ? "bg-info-bg text-ds-info"
-              : "bg-warning/10 text-warning"
-          }`}>
-            AFIP: {entorno === "produccion" ? "Producción" : entorno === "homologacion" ? "Homologación" : "Stub"}
-          </span>
+          <>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/notas-credito">Notas de Crédito</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/facturas-compra">Facturas Compra</Link>
+            </Button>
+            <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+              entorno === "produccion"
+                ? "bg-positive-bg text-positive"
+                : entorno === "homologacion"
+                ? "bg-info-bg text-ds-info"
+                : "bg-warning/10 text-warning"
+            }`}>
+              AFIP: {entorno === "produccion" ? "Producción" : entorno === "homologacion" ? "Homologación" : "Stub"}
+            </span>
+          </>
         }
       />
 

@@ -13,8 +13,8 @@ export default function DashboardLayout({
     <SidebarProvider
       style={
         {
-          "--sidebar-width": "260px",
-          "--sidebar-width-icon": "68px",
+          "--sidebar-width": "240px",
+          "--sidebar-width-icon": "52px",
         } as CSSProperties
       }
     >

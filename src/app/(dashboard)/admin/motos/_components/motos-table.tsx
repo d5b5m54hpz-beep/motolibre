@@ -117,7 +117,7 @@ export function MotosTable({ data, marcas = [] }: MotosTableProps) {
 // ── Gallery card (Fix 10: hover state) ──────────────────────────────────────
 function MotoGalleryCard({ moto }: { moto: MotoRow }) {
   return (
-    <div className="group rounded-lg border bg-card overflow-hidden transition-all duration-200 hover:border-primary/50 hover:shadow-md hover:shadow-primary/5 hover:-translate-y-0.5">
+    <div className="group rounded-lg border bg-card overflow-hidden transition-colors hover:border-border-hover">
       <div className="aspect-video relative bg-muted">
         {moto.imagenUrl ? (
           <Image

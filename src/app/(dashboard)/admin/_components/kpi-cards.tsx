@@ -37,11 +37,11 @@ interface KPICardsProps {
 }
 
 const colorMap = {
-  accent: "bg-accent-bg text-accent-DEFAULT",
-  positive: "bg-positive-bg text-positive",
-  negative: "bg-negative-bg text-negative",
-  info: "bg-info-bg text-ds-info",
-  warning: "bg-warning-bg text-warning",
+  accent: "text-accent-DEFAULT",
+  positive: "text-positive",
+  negative: "text-negative",
+  info: "text-ds-info",
+  warning: "text-warning",
 };
 
 export function KPICards({ data }: KPICardsProps) {
@@ -189,21 +189,19 @@ export function KPICards({ data }: KPICardsProps) {
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {cards.map((card) => (
         <div
           key={card.title}
-          className="bg-bg-card/80 backdrop-blur-sm rounded-2xl border border-border p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent-glow/10 hover:border-border-hover"
+          className="rounded-lg border bg-card p-5"
         >
-          <div className="flex items-start justify-between mb-4">
-            <span className="text-xs font-medium text-t-secondary uppercase tracking-wider">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-t-secondary">
               {card.title}
             </span>
-            <div className={cn("p-2 rounded-xl", colorMap[card.iconColor])}>
-              <card.icon className="h-4 w-4" />
-            </div>
+            <card.icon className={cn("h-4 w-4", colorMap[card.iconColor])} />
           </div>
-          <div className="font-display text-3xl font-extrabold tracking-tighter text-t-primary">
+          <div className="mt-2 text-2xl font-semibold tracking-tight text-t-primary font-mono tabular-nums">
             {card.numericValue > 0 ? (
               <AnimatedNumber
                 value={card.numericValue}
@@ -214,7 +212,7 @@ export function KPICards({ data }: KPICardsProps) {
               card.emptyLabel
             )}
           </div>
-          <p className="text-xs text-t-tertiary mt-2">{card.subtitle}</p>
+          <p className="text-xs text-t-tertiary mt-1.5">{card.subtitle}</p>
         </div>
       ))}
     </div>

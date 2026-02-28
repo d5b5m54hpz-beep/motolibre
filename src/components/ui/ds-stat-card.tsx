@@ -11,39 +11,39 @@ interface StatCardProps {
 }
 
 const colorMap = {
-  accent: "bg-accent-bg text-accent-DEFAULT",
-  positive: "bg-positive-bg text-positive",
-  negative: "bg-negative-bg text-negative",
-  info: "bg-info-bg text-ds-info",
-  warning: "bg-warning-bg text-warning",
+  accent: "text-accent-DEFAULT",
+  positive: "text-positive",
+  negative: "text-negative",
+  info: "text-ds-info",
+  warning: "text-warning",
 };
 
 export function DSStatCard({ title, value, subtitle, trend, icon: Icon, iconColor = "accent" }: StatCardProps) {
   return (
-    <div className="bg-bg-card/80 backdrop-blur-sm rounded-2xl border border-border p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent-glow/10 hover:border-border-hover">
-      <div className="flex items-start justify-between mb-4">
-        <span className="text-xs font-medium text-t-secondary uppercase tracking-wider">{title}</span>
+    <div className="rounded-lg border bg-card p-5">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-t-secondary">{title}</span>
         {Icon && (
-          <div className={cn("p-2 rounded-xl", colorMap[iconColor])}>
-            <Icon className="h-4 w-4" />
-          </div>
+          <Icon className={cn("h-4 w-4", colorMap[iconColor])} />
         )}
       </div>
-      <div className="font-display text-3xl font-extrabold tracking-tighter text-t-primary">
+      <div className="mt-2 text-2xl font-semibold tracking-tight text-t-primary font-mono tabular-nums">
         {value}
       </div>
-      <div className="flex items-center gap-2 mt-2">
-        {trend && (
-          <span className={cn(
-            "flex items-center gap-0.5 text-xs font-semibold",
-            trend.value >= 0 ? "text-positive" : "text-negative"
-          )}>
-            {trend.value >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-            {Math.abs(trend.value)}%
-          </span>
-        )}
-        {subtitle && <span className="text-xs text-t-tertiary">{subtitle}</span>}
-      </div>
+      {(trend || subtitle) && (
+        <div className="flex items-center gap-2 mt-1.5">
+          {trend && (
+            <span className={cn(
+              "flex items-center gap-0.5 text-xs font-medium",
+              trend.value >= 0 ? "text-positive" : "text-negative"
+            )}>
+              {trend.value >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+              {Math.abs(trend.value)}%
+            </span>
+          )}
+          {subtitle && <span className="text-xs text-t-tertiary">{subtitle}</span>}
+        </div>
+      )}
     </div>
   );
 }

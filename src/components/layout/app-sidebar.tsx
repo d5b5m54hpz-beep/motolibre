@@ -12,86 +12,21 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from "@/components/ui/collapsible";
-import { PanelLeft, PanelRight, LogOut, ChevronRight } from "lucide-react";
+import { PanelLeft, PanelRight, LogOut, ChevronDown } from "lucide-react";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const STORAGE_KEY = "motolibre-nav-open";
 
-// ── Motolibre Icon (wing only, for collapsed state) ──────────────────────────
-function MotolibreIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 36 36"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M9 26 C 7 22, 8 16, 13 13"
-        stroke="#23DFFF"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-      <path
-        d="M12 12.5 L 30 9"
-        stroke="#23DFFF"
-        strokeWidth="2.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M11 18.5 L 29 16.5"
-        stroke="#23DFFF"
-        strokeWidth="2.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M10 24.5 L 28 24"
-        stroke="#23DFFF"
-        strokeWidth="2.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-// ── Wordmark ─────────────────────────────────────────────────────────────────
-function MotolibreWordmark() {
-  return (
-    <span className="text-[#23DFFF] font-bold text-lg leading-none font-display tracking-[-0.02em]">
-      motolibre
-    </span>
-  );
-}
-
-// ── Sidebar toggle button ────────────────────────────────────────────────────
-function ToggleBtn({
-  collapsed,
-  onToggle,
-}: {
-  collapsed: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      onClick={onToggle}
-      className="p-1.5 rounded-lg text-t-tertiary hover:text-t-primary hover:bg-bg-card-hover transition-all duration-200 shrink-0"
-      title={collapsed ? "Expandir menú" : "Colapsar menú"}
-    >
-      {collapsed ? (
-        <PanelRight className="h-4 w-4" />
-      ) : (
-        <PanelLeft className="h-4 w-4" />
-      )}
-    </button>
-  );
-}
+// ── Split navigation: main vs pinned ─────────────────────────────────────────
+const generalGroup = navigation[0]!;
+const mainGroups = navigation.filter((g) => g !== generalGroup && !g.pinned);
+const pinnedGroups = navigation.filter((g) => g.pinned);
 
 // ── Hook: manage collapsible group state ─────────────────────────────────────
 function useNavState(pathname: string) {
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [hydrated, setHydrated] = useState(false);
 
-  // On mount: read localStorage + auto-open group with active route
   useEffect(() => {
     let stored: string[] = [];
     try {
@@ -103,9 +38,8 @@ function useNavState(pathname: string) {
 
     const initial = new Set(stored);
 
-    // Auto-open group containing current pathname
     for (const group of navigation) {
-      if (group.title === "General") continue;
+      if (group.title === "General" || group.pinned) continue;
       const hasActive = group.items.some(
         (item) =>
           pathname === item.href ||
@@ -118,11 +52,10 @@ function useNavState(pathname: string) {
     setHydrated(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-open group when pathname changes (navigation)
   useEffect(() => {
     if (!hydrated) return;
     for (const group of navigation) {
-      if (group.title === "General") continue;
+      if (group.title === "General" || group.pinned) continue;
       const hasActive = group.items.some(
         (item) =>
           pathname === item.href ||
@@ -155,7 +88,7 @@ function useNavState(pathname: string) {
   return { openGroups, toggleGroup, hydrated };
 }
 
-// ── Single nav item ──────────────────────────────────────────────────────────
+// ── Single nav item (text-only in expanded, icon-only in collapsed) ──────────
 function NavItemLink({
   item,
   pathname,
@@ -169,36 +102,36 @@ function NavItemLink({
     pathname === item.href ||
     (item.href !== "/admin" && pathname.startsWith(item.href));
 
+  if (collapsed) {
+    return (
+      <Link
+        href={item.href}
+        title={item.title}
+        className={cn(
+          "flex items-center justify-center rounded-md p-2 transition-colors duration-100",
+          isActive
+            ? "bg-bg-card-hover text-t-primary"
+            : "text-t-tertiary hover:bg-bg-card-hover hover:text-t-secondary"
+        )}
+      >
+        <item.icon className="h-[18px] w-[18px] shrink-0" />
+      </Link>
+    );
+  }
+
   return (
     <Link
       href={item.href}
-      title={collapsed ? item.title : undefined}
       className={cn(
-        "relative flex items-center gap-2.5 rounded-lg text-[13px] transition-colors duration-150",
-        collapsed ? "justify-center p-2.5" : "px-2.5 py-1.5",
+        "flex items-center rounded-md px-2 py-1.5 text-[13px] transition-colors duration-100",
         isActive
-          ? "bg-accent-DEFAULT/10 text-accent-DEFAULT font-medium"
+          ? "bg-bg-card-hover text-t-primary font-medium"
           : "text-t-secondary hover:bg-bg-card-hover hover:text-t-primary"
       )}
     >
-      {/* Active left bar indicator */}
-      {isActive && !collapsed && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-accent-DEFAULT rounded-r-full" />
-      )}
-
-      <item.icon
-        className={cn(
-          "shrink-0 h-[18px] w-[18px]",
-          collapsed && "h-5 w-5",
-          isActive ? "text-accent-DEFAULT" : "text-t-tertiary"
-        )}
-      />
-
-      {!collapsed && <span className="truncate">{item.title}</span>}
-
-      {/* Badge */}
-      {!collapsed && item.badge ? (
-        <span className="ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent-DEFAULT px-1 text-[10px] font-semibold text-white">
+      <span className="truncate">{item.title}</span>
+      {item.badge ? (
+        <span className="ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent-DEFAULT/15 px-1 text-[10px] font-medium text-accent-DEFAULT">
           {item.badge}
         </span>
       ) : null}
@@ -212,7 +145,6 @@ function NavGroupCollapsible({
   isOpen,
   onToggle,
   pathname,
-  hasActiveChild,
 }: {
   group: NavGroup;
   isOpen: boolean;
@@ -220,41 +152,31 @@ function NavGroupCollapsible({
   pathname: string;
   hasActiveChild: boolean;
 }) {
-  const GroupIcon = group.icon;
-
   return (
     <Collapsible open={isOpen} onOpenChange={onToggle}>
       <CollapsibleTrigger asChild>
         <button
           className={cn(
-            "group/trigger flex w-full items-center gap-2 rounded-lg px-2.5 h-7 text-[11px] font-semibold uppercase tracking-wider transition-colors duration-150",
-            "hover:bg-bg-card-hover hover:text-white",
-            hasActiveChild
-              ? "text-white"
-              : "text-t-tertiary"
+            "group/trigger flex w-full items-center gap-1.5 px-2 h-7 text-[11px] font-medium uppercase tracking-wider transition-colors duration-100",
+            "text-t-tertiary hover:text-t-secondary"
           )}
         >
-          <GroupIcon className={cn(
-            "h-3.5 w-3.5 shrink-0 transition-opacity duration-150 group-hover/trigger:opacity-100",
-            hasActiveChild ? "opacity-100" : "opacity-60"
-          )} />
           <span className="truncate">{group.title}</span>
-          <ChevronRight
+          <ChevronDown
             className={cn(
-              "ml-auto h-3 w-3 shrink-0 text-t-tertiary group-hover/trigger:text-white transition-all duration-200",
-              isOpen && "rotate-90",
-              hasActiveChild && "text-white"
+              "ml-auto h-3 w-3 shrink-0 text-t-tertiary/60 transition-transform duration-150",
+              !isOpen && "-rotate-90"
             )}
           />
         </button>
       </CollapsibleTrigger>
 
       <CollapsibleContent
-        className="overflow-hidden data-[state=open]:animate-[collapsible-down_200ms_ease-out] data-[state=closed]:animate-[collapsible-up_150ms_ease-out]"
+        className="overflow-hidden data-[state=open]:animate-[collapsible-down_150ms_ease-out] data-[state=closed]:animate-[collapsible-up_100ms_ease-out]"
         style={{ display: "grid" }}
       >
         <div className="min-h-0">
-          <div className="space-y-0.5 pt-0.5 pb-1">
+          <div className="space-y-px pt-0.5 pb-1">
             {group.items.map((item) => (
               <NavItemLink
                 key={item.href}
@@ -278,7 +200,6 @@ export function AppSidebar() {
 
   const collapsed = state === "collapsed";
 
-  // Precompute which groups have an active child
   const activeGroupSet = useMemo(() => {
     const set = new Set<string>();
     for (const group of navigation) {
@@ -292,45 +213,49 @@ export function AppSidebar() {
     return set;
   }, [pathname]);
 
-  const generalGroup = navigation[0];
-  const restGroups = navigation.slice(1);
-
   return (
     <Sidebar collapsible="icon">
       <div className="flex h-full flex-col overflow-hidden">
-        {/* ── Header / Logo ─────────────────────────────────── */}
+        {/* ── Header ─────────────────────────────────── */}
         <div
           className={cn(
             "flex shrink-0 items-center border-b border-border",
             collapsed
-              ? "h-14 flex-col justify-center gap-1 py-2 px-2"
-              : "h-14 px-4 gap-2.5"
+              ? "h-14 flex-col justify-center gap-1.5 py-2 px-2"
+              : "h-14 px-3.5 gap-2.5"
           )}
         >
           {collapsed ? (
-            <>
-              <MotolibreIcon className="w-7 h-7" />
-              <ToggleBtn collapsed={collapsed} onToggle={toggleSidebar} />
-            </>
+            <button
+              onClick={toggleSidebar}
+              className="p-1 rounded-md text-t-tertiary hover:text-t-primary hover:bg-bg-card-hover transition-colors"
+              title="Expandir menú"
+            >
+              <PanelRight className="h-4 w-4" />
+            </button>
           ) : (
             <>
-              <MotolibreIcon className="w-7 h-7" />
-              <MotolibreWordmark />
-              <div className="ml-auto">
-                <ToggleBtn collapsed={collapsed} onToggle={toggleSidebar} />
-              </div>
+              <span className="text-t-primary font-semibold text-[15px] tracking-[-0.01em]">
+                motolibre
+              </span>
+              <button
+                onClick={toggleSidebar}
+                className="ml-auto p-1 rounded-md text-t-tertiary hover:text-t-primary hover:bg-bg-card-hover transition-colors"
+                title="Colapsar menú"
+              >
+                <PanelLeft className="h-4 w-4" />
+              </button>
             </>
           )}
         </div>
 
-        {/* ── Nav ───────────────────────────────────────────── */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none py-2 px-2">
+        {/* ── Nav ───────────────────────────────────── */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none px-2 py-2">
           {collapsed ? (
-            /* ── Collapsed: flat icon list with dividers ── */
             <>
-              {navigation.map((group, gi) => (
+              {[generalGroup, ...mainGroups].map((group, gi) => (
                 <div key={group.title}>
-                  {gi > 0 && <div className="mx-2 my-2 h-px bg-border" />}
+                  {gi > 0 && <div className="mx-1 my-2 h-px bg-border" />}
                   <div className="space-y-0.5">
                     {group.items.map((item) => (
                       <NavItemLink
@@ -345,10 +270,9 @@ export function AppSidebar() {
               ))}
             </>
           ) : (
-            /* ── Expanded: collapsible groups ── */
             <>
-              {/* General group — always open, no collapsible */}
-              <div className="space-y-0.5 mb-1">
+              {/* General — always open, no header */}
+              <div className="space-y-px mb-2">
                 {generalGroup?.items.map((item) => (
                   <NavItemLink
                     key={item.href}
@@ -359,10 +283,13 @@ export function AppSidebar() {
                 ))}
               </div>
 
+              {/* Separator */}
+              <div className="mx-1 mb-2 h-px bg-border" />
+
               {/* Collapsible groups */}
               {hydrated &&
-                restGroups.map((group) => (
-                  <div key={group.title} className="mt-1">
+                mainGroups.map((group, gi) => (
+                  <div key={group.title} className={cn(gi > 0 && "mt-3")}>
                     <NavGroupCollapsible
                       group={group}
                       isOpen={openGroups.has(group.title)}
@@ -376,19 +303,42 @@ export function AppSidebar() {
           )}
         </nav>
 
-        {/* ── Footer ────────────────────────────────────────── */}
-        <div
-          className={cn(
-            "shrink-0 border-t border-border py-3",
-            collapsed ? "px-2" : "px-3"
+        {/* ── Footer: pinned + logout ──────────────── */}
+        <div className="shrink-0 border-t border-border px-2 py-2">
+          {collapsed ? (
+            pinnedGroups.map((group) => (
+              <div key={group.title} className="space-y-0.5 mb-1">
+                {group.items.map((item) => (
+                  <NavItemLink
+                    key={item.href}
+                    item={item}
+                    pathname={pathname}
+                    collapsed
+                  />
+                ))}
+              </div>
+            ))
+          ) : (
+            hydrated &&
+            pinnedGroups.map((group) => (
+              <div key={group.title} className="mb-1">
+                <NavGroupCollapsible
+                  group={group}
+                  isOpen={openGroups.has(group.title)}
+                  onToggle={() => toggleGroup(group.title)}
+                  pathname={pathname}
+                  hasActiveChild={activeGroupSet.has(group.title)}
+                />
+              </div>
+            ))
           )}
-        >
+
           <button
             onClick={() => signOut({ callbackUrl: "/login-admin" })}
             title={collapsed ? "Cerrar sesión" : undefined}
             className={cn(
-              "w-full flex items-center gap-2.5 rounded-lg text-sm text-t-secondary hover:bg-bg-card-hover hover:text-negative transition-colors duration-150",
-              collapsed ? "justify-center p-2.5" : "px-2.5 py-1.5"
+              "w-full flex items-center rounded-md text-[13px] text-t-tertiary hover:bg-bg-card-hover hover:text-t-primary transition-colors duration-100",
+              collapsed ? "justify-center p-2" : "gap-2 px-2 py-1.5"
             )}
           >
             <LogOut className="h-4 w-4 shrink-0" />

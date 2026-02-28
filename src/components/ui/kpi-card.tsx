@@ -21,48 +21,41 @@ export function KPICard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-lg border bg-card p-6 transition-all hover:shadow-md",
+        "rounded-lg border bg-card p-5",
         className
       )}
     >
-      {/* Decorative icon */}
-      {Icon && (
-        <div className="absolute top-4 right-4 text-muted-foreground/15">
-          <Icon className="h-10 w-10" />
-        </div>
-      )}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-t-secondary">{label}</p>
+        {Icon && <Icon className="h-4 w-4 text-t-tertiary" />}
+      </div>
 
-      {/* Label */}
-      <p className="text-sm font-medium text-muted-foreground">{label}</p>
-
-      {/* Value */}
-      <p className="mt-1 text-3xl font-bold font-mono tabular-nums tracking-tight">
+      <p className="mt-2 text-2xl font-semibold font-mono tabular-nums tracking-tight text-t-primary">
         {value}
       </p>
 
-      {/* Trend + Description */}
-      <div className="mt-2 flex items-center gap-2">
-        {trend && (
-          <span
-            className={cn(
-              "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs font-semibold",
-              trend.positive
-                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-                : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400"
-            )}
-          >
-            {trend.positive ? (
-              <ArrowUpRight className="h-3 w-3" />
-            ) : (
-              <ArrowDownRight className="h-3 w-3" />
-            )}
-            {Math.abs(trend.value)}%
-          </span>
-        )}
-        {description && (
-          <span className="text-xs text-muted-foreground">{description}</span>
-        )}
-      </div>
+      {(trend || description) && (
+        <div className="mt-1.5 flex items-center gap-2">
+          {trend && (
+            <span
+              className={cn(
+                "inline-flex items-center gap-0.5 text-xs font-medium",
+                trend.positive ? "text-positive" : "text-negative"
+              )}
+            >
+              {trend.positive ? (
+                <ArrowUpRight className="h-3 w-3" />
+              ) : (
+                <ArrowDownRight className="h-3 w-3" />
+              )}
+              {Math.abs(trend.value)}%
+            </span>
+          )}
+          {description && (
+            <span className="text-xs text-t-tertiary">{description}</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

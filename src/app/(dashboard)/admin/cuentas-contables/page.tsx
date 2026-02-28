@@ -3,6 +3,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Folder, ArrowRightLeft } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 interface CuentaRow {
   id: string;
@@ -100,6 +102,16 @@ export default async function CuentasContablesPage() {
       <PageHeader
         title="Plan de Cuentas"
         description="Plan de cuentas FACPCE argentino — estructura jerárquica de 4 niveles"
+        actions={
+          <>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/asientos">Asientos</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/periodos">Períodos</Link>
+            </Button>
+          </>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-3">

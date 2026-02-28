@@ -26,6 +26,7 @@ import { formatMoney } from "@/lib/format";
 import {
   Package, Plus, AlertTriangle, ArrowUpDown, BarChart3,
 } from "lucide-react";
+import Link from "next/link";
 
 interface Repuesto {
   id: string;
@@ -160,7 +161,26 @@ function RepuestosContent() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Inventario de Repuestos" description="Control de stock, movimientos y ubicaciones" />
+      <PageHeader
+        title="Inventario de Repuestos"
+        description="Control de stock, movimientos y ubicaciones"
+        actions={
+          <>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/repuestos/ubicaciones">Ubicaciones</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/repuestos/sugerencia-compra">Sugerencia Compra</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/pricing-repuestos">Pricing</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/ventas-repuestos">Ventas</Link>
+            </Button>
+          </>
+        }
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">

@@ -5,6 +5,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { KPICard } from "@/components/ui/kpi-card";
 import { MantenimientosTable } from "./_components/mantenimientos-table";
 import { Calendar, CalendarDays, CheckCircle2, XCircle } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import type { EstadoMantenimiento, Prisma } from "@prisma/client";
 
 async function getMantenimientos(
@@ -96,6 +98,16 @@ export default async function MantenimientosPage({
       <PageHeader
         title="Mantenimientos Programados"
         description="Agenda de revisiones técnicas obligatorias"
+        actions={
+          <>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/mantenimientos/ordenes">Órdenes de Trabajo</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/mantenimientos/planes">Planes Service</Link>
+            </Button>
+          </>
+        }
       />
 
       {/* KPI Cards */}
